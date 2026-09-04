@@ -108,17 +108,16 @@ export const Header: React.FC<Props> = ({
                 </span>
               </div>
               <div className="text-xs sm:text-sm font-extrabold text-[#1C1917] dark:text-[#EAEBED] capitalize truncate max-w-[160px] sm:max-w-xs md:max-w-none">
-                {activeTab === 'dashboard' && 'Bosh Sahifa • Student Control'}
-                {activeTab === 'vault' && 'AI Mistake Vault (Leitner SRS)'}
-                {activeTab === 'bluebook' && 'Official 2-Stage MST Testing'}
-                {activeTab === 'qbank' && 'Digital SAT Question Bank'}
-                {activeTab === 'roadmap' && '30-Day Score Growth Roadmap'}
-                {activeTab === 'community' && 'Community & Live Study'}
-                {activeTab === 'blog' && 'Blog & Strategy Guides'}
-                {activeTab === 'admin' && 'Staff Verification & Plans'}
-                {activeTab === 'profile' && 'Talaba Portfeli & Profil'}
-                {activeTab === 'arena' && 'SAT Multiplayer Arena'}
-                {activeTab === 'ai-tutor' && 'Sokratik AI Repetitor'}
+                {activeTab === 'dashboard' && 'Bosh sahifa'}
+                {activeTab === 'vault' && 'Xatolar Banki'}
+                {activeTab === 'bluebook' && 'Bluebook Testlar'}
+                {activeTab === 'qbank' && 'Savollar Banki (SQB)'}
+                {activeTab === 'roadmap' && 'O‘quv Rejasi'}
+                {activeTab === 'community' && 'Hamjamiyat'}
+                {activeTab === 'blog' && 'Blog & Yangiliklar'}
+                {activeTab === 'admin' && 'Admin Panel'}
+                {activeTab === 'profile' && 'Profil & Sozlamalar'}
+                {activeTab === 'arena' && 'Multiplayer Arena'}
               </div>
             </div>
           )}

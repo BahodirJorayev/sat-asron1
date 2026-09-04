@@ -310,7 +310,7 @@ export const INITIAL_VOCAB_WORDS: VocabularyWord[] = [
     partOfSpeech: 'adj.',
     phonetic: '/ləˈkɒn.ɪk/',
     definition: 'Using very few words; brief and to the point.',
-    definitionUz: 'Kamgap, lo'nda, qisqa va aniq ifodalangan.',
+    definitionUz: "Kamgap, lo'nda, qisqa va aniq ifodalangan.",
     sampleSentence: 'His laconic reply of "No" left no room for further negotiation or debate.',
     synonyms: ['terse', 'concise', 'succinct', 'curt'],
     antonyms: ['verbose', 'loquacious', 'garrulous', 'prolix'],

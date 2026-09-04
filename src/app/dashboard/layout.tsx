@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -17,6 +17,7 @@ import {
   LogOut,
   Menu,
   X,
+  ChevronDown,
 } from 'lucide-react';
 import { ThemeToggle } from '../../components/ThemeToggle';
 
@@ -28,7 +29,7 @@ export interface NavItem {
   icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>;
 }
 
-export const OFFICIAL_NAVIGATION_ITEMS: NavItem[] = [
+export const OFFICIAL_SIDEBAR_ITEMS: NavItem[] = [
   {
     id: 'dashboard',
     label: 'Bosh sahifa',
@@ -71,20 +72,6 @@ export const OFFICIAL_NAVIGATION_ITEMS: NavItem[] = [
     href: '/dashboard/community',
     icon: MessageSquare,
   },
-  {
-    id: 'profile',
-    label: 'Profil',
-    shortLabel: 'Profil',
-    href: '/dashboard/profile',
-    icon: UserIcon,
-  },
-  {
-    id: 'settings',
-    label: 'Sozlamalar',
-    shortLabel: 'Sozlamalar',
-    href: '/dashboard/settings',
-    icon: Settings,
-  },
 ];
 
 export default function DashboardLayout({
@@ -95,24 +82,39 @@ export default function DashboardLayout({
   const pathname = usePathname() || '/dashboard';
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState<boolean>(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState<boolean>(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close profile dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+    if (isProfileMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isProfileMenuOpen]);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#0F172A] dark:text-[#F8FAFC] font-sans flex overflow-hidden selection:bg-[#E07A5F] selection:text-white transition-colors duration-150">
       {/* ========================================================================= */}
-      {/* 1. DESKTOP SIDEBAR (Theme Adaptive: Light & Dark)                         */}
+      {/* 1. DESKTOP SIDEBAR (Strict 6 Items, No Profile/Settings, No Bottom Toggle)*/}
       {/* ========================================================================= */}
       <aside
-        className={`hidden md:flex flex-col justify-between shrink-0 h-screen sticky top-0 z-30 bg-white dark:bg-[#121A2F] border-r border-[#E2E8F0] dark:border-[#1E293B] transition-all duration-200 select-none ${
+        className={`hidden md:flex flex-col justify-between shrink-0 h-screen sticky top-0 z-30 bg-white dark:bg-[#121A2F] border-r border-[#E2E8F0] dark:border-[#1E293B] shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none transition-all duration-200 select-none ${
           isCollapsed ? 'w-20' : 'w-64'
         }`}
       >
-        {/* Header: Logo & Collapse Toggle */}
+        {/* Brand Header */}
         <div className="h-16 px-4 border-b border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-between gap-3">
           <Link
             href="/dashboard"
-            className="flex items-center gap-3 min-w-0 group"
+            className="flex items-center gap-3 min-w-0 group cursor-pointer"
           >
-            <div className="w-9 h-9 rounded-xl bg-[#F1F5F9] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-center font-mono font-extrabold text-[#E07A5F] text-base shrink-0 group-hover:border-[#E07A5F]/50 transition-colors shadow-2xs">
+            <div className="w-9 h-9 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-center font-mono font-bold text-[#E07A5F] text-base shrink-0 group-hover:border-[#E07A5F]/60 transition-colors shadow-2xs">
               Σ
             </div>
             {!isCollapsed && (
@@ -121,7 +123,7 @@ export default function DashboardLayout({
                   ASRON SAT
                 </div>
                 <div className="text-[10px] font-mono text-[#64748B] dark:text-[#94A3B8] font-semibold tracking-wider uppercase">
-                  Digital Platform
+                  Academic Platform
                 </div>
               </div>
             )}
@@ -137,15 +139,15 @@ export default function DashboardLayout({
           </button>
         </div>
 
-        {/* 8 Official Navigation Items */}
+        {/* 6 Clean Navigation Items */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto [&::-webkit-scrollbar]:hidden scrollbar-none">
           {!isCollapsed && (
-            <div className="px-3 pb-1.5 text-[10px] font-mono font-semibold uppercase tracking-wider text-[#64748B] dark:text-[#64748B]">
+            <div className="px-3 pb-2 text-[10px] font-mono font-semibold uppercase tracking-wider text-[#64748B] dark:text-[#64748B]">
               Asosiy Bo‘limlar
             </div>
           )}
 
-          {OFFICIAL_NAVIGATION_ITEMS.map((item) => {
+          {OFFICIAL_SIDEBAR_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive =
               pathname === item.href ||
@@ -157,16 +159,15 @@ export default function DashboardLayout({
                 href={item.href}
                 title={isCollapsed ? item.label : undefined}
                 className={`relative flex items-center gap-3 ${
-                  isCollapsed ? 'justify-center h-10 w-10 mx-auto' : 'px-3 py-2'
+                  isCollapsed ? 'justify-center h-10 w-10 mx-auto' : 'px-3 py-2.5'
                 } rounded-xl text-xs font-medium transition-all duration-150 cursor-pointer ${
                   isActive
-                    ? 'bg-[#F1F5F9] dark:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] font-bold border border-[#E2E8F0] dark:border-[#334155]/60 shadow-2xs'
-                    : 'text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9]/80 dark:hover:bg-[#1E293B]/70'
+                    ? 'bg-[#F1F5F9] dark:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] font-semibold border border-[#E2E8F0] dark:border-[#334155]/60 shadow-2xs'
+                    : 'text-[#475569] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]/60'
                 }`}
               >
-                {/* Active Accent Bar */}
                 {isActive && (
-                  <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r-md bg-[#E07A5F]" />
+                  <span className="absolute left-0 top-2.5 bottom-2.5 w-1 rounded-r-md bg-[#E07A5F]" />
                 )}
 
                 <Icon
@@ -185,21 +186,12 @@ export default function DashboardLayout({
           })}
         </nav>
 
-        {/* Footer (Theme Toggle & User Status) */}
-        <div className="p-3 border-t border-[#E2E8F0] dark:border-[#1E293B] bg-[#F8FAFC] dark:bg-[#0A0F1D]/60 space-y-2">
-          <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} gap-2`}>
-            <ThemeToggle />
-            {!isCollapsed && (
-              <span className="text-[10px] font-mono text-[#64748B] dark:text-[#94A3B8]">
-                ASRON SAT v2.6
-              </span>
-            )}
-          </div>
-
+        {/* Minimal Sidebar Footer (Status Only, Zero Redundant Toggles) */}
+        <div className="p-3 border-t border-[#E2E8F0] dark:border-[#1E293B] bg-[#F8FAFC]/70 dark:bg-[#0A0F1D]/60 shrink-0">
           <div
             className={`p-2 rounded-xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] flex items-center ${
               isCollapsed ? 'justify-center' : 'justify-between'
-            } gap-2`}
+            } gap-2 shadow-2xs`}
           >
             <div className="flex items-center gap-2 min-w-0">
               <div className="w-7 h-7 rounded-lg bg-[#F1F5F9] dark:bg-[#1E293B] text-[#E07A5F] border border-[#E2E8F0] dark:border-[#334155] flex items-center justify-center font-mono text-xs font-bold shrink-0">
@@ -207,48 +199,31 @@ export default function DashboardLayout({
               </div>
               {!isCollapsed && (
                 <div className="min-w-0 leading-tight">
-                  <div className="text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC] truncate">
+                  <div className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] truncate">
                     Talaba
                   </div>
                   <div className="text-[10px] font-mono text-[#64748B] dark:text-[#94A3B8] truncate">
-                    1550+ Maqsad
+                    Digital SAT 2026
                   </div>
                 </div>
               )}
             </div>
-
-            {!isCollapsed && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (typeof window !== 'undefined') {
-                    localStorage.removeItem('sb-auth-token');
-                    window.location.href = '/';
-                  }
-                }}
-                title="Chiqish"
-                className="p-1.5 rounded-lg text-[#64748B] dark:text-[#94A3B8] hover:text-rose-500 hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] transition-colors cursor-pointer shrink-0"
-              >
-                <LogOut size={13} />
-              </button>
-            )}
           </div>
         </div>
       </aside>
 
       {/* ========================================================================= */}
-      {/* 2. MAIN CONTENT VIEWPORT                                                 */}
+      {/* 2. MAIN WORKSPACE VIEWPORT                                               */}
       {/* ========================================================================= */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        {/* Top Navbar */}
-        <header className="h-16 px-4 sm:px-8 border-b border-[#E2E8F0] dark:border-[#1E293B] bg-white/90 dark:bg-[#0A0F1D]/80 backdrop-blur-md flex items-center justify-between sticky top-0 z-20 shrink-0 transition-colors">
+        {/* Top Navbar with Single Theme Toggle & Profile Avatar Menu */}
+        <header className="h-16 px-4 sm:px-8 border-b border-[#E2E8F0] dark:border-[#1E293B] bg-white/95 dark:bg-[#121A2F]/95 backdrop-blur-md flex items-center justify-between sticky top-0 z-20 shrink-0 transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.03)] dark:shadow-none">
           <div className="flex items-center gap-3">
-            {/* Mobile Drawer Trigger */}
             <button
               type="button"
               onClick={() => setIsMobileDrawerOpen(true)}
               aria-label="Menyuni ochish"
-              className="md:hidden p-2 rounded-xl bg-[#F1F5F9] dark:bg-[#121A2F] text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] border border-[#E2E8F0] dark:border-[#1E293B] transition-colors cursor-pointer"
+              className="md:hidden p-2 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] border border-[#E2E8F0] dark:border-[#1E293B] transition-colors cursor-pointer"
             >
               <Menu size={18} />
             </button>
@@ -256,27 +231,96 @@ export default function DashboardLayout({
             <div className="flex items-center gap-2 text-xs font-mono text-[#64748B] dark:text-[#94A3B8]">
               <span className="font-bold text-[#0F172A] dark:text-[#F8FAFC]">ASRON SAT</span>
               <span>/</span>
-              <span className="text-[#64748B] dark:text-[#94A3B8]">Boshqaruv Paneli</span>
+              <span className="text-[#475569] dark:text-[#94A3B8]">Boshqaruv Paneli</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 text-xs font-mono">
-            <div className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-[#F1F5F9] dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] text-[11px] text-[#0F172A] dark:text-[#94A3B8]">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Digital SAT 2026</span>
-            </div>
+          <div className="flex items-center gap-3 sm:gap-4">
+            {/* Single Official Theme Toggle */}
             <ThemeToggle />
+
+            {/* Profile Avatar & Dropdown Menu (Sole Access Point for Profile & Settings) */}
+            <div className="relative" ref={profileMenuRef}>
+              <button
+                type="button"
+                onClick={() => setIsProfileMenuOpen((prev) => !prev)}
+                className="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] border border-transparent hover:border-[#E2E8F0] dark:hover:border-[#334155] transition-all cursor-pointer group"
+                aria-expanded={isProfileMenuOpen}
+                aria-haspopup="true"
+              >
+                <div className="w-8 h-8 rounded-xl bg-[#0B1B3D] text-[#F8FAFC] flex items-center justify-center font-mono text-xs font-bold shadow-xs">
+                  T
+                </div>
+                <div className="hidden sm:block text-left leading-tight">
+                  <div className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
+                    Talaba
+                  </div>
+                  <div className="text-[10px] font-mono text-[#64748B] dark:text-[#94A3B8]">
+                    1550+ Maqsad
+                  </div>
+                </div>
+                <ChevronDown size={14} className="text-[#64748B] dark:text-[#94A3B8] group-hover:text-[#0F172A] dark:group-hover:text-[#F8FAFC] transition-transform duration-150" />
+              </button>
+
+              {/* Profile & Settings Dropdown Menu */}
+              {isProfileMenuOpen && (
+                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] rounded-2xl shadow-xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+                  <div className="px-3.5 py-2 border-b border-[#E2E8F0] dark:border-[#1E293B] mb-1">
+                    <p className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
+                      Talaba Portfeli
+                    </p>
+                    <p className="text-[11px] font-mono text-[#64748B] dark:text-[#94A3B8] truncate mt-0.5">
+                      student@asronsat.uz
+                    </p>
+                  </div>
+
+                  <Link
+                    href="/dashboard/profile"
+                    onClick={() => setIsProfileMenuOpen(false)}
+                    className="flex items-center gap-2.5 px-3.5 py-2 text-xs text-[#475569] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] transition-colors"
+                  >
+                    <UserIcon size={15} />
+                    <span>Mening Profilim</span>
+                  </Link>
+
+                  <Link
+                    href="/dashboard/settings"
+                    onClick={() => setIsProfileMenuOpen(false)}
+                    className="flex items-center gap-2.5 px-3.5 py-2 text-xs text-[#475569] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] transition-colors"
+                  >
+                    <Settings size={15} />
+                    <span>Platforma Sozlamalari</span>
+                  </Link>
+
+                  <div className="my-1 border-t border-[#E2E8F0] dark:border-[#1E293B]" />
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        localStorage.removeItem('sb-auth-token');
+                        window.location.href = '/';
+                      }
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer text-left"
+                  >
+                    <LogOut size={15} />
+                    <span>Hisobdan Chiqish</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
-        {/* Page Main Content Area */}
+        {/* Main Content Area */}
         <main className="flex-1 p-4 sm:p-8 max-w-7xl w-full mx-auto pb-24 md:pb-12">
           {children}
         </main>
       </div>
 
       {/* ========================================================================= */}
-      {/* 3. MOBILE NAVIGATION DRAWER (All 8 Items Accessible on Mobile)           */}
+      {/* 3. MOBILE NAVIGATION DRAWER (6 Items Only, No Bottom Toggle)              */}
       {/* ========================================================================= */}
       {isMobileDrawerOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
@@ -289,7 +333,7 @@ export default function DashboardLayout({
             <div>
               <div className="flex items-center justify-between pb-4 border-b border-[#E2E8F0] dark:border-[#1E293B] mb-4">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#F1F5F9] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-center font-mono font-bold text-[#E07A5F] text-sm">
+                  <div className="w-8 h-8 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-center font-mono font-bold text-[#E07A5F] text-sm">
                     Σ
                   </div>
                   <span className="font-bold text-sm text-[#0F172A] dark:text-[#F8FAFC]">
@@ -306,8 +350,8 @@ export default function DashboardLayout({
                 </button>
               </div>
 
-              <nav className="space-y-1 overflow-y-auto max-h-[calc(100vh-140px)]">
-                {OFFICIAL_NAVIGATION_ITEMS.map((item) => {
+              <nav className="space-y-1 overflow-y-auto">
+                {OFFICIAL_SIDEBAR_ITEMS.map((item) => {
                   const Icon = item.icon;
                   const isActive = pathname === item.href;
 
@@ -318,8 +362,8 @@ export default function DashboardLayout({
                       onClick={() => setIsMobileDrawerOpen(false)}
                       className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
                         isActive
-                          ? 'bg-[#F1F5F9] dark:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] font-bold border border-[#E2E8F0] dark:border-[#334155]'
-                          : 'text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9]/80 dark:hover:bg-[#1E293B]/70'
+                          ? 'bg-[#F1F5F9] dark:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] font-semibold border border-[#E2E8F0] dark:border-[#334155]'
+                          : 'text-[#475569] dark:text-[#94A3B8] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]/60'
                       }`}
                     >
                       <Icon
@@ -333,21 +377,21 @@ export default function DashboardLayout({
               </nav>
             </div>
 
-            <div className="pt-3 border-t border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-between">
-              <ThemeToggle showLabel={true} />
+            <div className="pt-3 border-t border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-between text-xs font-mono text-[#64748B] dark:text-[#94A3B8]">
+              <span>ASRON SAT v2.6</span>
             </div>
           </div>
         </div>
       )}
 
       {/* ========================================================================= */}
-      {/* 4. MOBILE BOTTOM BAR (Primary Quick Launch Access)                       */}
+      {/* 4. MOBILE BOTTOM BAR (Primary 5 Quick Tabs)                              */}
       {/* ========================================================================= */}
       <nav
         aria-label="Mobil Navigatsiya"
         className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#0A0F1D]/95 border-t border-[#E2E8F0] dark:border-[#1E293B] backdrop-blur-lg px-2 pt-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] flex items-center justify-around select-none shadow-2xl transition-colors"
       >
-        {OFFICIAL_NAVIGATION_ITEMS.slice(0, 5).map((item) => {
+        {OFFICIAL_SIDEBAR_ITEMS.slice(0, 5).map((item) => {
           const Icon = item.icon;
           const isActive =
             pathname === item.href ||

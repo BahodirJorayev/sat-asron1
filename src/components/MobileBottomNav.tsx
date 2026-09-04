@@ -42,11 +42,6 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       label: 'Xatolar',
       icon: BookmarkCheck,
     },
-    {
-      id: 'profile',
-      label: 'Profil',
-      icon: UserIcon,
-    },
   ];
 
   return (

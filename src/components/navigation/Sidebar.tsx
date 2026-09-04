@@ -10,14 +10,11 @@ import {
   BookOpen,
   BookmarkCheck,
   MessageSquare,
-  User as UserIcon,
-  Settings,
   PanelLeftClose,
   PanelLeftOpen,
   LogOut,
   ShieldAlert,
 } from 'lucide-react';
-import { ThemeToggle } from '../ThemeToggle';
 
 export interface NavItem {
   id: string;
@@ -27,7 +24,7 @@ export interface NavItem {
   icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>;
 }
 
-export const OFFICIAL_NAVIGATION_ITEMS: NavItem[] = [
+export const EXACT_SIDEBAR_ITEMS: NavItem[] = [
   {
     id: 'dashboard',
     label: 'Bosh sahifa',
@@ -70,20 +67,6 @@ export const OFFICIAL_NAVIGATION_ITEMS: NavItem[] = [
     href: '/dashboard/community',
     icon: MessageSquare,
   },
-  {
-    id: 'profile',
-    label: 'Profil',
-    shortLabel: 'Profil',
-    href: '/dashboard/profile',
-    icon: UserIcon,
-  },
-  {
-    id: 'settings',
-    label: 'Sozlamalar',
-    shortLabel: 'Sozlamalar',
-    href: '/dashboard/settings',
-    icon: Settings,
-  },
 ];
 
 interface SidebarProps {
@@ -116,17 +99,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside
-      className={`hidden md:flex flex-col justify-between shrink-0 h-screen sticky top-0 z-30 bg-white dark:bg-[#121A2F] border-r border-[#E2E8F0] dark:border-[#1E293B] transition-all duration-200 select-none text-[#0F172A] dark:text-[#F8FAFC] ${
+      className={`hidden md:flex flex-col justify-between shrink-0 h-screen sticky top-0 z-30 bg-white dark:bg-[#121A2F] border-r border-[#E2E8F0] dark:border-[#1E293B] shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none transition-all duration-200 select-none text-[#0F172A] dark:text-[#F8FAFC] ${
         isCollapsed ? 'w-20' : 'w-64'
       } ${className}`}
     >
-      {/* 1. Header (Brand & Collapse Toggle) */}
+      {/* 1. Brand Header & Collapse Toggle */}
       <div className="h-16 px-4 border-b border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-between gap-2 shrink-0">
         <Link
           href="/dashboard"
           className="flex items-center gap-3 min-w-0 group cursor-pointer"
         >
-          <div className="w-9 h-9 rounded-xl bg-[#F1F5F9] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-center font-mono font-extrabold text-[#E07A5F] text-base shrink-0 group-hover:border-[#E07A5F]/50 transition-colors shadow-2xs">
+          <div className="w-9 h-9 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-center font-mono font-bold text-[#E07A5F] text-base shrink-0 group-hover:border-[#E07A5F]/60 transition-colors shadow-2xs">
             Σ
           </div>
           {!isCollapsed && (
@@ -135,7 +118,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 ASRON SAT
               </div>
               <div className="text-[10px] font-mono text-[#64748B] dark:text-[#94A3B8] font-semibold tracking-wider uppercase">
-                Digital Suite
+                Academic Suite
               </div>
             </div>
           )}
@@ -151,15 +134,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </button>
       </div>
 
-      {/* 2. Navigation Items (Exactly 8 Official Modules) */}
+      {/* 2. Strict 6 Navigation Items (No Profile, No Settings) */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto [&::-webkit-scrollbar]:hidden scrollbar-none">
         {!isCollapsed && (
-          <div className="px-3 pb-1.5 text-[10px] font-mono font-semibold uppercase tracking-wider text-[#64748B] dark:text-[#64748B]">
+          <div className="px-3 pb-2 text-[10px] font-mono font-semibold uppercase tracking-wider text-[#64748B] dark:text-[#64748B]">
             Asosiy Bo‘limlar
           </div>
         )}
 
-        {OFFICIAL_NAVIGATION_ITEMS.map((item) => {
+        {EXACT_SIDEBAR_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive =
             pathname === item.href ||
@@ -171,16 +154,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 href={item.href}
                 title={isCollapsed ? item.label : undefined}
                 className={`relative flex items-center gap-3 ${
-                  isCollapsed ? 'justify-center h-10 w-10 mx-auto' : 'px-3 py-2'
+                  isCollapsed ? 'justify-center h-10 w-10 mx-auto' : 'px-3 py-2.5'
                 } rounded-xl text-xs font-medium transition-all duration-150 cursor-pointer ${
                   isActive
-                    ? 'bg-[#F1F5F9] dark:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] font-bold border border-[#E2E8F0] dark:border-[#334155]/60 shadow-2xs'
-                    : 'text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9]/80 dark:hover:bg-[#1E293B]/70'
+                    ? 'bg-[#F1F5F9] dark:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] font-semibold border border-[#E2E8F0] dark:border-[#334155]/60 shadow-2xs'
+                    : 'text-[#475569] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]/60'
                 }`}
               >
-                {/* Active Accent Bar */}
+                {/* Minimal Active Bar */}
                 {isActive && (
-                  <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r-md bg-[#E07A5F]" />
+                  <span className="absolute left-0 top-2.5 bottom-2.5 w-1 rounded-r-md bg-[#E07A5F]" />
                 )}
 
                 <Icon
@@ -206,13 +189,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
           );
         })}
 
-        {/* Admin Panel Link if Admin */}
+        {/* Admin Staff Access if Applicable */}
         {isAdmin && (
           <div className="pt-2 border-t border-[#E2E8F0] dark:border-[#1E293B]">
             <Link
               href="/dashboard/admin"
               className={`flex items-center gap-3 ${
-                isCollapsed ? 'justify-center h-10 w-10 mx-auto' : 'px-3 py-2'
+                isCollapsed ? 'justify-center h-10 w-10 mx-auto' : 'px-3 py-2.5'
               } rounded-xl text-xs font-medium transition-all text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40`}
             >
               <ShieldAlert size={17} />
@@ -222,21 +205,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
       </nav>
 
-      {/* 3. Footer (Theme Toggle & Profile Strip) */}
-      <div className="p-3 border-t border-[#E2E8F0] dark:border-[#1E293B] bg-[#F8FAFC] dark:bg-[#0A0F1D]/60 space-y-2">
-        <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} gap-2`}>
-          <ThemeToggle />
-          {!isCollapsed && (
-            <span className="text-[10px] font-mono text-[#64748B] dark:text-[#94A3B8]">
-              ASRON SAT v2.6
-            </span>
-          )}
-        </div>
-
+      {/* 3. Footer Strip (NO Redundant Theme Toggle, Clean Status Bar) */}
+      <div className="p-3 border-t border-[#E2E8F0] dark:border-[#1E293B] bg-[#F8FAFC]/70 dark:bg-[#0A0F1D]/60 shrink-0">
         <div
           className={`p-2 rounded-xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] flex items-center ${
             isCollapsed ? 'justify-center' : 'justify-between'
-          } gap-2`}
+          } gap-2 shadow-2xs`}
         >
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-7 h-7 rounded-lg bg-[#F1F5F9] dark:bg-[#1E293B] text-[#E07A5F] border border-[#E2E8F0] dark:border-[#334155] flex items-center justify-center font-mono text-xs font-bold shrink-0">
@@ -244,11 +218,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
             {!isCollapsed && (
               <div className="min-w-0 leading-tight">
-                <div className="text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC] truncate">
+                <div className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] truncate">
                   Talaba
                 </div>
                 <div className="text-[10px] font-mono text-[#64748B] dark:text-[#94A3B8] truncate">
-                  1550+ Maqsad
+                  Digital SAT
                 </div>
               </div>
             )}

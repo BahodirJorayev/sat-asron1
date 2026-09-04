@@ -6,8 +6,6 @@ import {
   BookOpen,
   BookmarkCheck,
   MessageSquare,
-  User as UserIcon,
-  Settings,
   PanelLeftClose,
   PanelLeftOpen,
   ShieldAlert,
@@ -15,7 +13,6 @@ import {
 import { User } from '../types';
 import { SiteBrandingConfig } from '../data/blogAndBrandingData';
 import { SidebarFooter } from './SidebarFooter';
-import { ThemeToggle } from './ThemeToggle';
 
 export interface AppSidebarProps {
   user: User;
@@ -49,12 +46,10 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   onToggleCollapse,
   onOpenPaywall,
   onOpenVocabTrainer,
-  onOpenMultiplayerArena,
   onOpenSettings,
   onOpenProfile,
   onOpenAdminLogin,
   onLogout,
-  unreadAlertCount = 0,
 }) => {
   const [internalCollapsed, setInternalCollapsed] = useState<boolean>(() => {
     if (typeof localStorage !== 'undefined') {
@@ -81,7 +76,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
 
   const brandName = siteBranding?.brandName || 'ASRON SAT';
 
-  // EXACT 8 OFFICIAL NAVIGATION ITEMS (Kunlik Mashq and standalone AI Repetitor permanently removed)
+  // EXACT 6 NAVIGATION ITEMS (Profile & Settings removed from sidebar; accessed via Header)
   const navigationItems = [
     {
       id: 'dashboard',
@@ -122,24 +117,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       icon: MessageSquare,
       onClick: () => setActiveTab('community'),
     },
-    {
-      id: 'profile',
-      label: 'Profil',
-      icon: UserIcon,
-      onClick: () => {
-        if (onOpenProfile) onOpenProfile();
-        else setActiveTab('profile');
-      },
-    },
-    {
-      id: 'settings',
-      label: 'Sozlamalar',
-      icon: Settings,
-      onClick: () => {
-        if (onOpenSettings) onOpenSettings();
-        else setActiveTab('settings');
-      },
-    },
     ...(user.role === 'ADMIN' || user.role === 'SUPER_ADMIN'
       ? [
           {
@@ -156,7 +133,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     <aside
       className={`hidden md:flex relative h-screen sticky top-0 shrink-0 z-30 select-none flex-col justify-between transition-all duration-200 ease-in-out ${
         isCollapsed ? 'w-20' : 'w-64'
-      } bg-white dark:bg-[#121A2F] border-r border-[#E2E8F0] dark:border-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] overflow-visible`}
+      } bg-white dark:bg-[#121A2F] border-r border-[#E2E8F0] dark:border-[#1E293B] shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none text-[#0F172A] dark:text-[#F8FAFC] overflow-visible`}
     >
       {/* 1. Header (Brand & Collapse/Expand Toggle) */}
       {isCollapsed ? (
@@ -165,7 +142,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             type="button"
             onClick={handleToggleCollapse}
             aria-label="Kengaytirish (Expand sidebar)"
-            className="w-10 h-10 rounded-xl bg-[#F1F5F9] dark:bg-[#0A0F1D] text-[#0F172A] dark:text-white flex items-center justify-center font-extrabold text-sm shadow-xs border border-[#E2E8F0] dark:border-[#1E293B] hover:border-[#E07A5F]/50 transition-all cursor-pointer relative overflow-hidden p-1.5"
+            className="w-10 h-10 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#0F172A] dark:text-white flex items-center justify-center font-extrabold text-sm shadow-xs border border-[#E2E8F0] dark:border-[#1E293B] hover:border-[#E07A5F]/60 transition-all cursor-pointer relative overflow-hidden p-1.5"
           >
             <span className="transition-all duration-200 group-hover:opacity-0 group-hover:scale-75 w-full h-full flex items-center justify-center font-mono text-[#E07A5F]">
               Σ
@@ -186,7 +163,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             className="flex items-center gap-3 cursor-pointer group min-w-0"
             title={`${brandName} - Bosh Sahifa`}
           >
-            <div className="w-9 h-9 rounded-xl bg-[#F1F5F9] dark:bg-[#0A0F1D] text-[#E07A5F] border border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-center font-mono font-bold text-base group-hover:border-[#E07A5F]/50 transition-colors shrink-0 shadow-2xs">
+            <div className="w-9 h-9 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#E07A5F] border border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-center font-mono font-bold text-base group-hover:border-[#E07A5F]/60 transition-colors shrink-0 shadow-2xs">
               Σ
             </div>
 
@@ -195,7 +172,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 {brandName}
               </div>
               <p className="text-[10px] font-mono text-[#64748B] dark:text-[#94A3B8] font-medium truncate mt-0.5">
-                Executive Portal
+                Academic Suite
               </p>
             </div>
           </div>
@@ -211,10 +188,10 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         </div>
       )}
 
-      {/* 2. Official 8 Navigation Items */}
+      {/* 2. Official 6 Navigation Items */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto [&::-webkit-scrollbar]:hidden scrollbar-none">
         {!isCollapsed && (
-          <div className="px-3 pb-1.5 text-[10px] font-mono font-semibold uppercase tracking-wider text-[#64748B] dark:text-[#64748B]">
+          <div className="px-3 pb-2 text-[10px] font-mono font-semibold uppercase tracking-wider text-[#64748B] dark:text-[#64748B]">
             Asosiy Bo‘limlar
           </div>
         )}
@@ -230,16 +207,16 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 onClick={item.onClick}
                 aria-label={item.label}
                 className={`w-full flex items-center ${
-                  isCollapsed ? 'justify-center h-10 w-10 mx-auto' : 'justify-start px-3 py-2'
+                  isCollapsed ? 'justify-center h-10 w-10 mx-auto' : 'justify-start px-3 py-2.5'
                 } rounded-xl text-xs font-medium transition-all duration-150 cursor-pointer ${
                   isActive
-                    ? 'bg-[#F1F5F9] dark:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] font-bold border border-[#E2E8F0] dark:border-[#334155]/60 shadow-2xs'
-                    : 'text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9]/80 dark:hover:bg-[#1E293B]/70'
+                    ? 'bg-[#F1F5F9] dark:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] font-semibold border border-[#E2E8F0] dark:border-[#334155]/60 shadow-2xs'
+                    : 'text-[#475569] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]/60'
                 }`}
               >
                 {/* Active Accent Bar */}
                 {isActive && (
-                  <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r-md bg-[#E07A5F]" />
+                  <span className="absolute left-0 top-2.5 bottom-2.5 w-1 rounded-r-md bg-[#E07A5F]" />
                 )}
 
                 <div className="flex items-center gap-3 min-w-0">
@@ -265,28 +242,17 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         })}
       </nav>
 
-      {/* 3. Theme Toggle & Footer Profile */}
-      <div className="p-3 border-t border-[#E2E8F0] dark:border-[#1E293B] bg-[#F8FAFC] dark:bg-[#0A0F1D]/50">
-        <div className="mb-2 flex items-center justify-between">
-          <ThemeToggle />
-          {!isCollapsed && (
-            <span className="text-[10px] font-mono text-[#64748B] dark:text-[#94A3B8]">
-              ASRON SAT v2.6
-            </span>
-          )}
-        </div>
-
-        <SidebarFooter
-          user={user}
-          isCollapsed={isCollapsed}
-          activeTab={activeTab}
-          onOpenProfile={onOpenProfile || (() => setActiveTab('profile'))}
-          onOpenSettings={onOpenSettings || (() => setActiveTab('settings'))}
-          onOpenPaywall={onOpenPaywall}
-          onOpenAdminLogin={onOpenAdminLogin}
-          onLogout={onLogout}
-        />
-      </div>
+      {/* 3. Clean Footer Profile Strip (NO Redundant Theme Toggle) */}
+      <SidebarFooter
+        user={user}
+        isCollapsed={isCollapsed}
+        activeTab={activeTab}
+        onOpenProfile={onOpenProfile || (() => setActiveTab('profile'))}
+        onOpenSettings={onOpenSettings || (() => setActiveTab('settings'))}
+        onOpenPaywall={onOpenPaywall}
+        onOpenAdminLogin={onOpenAdminLogin}
+        onLogout={onLogout}
+      />
     </aside>
   );
 };

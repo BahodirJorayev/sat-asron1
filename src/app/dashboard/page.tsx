@@ -6,7 +6,8 @@ import {
   FileText,
   Database,
   BookOpen,
-  Swords,
+  BookmarkCheck,
+  MessageSquare,
   ArrowUpRight,
 } from 'lucide-react';
 import { ExamCountdownWidget } from '../../components/dashboard/ExamCountdownWidget';
@@ -34,12 +35,12 @@ export default function DashboardPage() {
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#0F172A] dark:text-[#F8FAFC]">
             Talaba Boshqaruv Paneli
           </h1>
-          <p className="text-xs font-mono text-[#64748B] dark:text-[#94A3B8] mt-0.5 font-medium">
+          <p className="text-xs font-mono text-[#475569] dark:text-[#94A3B8] mt-0.5 font-medium">
             {todayFormatted} • Digital SAT Tayyorgarlik Markazi
           </p>
         </div>
 
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] text-xs font-mono text-[#64748B] dark:text-[#94A3B8] self-start sm:self-auto shadow-2xs">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] text-xs font-mono text-[#475569] dark:text-[#94A3B8] self-start sm:self-auto shadow-[0_1px_2px_rgba(0,0,0,0.03)] dark:shadow-none">
           <span className="w-1.5 h-1.5 rounded-full bg-[#E07A5F]" />
           <span>MST Adaptiv Tizim Faol</span>
         </div>
@@ -54,7 +55,7 @@ export default function DashboardPage() {
       {/* 3. Core Metrics Grid: Clean 0-State Baseline (Zero Emojis, Crisp Monospace) */}
       <section aria-label="Asosiy Metrikalar" className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Metric 1: Streak */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] flex flex-col justify-between shadow-xs transition-colors">
+        <div className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] flex flex-col justify-between shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none transition-colors">
           <div className="text-[11px] font-mono uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8] font-semibold">
             Ketma-ketlik (Streak)
           </div>
@@ -69,7 +70,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Metric 2: Questions Done */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] flex flex-col justify-between shadow-xs transition-colors">
+        <div className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] flex flex-col justify-between shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none transition-colors">
           <div className="text-[11px] font-mono uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8] font-semibold">
             Ishlangan Savollar
           </div>
@@ -84,7 +85,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Metric 3: Accuracy */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] flex flex-col justify-between shadow-xs transition-colors">
+        <div className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] flex flex-col justify-between shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none transition-colors">
           <div className="text-[11px] font-mono uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8] font-semibold">
             O‘rtacha Aniqlik
           </div>
@@ -99,7 +100,7 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      {/* 4. Quick Launch Modules Matrix (Restored Core Links) */}
+      {/* 4. Quick Launch Modules Matrix (Standalone Core Modules) */}
       <section aria-label="Asosiy Modullar" className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8]">
@@ -108,10 +109,29 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Module 1: Mock Tests */}
+          {/* Module 1: Savollar Banki */}
+          <Link
+            href="/dashboard/practice"
+            className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] hover:border-[#CBD5E1] dark:hover:border-[#334155] transition-all text-left flex items-start justify-between group shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none cursor-pointer"
+          >
+            <div className="space-y-1.5 pr-2">
+              <div className="flex items-center gap-2">
+                <Database size={16} className="text-[#E07A5F] stroke-[1.8]" />
+                <span className="font-bold text-sm text-[#0F172A] dark:text-[#F8FAFC]">
+                  Savollar Banki
+                </span>
+              </div>
+              <p className="text-xs text-[#475569] dark:text-[#94A3B8] leading-relaxed">
+                3,000+ saralangan rasmiy College Board savollar bazasi va filtrlash.
+              </p>
+            </div>
+            <ArrowUpRight size={16} className="text-[#64748B] dark:text-[#94A3B8] group-hover:text-[#0F172A] dark:group-hover:text-[#F8FAFC] transition-colors shrink-0 stroke-[1.5]" />
+          </Link>
+
+          {/* Module 2: Mock Testlar */}
           <Link
             href="/dashboard/mocks"
-            className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] hover:border-[#CBD5E1] dark:hover:border-[#334155] transition-all text-left flex items-start justify-between group shadow-xs cursor-pointer"
+            className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] hover:border-[#CBD5E1] dark:hover:border-[#334155] transition-all text-left flex items-start justify-between group shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none cursor-pointer"
           >
             <div className="space-y-1.5 pr-2">
               <div className="flex items-center gap-2">
@@ -120,36 +140,17 @@ export default function DashboardPage() {
                   Mock Testlar
                 </span>
               </div>
-              <p className="text-xs text-[#64748B] dark:text-[#94A3B8] leading-relaxed">
-                Rasmiy 2-bosqichli MST formatidagi to‘liq adaptiv testlar.
+              <p className="text-xs text-[#475569] dark:text-[#94A3B8] leading-relaxed">
+                Rasmiy 2-bosqichli adaptiv MST formatidagi to‘liq testlar to‘plami.
               </p>
             </div>
             <ArrowUpRight size={16} className="text-[#64748B] dark:text-[#94A3B8] group-hover:text-[#0F172A] dark:group-hover:text-[#F8FAFC] transition-colors shrink-0 stroke-[1.5]" />
           </Link>
 
-          {/* Module 2: Question Bank (SQB) */}
-          <Link
-            href="/dashboard/practice"
-            className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] hover:border-[#CBD5E1] dark:hover:border-[#334155] transition-all text-left flex items-start justify-between group shadow-xs cursor-pointer"
-          >
-            <div className="space-y-1.5 pr-2">
-              <div className="flex items-center gap-2">
-                <Database size={16} className="text-[#E07A5F] stroke-[1.8]" />
-                <span className="font-bold text-sm text-[#0F172A] dark:text-[#F8FAFC]">
-                  Savollar Banki (SQB)
-                </span>
-              </div>
-              <p className="text-xs text-[#64748B] dark:text-[#94A3B8] leading-relaxed">
-                3,000+ saralangan rasmiy College Board savollar bazasi.
-              </p>
-            </div>
-            <ArrowUpRight size={16} className="text-[#64748B] dark:text-[#94A3B8] group-hover:text-[#0F172A] dark:group-hover:text-[#F8FAFC] transition-colors shrink-0 stroke-[1.5]" />
-          </Link>
-
-          {/* Module 3: SAT Vocab (400 Words) */}
+          {/* Module 3: SAT Lug'at */}
           <Link
             href="/dashboard/vocabulary"
-            className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] hover:border-[#CBD5E1] dark:hover:border-[#334155] transition-all text-left flex items-start justify-between group shadow-xs cursor-pointer"
+            className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] hover:border-[#CBD5E1] dark:hover:border-[#334155] transition-all text-left flex items-start justify-between group shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none cursor-pointer"
           >
             <div className="space-y-1.5 pr-2">
               <div className="flex items-center gap-2">
@@ -158,27 +159,27 @@ export default function DashboardPage() {
                   SAT Lug‘at (400 So‘z)
                 </span>
               </div>
-              <p className="text-xs text-[#64748B] dark:text-[#94A3B8] leading-relaxed">
-                Spaced Repetition (SRS) so‘z kartochkalari va o‘zlashtirish.
+              <p className="text-xs text-[#475569] dark:text-[#94A3B8] leading-relaxed">
+                Spaced Repetition (SRS) so‘z kartochkalari va o‘zlashtirish tahlili.
               </p>
             </div>
             <ArrowUpRight size={16} className="text-[#64748B] dark:text-[#94A3B8] group-hover:text-[#0F172A] dark:group-hover:text-[#F8FAFC] transition-colors shrink-0 stroke-[1.5]" />
           </Link>
 
-          {/* Module 4: Multiplayer Arena */}
+          {/* Module 4: Hamjamiyat */}
           <Link
-            href="/dashboard/community?view=arena"
-            className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] hover:border-[#CBD5E1] dark:hover:border-[#334155] transition-all text-left flex items-start justify-between group shadow-xs cursor-pointer"
+            href="/dashboard/community"
+            className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] hover:border-[#CBD5E1] dark:hover:border-[#334155] transition-all text-left flex items-start justify-between group shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none cursor-pointer"
           >
             <div className="space-y-1.5 pr-2">
               <div className="flex items-center gap-2">
-                <Swords size={16} className="text-[#E07A5F] stroke-[1.8]" />
+                <MessageSquare size={16} className="text-[#E07A5F] stroke-[1.8]" />
                 <span className="font-bold text-sm text-[#0F172A] dark:text-[#F8FAFC]">
-                  Multiplayer Arena
+                  Hamjamiyat
                 </span>
               </div>
-              <p className="text-xs text-[#64748B] dark:text-[#94A3B8] leading-relaxed">
-                1v1 real vaqtdagi tezkor bilim bellashuvi va reyting.
+              <p className="text-xs text-[#475569] dark:text-[#94A3B8] leading-relaxed">
+                Rasmiy muhokama kanallari va jonli o‘quv xonalari.
               </p>
             </div>
             <ArrowUpRight size={16} className="text-[#64748B] dark:text-[#94A3B8] group-hover:text-[#0F172A] dark:group-hover:text-[#F8FAFC] transition-colors shrink-0 stroke-[1.5]" />
@@ -187,7 +188,7 @@ export default function DashboardPage() {
       </section>
 
       {/* 5. Recent Activity & Mistake Vault Section (Clean Empty State) */}
-      <section aria-label="So‘nggi Faoliyat" className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-xs transition-colors">
+      <section aria-label="So‘nggi Faoliyat" className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none transition-colors">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC]">
             So‘nggi Faoliyat
@@ -207,7 +208,7 @@ export default function DashboardPage() {
           <div className="pt-1">
             <Link
               href="/dashboard/practice"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#F1F5F9] dark:bg-[#1E293B] hover:bg-[#E2E8F0] dark:hover:bg-[#2D3748] text-[#0F172A] dark:text-[#F8FAFC] text-xs font-mono font-semibold transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#F1F5F9] dark:bg-[#1E293B] hover:bg-[#E2E8F0] dark:hover:bg-[#2D3748] text-[#0F172A] dark:text-[#F8FAFC] text-xs font-mono font-semibold transition-colors shadow-2xs"
             >
               <span>Savollar bankiga o‘tish</span>
               <ArrowUpRight size={13} />

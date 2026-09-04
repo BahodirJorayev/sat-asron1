@@ -204,22 +204,22 @@ export const Header: React.FC<Props> = ({
               {/* Current User Quick Profile Button */}
               <div
                 onClick={onOpenCurrentUserProfile}
-                className="flex items-center gap-2.5 pl-2 pr-3.5 py-1.5 rounded-xl bg-[#FAF7F2] dark:bg-[#181B26] hover:bg-[#F3EFE6] dark:hover:bg-[#202534] border border-[#E8E2D5] dark:border-[#262B3D] hover:border-[#2563EB]/40 dark:hover:border-blue-500/40 cursor-pointer transition-all shadow-2xs"
+                className="flex items-center gap-2.5 pl-2 pr-3.5 py-1.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#1E293B] hover:border-[#E07A5F]/50 transition-all cursor-pointer shadow-2xs"
                 title="Mening Profilim sahifasini ochish"
               >
                 <img
                   src={user.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}
                   alt={user.fullName}
-                  className="w-7 h-7 rounded-full object-cover border border-[#E8E2D5] dark:border-[#262B3D]"
+                  className="w-7 h-7 rounded-full object-cover border border-[#E2E8F0] dark:border-[#1E293B]"
                 />
                 <div className="text-left">
-                  <div className="text-[12px] font-bold text-[#1C1917] dark:text-[#EAEBED] leading-tight flex items-center gap-1">
+                  <div className="text-[12px] font-bold text-[#0F172A] dark:text-[#F8FAFC] leading-tight flex items-center gap-1">
                     <span>{user.fullName.split(' ')[0]}</span>
-                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-blue-50 dark:bg-blue-900/40 text-[#2563EB] dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 dark:bg-[#1E293B] text-[#0F172A] dark:text-[#94A3B8] border border-[#E2E8F0] dark:border-[#334155]">
                       {user.planTier}
                     </span>
                   </div>
-                  <div className="text-[10px] text-[#78716C] dark:text-[#94A3B8]">
+                  <div className="text-[10px] text-[#64748B] dark:text-[#94A3B8] font-mono">
                     @{user.username || 'user'}
                   </div>
                 </div>

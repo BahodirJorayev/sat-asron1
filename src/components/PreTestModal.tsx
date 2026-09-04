@@ -24,7 +24,6 @@ interface PreTestModalProps {
   user: User;
   onClose: () => void;
   onLaunchTest: (test: MockTest, startInFullscreen: boolean) => void;
-  onOpenPaywall?: () => void;
 }
 
 export const PreTestModal: React.FC<PreTestModalProps> = ({
@@ -33,7 +32,6 @@ export const PreTestModal: React.FC<PreTestModalProps> = ({
   user,
   onClose,
   onLaunchTest,
-  onOpenPaywall,
 }) => {
   const [fullscreenConsent, setFullscreenConsent] = useState(true);
   const [understoodMST, setUnderstoodMST] = useState(true);
@@ -41,14 +39,7 @@ export const PreTestModal: React.FC<PreTestModalProps> = ({
 
   if (!isOpen || !test) return null;
 
-  const isProLocked = test.isProOnly && user.planTier !== 'PRO';
-
   const handleLaunch = () => {
-    if (isProLocked) {
-      onOpenPaywall?.();
-      return;
-    }
-
     if (fullscreenConsent && document.documentElement.requestFullscreen) {
       document.documentElement.requestFullscreen().catch(() => {
         // Fullscreen request may be blocked by iframe or browser permissions
@@ -75,12 +66,16 @@ export const PreTestModal: React.FC<PreTestModalProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-white border border-[#E5E0D8] text-[#E07A5F]">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-white dark:bg-[#121A2F] border border-[#E5E0D8] dark:border-[#1E293B] text-[#E07A5F]">
                   Official Bluebook Simulation
                 </span>
-                {test.isProOnly && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#FFF4F0] text-[#E07A5F] border border-[#FCD9CE]">
-                    PRO PASS
+                {test.isPrivate ? (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#FFF4F0] dark:bg-[#1E293B] text-[#E07A5F] border border-[#FCD9CE] dark:border-[#334155]">
+                    MAXSUS KURS
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#EBF8F5] dark:bg-[#0A0F1D] text-[#2A9D8F] border border-[#BCE8DE] dark:border-[#1E293B]">
+                    OMMAVIY
                   </span>
                 )}
               </div>
@@ -100,27 +95,6 @@ export const PreTestModal: React.FC<PreTestModalProps> = ({
 
         {/* Content Body */}
         <div className="p-6 sm:p-8 space-y-6 max-h-[72vh] overflow-y-auto">
-          {/* Pro Lock Alert */}
-          {isProLocked && (
-            <div className="p-4 rounded-2xl bg-[#FFF4F0] border border-[#FCD9CE] flex items-start gap-3.5">
-              <div className="p-2 rounded-xl bg-white text-[#E07A5F] border border-[#FCD9CE] shrink-0 mt-0.5">
-                <Lock size={18} />
-              </div>
-              <div className="space-y-1">
-                <h4 className="text-xs font-bold text-[#1E1B18]">PRO Pass Required</h4>
-                <p className="text-xs text-[#78716C] leading-relaxed">
-                  This full-length adaptive simulation is exclusive to AURA SAT PRO members. Upgrade to unlock all 12+ official adaptive mocks, AI trap diagnostics, and detailed score percentiles.
-                </p>
-                <button
-                  onClick={() => onOpenPaywall?.()}
-                  className="mt-2 px-3 py-1.5 rounded-lg bg-[#E07A5F] hover:bg-[#c96a51] text-white text-xs font-bold transition-all shadow-xs cursor-pointer inline-flex items-center gap-1.5"
-                >
-                  <Sparkles size={12} />
-                  <span>Unlock PRO Mocks for $59</span>
-                </button>
-              </div>
-            </div>
-          )}
 
           {/* Section 1: Bluebook 2-Stage MST Architecture */}
           <div className="space-y-3">
@@ -269,7 +243,7 @@ export const PreTestModal: React.FC<PreTestModalProps> = ({
 
           <button
             onClick={handleLaunch}
-            disabled={!understoodMST || isProLocked}
+            disabled={!understoodMST}
             className="w-full sm:w-auto px-7 py-3 rounded-2xl bg-[#1E1B18] hover:bg-[#3D405B] disabled:opacity-50 text-white text-xs font-extrabold shadow-md transition-all hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer"
           >
             <Maximize2 size={14} />

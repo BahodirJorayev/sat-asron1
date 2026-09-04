@@ -56,8 +56,8 @@ export interface AdminCredentials {
 }
 
 export const INITIAL_ADMIN_CREDENTIALS: AdminCredentials = {
-  adminEmail: 'admin@asronsat.uz',
-  adminPass: 'asron2026',
+  adminEmail: 'Bahodir',
+  adminPass: 'Bahodir2008',
 };
 
 export const INITIAL_TESTIMONIALS: UserTestimonial[] = [];

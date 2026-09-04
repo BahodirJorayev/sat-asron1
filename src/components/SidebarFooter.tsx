@@ -170,7 +170,7 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
                 {user.fullName || 'Student'}
               </div>
               <div className="text-[10px] text-[#A8A29E] dark:text-[#94A3B8] font-mono truncate">
-                @{user.username || 'user'} • {user.planTier || 'FREE'}
+                @{user.username || 'user'}
               </div>
             </div>
 
@@ -188,14 +188,6 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
             >
               <Settings size={14} className="text-[#78716C] dark:text-[#94A3B8]" />
               <span>Platforma Sozlamalari</span>
-            </DropdownMenuItem>
-
-            <DropdownMenuItem
-              onClick={handleBillingClick}
-              className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium text-[#1E1B18] dark:text-[#EAEBED] hover:bg-white dark:hover:bg-[#202534] rounded-xl cursor-pointer transition-colors"
-            >
-              <CreditCard size={14} className="text-[#78716C] dark:text-[#94A3B8]" />
-              <span>Obuna & Tariflar</span>
             </DropdownMenuItem>
 
             <DropdownMenuSeparator className="my-1 bg-[#EBE5DF] dark:bg-[#262B3D]" />
@@ -314,15 +306,6 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
           >
             <Settings size={14} className="text-[#78716C] dark:text-[#94A3B8]" />
             <span>Platforma Sozlamalari</span>
-          </DropdownMenuItem>
-
-          {/* 💳 Obuna & Tariflar */}
-          <DropdownMenuItem
-            onClick={handleBillingClick}
-            className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium text-[#1E1B18] dark:text-[#EAEBED] hover:bg-white dark:hover:bg-[#202534] rounded-xl cursor-pointer transition-colors"
-          >
-            <CreditCard size={14} className="text-[#78716C] dark:text-[#94A3B8]" />
-            <span>Obuna & Tariflar</span>
           </DropdownMenuItem>
 
           <DropdownMenuSeparator className="my-1 bg-[#EBE5DF] dark:bg-[#262B3D]" />

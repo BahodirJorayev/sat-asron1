@@ -306,6 +306,8 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
             <AdminGlobalSettings
               globalSettings={globalSettings}
               onSaveSettings={(settings) => onSaveGlobalSettings && onSaveGlobalSettings(settings)}
+              adminCredentials={adminCredentials}
+              onUpdateAdminCredentials={onUpdateAdminCredentials}
             />
           )}
 

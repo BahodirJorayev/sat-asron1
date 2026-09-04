@@ -4,17 +4,21 @@ import {
   Send, Save, RotateCcw, 
   Check, Radio, AlertTriangle, Image as ImageIcon,
   Plus, Trash2, Eye, ExternalLink, Sliders, ToggleLeft, ToggleRight,
-  HelpCircle, MessageSquare, Flame, CheckCircle, ArrowUpDown, ChevronDown, ChevronUp
+  HelpCircle, MessageSquare, Flame, CheckCircle, ArrowUpDown, ChevronDown, ChevronUp,
+  Lock, KeyRound, ShieldCheck
 } from 'lucide-react';
 import { GlobalPlatformSettings, UserTestimonial } from '../types';
 import { uploadBrandAsset, saveGlobalPlatformSettings, DEFAULT_GLOBAL_SETTINGS } from '../lib/adminApi';
 import { AsronLogo } from './AsronLogo';
+import { AdminCredentials } from '../data/blogAndBrandingData';
 
 interface AdminGlobalSettingsProps {
   globalSettings: GlobalPlatformSettings;
   onSaveSettings: (settings: GlobalPlatformSettings) => void;
   testimonials?: UserTestimonial[];
   onSaveTestimonials?: (testimonials: UserTestimonial[]) => void;
+  adminCredentials?: AdminCredentials;
+  onUpdateAdminCredentials?: (updated: AdminCredentials) => void;
 }
 
 export const AdminGlobalSettings: React.FC<AdminGlobalSettingsProps> = ({
@@ -22,11 +26,26 @@ export const AdminGlobalSettings: React.FC<AdminGlobalSettingsProps> = ({
   onSaveSettings,
   testimonials = [],
   onSaveTestimonials,
+  adminCredentials,
+  onUpdateAdminCredentials,
 }) => {
   const [form, setForm] = useState<GlobalPlatformSettings>(globalSettings || DEFAULT_GLOBAL_SETTINGS);
   const [saveStatus, setSaveStatus] = useState<'IDLE' | 'SAVING' | 'SAVED' | 'ERROR'>('IDLE');
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
-  const [activeSubSection, setActiveSubSection] = useState<'brand' | 'landing' | 'faqs' | 'testimonials' | 'killswitches'>('brand');
+  const [activeSubSection, setActiveSubSection] = useState<'brand' | 'landing' | 'faqs' | 'testimonials' | 'killswitches' | 'security'>('brand');
+
+  // Admin Credentials State
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newAdminLogin, setNewAdminLogin] = useState(adminCredentials?.adminUser || 'Bahodir');
+  const [newAdminPass, setNewAdminPass] = useState('');
+  const [confirmAdminPass, setConfirmAdminPass] = useState('');
+  const [credMessage, setCredMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  useEffect(() => {
+    if (adminCredentials?.adminUser) {
+      setNewAdminLogin(adminCredentials.adminUser);
+    }
+  }, [adminCredentials]);
 
   // FAQ CRUD State
   const [newFaqQ, setNewFaqQ] = useState('');
@@ -130,6 +149,44 @@ export const AdminGlobalSettings: React.FC<AdminGlobalSettingsProps> = ({
     setForm({ ...form, testimonials: next });
   };
 
+  const handleUpdateCredentials = (e: React.FormEvent) => {
+    e.preventDefault();
+    setCredMessage(null);
+
+    const activePass = adminCredentials?.adminPass || 'Bahodir2008';
+    if (currentPassword.trim() !== activePass.trim()) {
+      setCredMessage({ text: 'Joriy parol noto‘g‘ri kiritildi.', type: 'error' });
+      return;
+    }
+    if (!newAdminLogin.trim()) {
+      setCredMessage({ text: 'Login bo‘sh bo‘lishi mumkin emas.', type: 'error' });
+      return;
+    }
+    if (!newAdminPass.trim()) {
+      setCredMessage({ text: 'Yangi parol kiritilmadi.', type: 'error' });
+      return;
+    }
+    if (newAdminPass.length < 6) {
+      setCredMessage({ text: 'Yangi parol kamida 6 belgidan iborat bo‘lishi kerak.', type: 'error' });
+      return;
+    }
+    if (newAdminPass !== confirmAdminPass) {
+      setCredMessage({ text: 'Yangi parollar mos kelmadi.', type: 'error' });
+      return;
+    }
+
+    if (onUpdateAdminCredentials) {
+      onUpdateAdminCredentials({
+        adminUser: newAdminLogin.trim(),
+        adminPass: newAdminPass.trim(),
+      });
+      setCredMessage({ text: 'Admin ma‘lumotlari muvaffaqiyatli yangilandi!', type: 'success' });
+      setCurrentPassword('');
+      setNewAdminPass('');
+      setConfirmAdminPass('');
+    }
+  };
+
   return (
     <div id="admin-global-settings" className="space-y-6 font-sans">
       {/* Toast Notification */}
@@ -184,6 +241,7 @@ export const AdminGlobalSettings: React.FC<AdminGlobalSettingsProps> = ({
           { id: 'faqs', label: `3. FAQ Matrix (${form.faqs?.length || 0})` },
           { id: 'testimonials', label: `4. Testimonials (${form.testimonials?.length || 0})` },
           { id: 'killswitches', label: '5. Emergency Kill-Switches' },
+          { id: 'security', label: '6. Xavfsizlik & Parollar' },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -722,6 +780,120 @@ export const AdminGlobalSettings: React.FC<AdminGlobalSettingsProps> = ({
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* SUB-SECTION 6: XAVFSIZLIK & PAROLLAR */}
+      {activeSubSection === 'security' && (
+        <div className="max-w-2xl mx-auto p-6 rounded-2xl bg-[#121A2F] border border-[#1E293B] shadow-xs space-y-6">
+          <div className="border-b border-[#1E293B] pb-4">
+            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-md bg-[#0A0F1D] text-[#E07A5F] border border-[#1E293B] text-[11px] font-mono uppercase tracking-wider mb-2">
+              <Lock className="w-3.5 h-3.5" />
+              <span>Super Admin Xavfsizlik Sozlamalari</span>
+            </div>
+            <h3 className="text-base font-bold text-[#F8FAFC]">
+              Admin Login va Parolini Yangilash
+            </h3>
+            <p className="text-xs text-[#64748B]">
+              Xavfsizlik yuzasidan yangi ma‘lumotlarni kiritishdan oldin joriy parolingizni tasdiqlashingiz shart.
+            </p>
+          </div>
+
+          {credMessage && (
+            <div
+              className={`p-3.5 rounded-xl text-xs font-mono flex items-center gap-2 border ${
+                credMessage.type === 'success'
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                  : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+              }`}
+            >
+              {credMessage.type === 'success' ? (
+                <ShieldCheck className="w-4 h-4 text-emerald-400 stroke-[2]" />
+              ) : (
+                <AlertTriangle className="w-4 h-4 text-rose-400 stroke-[2]" />
+              )}
+              <span>{credMessage.text}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleUpdateCredentials} className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-mono text-[#94A3B8] uppercase flex items-center justify-between">
+                <span>Joriy Parol (Talab qilinadi)</span>
+                <span className="text-[10px] text-rose-400 font-sans">*Majburiy</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="••••••••"
+                  autoComplete="off"
+                  required
+                  className="w-full px-3 py-2.5 rounded-xl bg-[#0A0F1D] border border-[#1E293B] text-xs font-mono text-[#F8FAFC] placeholder-[#475569] focus:outline-hidden focus:border-[#E07A5F]"
+                />
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-[#1E293B] space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-mono text-[#94A3B8] uppercase">
+                  Yangi Admin Logini
+                </label>
+                <input
+                  type="text"
+                  value={newAdminLogin}
+                  onChange={(e) => setNewAdminLogin(e.target.value)}
+                  placeholder="Bahodir"
+                  autoComplete="off"
+                  required
+                  className="w-full px-3 py-2.5 rounded-xl bg-[#0A0F1D] border border-[#1E293B] text-xs font-mono text-[#F8FAFC] placeholder-[#475569] focus:outline-hidden focus:border-[#E07A5F]"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-mono text-[#94A3B8] uppercase">
+                    Yangi Parol
+                  </label>
+                  <input
+                    type="password"
+                    value={newAdminPass}
+                    onChange={(e) => setNewAdminPass(e.target.value)}
+                    placeholder="••••••••"
+                    autoComplete="off"
+                    required
+                    className="w-full px-3 py-2.5 rounded-xl bg-[#0A0F1D] border border-[#1E293B] text-xs font-mono text-[#F8FAFC] placeholder-[#475569] focus:outline-hidden focus:border-[#E07A5F]"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-mono text-[#94A3B8] uppercase">
+                    Yangi Parolni Tasdiqlang
+                  </label>
+                  <input
+                    type="password"
+                    value={confirmAdminPass}
+                    onChange={(e) => setConfirmAdminPass(e.target.value)}
+                    placeholder="••••••••"
+                    autoComplete="off"
+                    required
+                    className="w-full px-3 py-2.5 rounded-xl bg-[#0A0F1D] border border-[#1E293B] text-xs font-mono text-[#F8FAFC] placeholder-[#475569] focus:outline-hidden focus:border-[#E07A5F]"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-3 flex justify-end">
+              <button
+                type="submit"
+                className="px-5 py-2.5 rounded-xl bg-[#E07A5F] hover:bg-[#c96c53] text-[#0A0F1D] font-mono font-bold text-xs flex items-center gap-2 transition-all cursor-pointer shadow-xs active:scale-98"
+              >
+                <KeyRound className="w-4 h-4 stroke-[2.5]" />
+                <span>PAROL VA LOGINNI YANGILASH</span>
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>

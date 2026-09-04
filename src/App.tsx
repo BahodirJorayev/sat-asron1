@@ -1340,41 +1340,9 @@ export default function App() {
         isOpen={isDiagnosticOpen}
         onClose={() => setIsDiagnosticOpen(false)}
         user={currentUser}
-        onUnlockPro={() => setIsPaywallOpen(true)}
+        onUnlockPro={() => {}}
         onSaveDiagnosticResult={handleSaveDiagnosticResult}
       />
-
-      {/* Luxury Paywall & Receipt Upload Modal */}
-      <PaywallModal
-        isOpen={isPaywallOpen}
-        onClose={() => setIsPaywallOpen(false)}
-        user={currentUser}
-        pricingPlans={pricingPlans}
-        adminTelegram={globalSettings.contactTelegram}
-        onUploadReceipt={handleUploadReceipt}
-        onDirectUpgrade={handleDirectUpgrade}
-      />
-
-      {/* 3D Obsidian-Gold Executive Tier Unlock Celebration Modal */}
-      {celebrationUser && (
-        <TierUnlockCelebration
-          user={celebrationUser}
-          onClose={() => {
-            setCelebrationUser(null);
-            // clear unseen flag
-            setUsersList((prev) =>
-              prev.map((u) => (u.id === currentUser.id ? { ...u, unseenTierUpgrade: false } : u))
-            );
-          }}
-          onEnterWorkspace={() => {
-            setCelebrationUser(null);
-            setUsersList((prev) =>
-              prev.map((u) => (u.id === currentUser.id ? { ...u, unseenTierUpgrade: false } : u))
-            );
-            setActiveTab('dashboard');
-          }}
-        />
-      )}
 
       {/* Telegram Notification Simulator Drawer */}
       <TelegramNotificationSimulator

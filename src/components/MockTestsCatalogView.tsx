@@ -28,9 +28,11 @@ import {
   X,
   Play
 } from 'lucide-react';
-import { MockTest, User, TestAttempt, Question, MockTestCategory, PlanTier } from '../types';
+import { MockTest, User, TestAttempt, Question, MockTestCategory } from '../types';
 import { PreTestModal } from './PreTestModal';
+import { MockAccessCodeModal } from './MockAccessCodeModal';
 import { FormattedMath } from './WorkoutActiveSession';
+import { supabase } from '../lib/supabase';
 
 interface MockTestsCatalogViewProps {
   user: User;
@@ -53,6 +55,7 @@ const EXPANDED_MOCK_TESTS: MockTest[] = [
     category: 'OFFICIAL_MOCK',
     isPublished: true,
     isProOnly: false,
+    isPrivate: false,
     totalTimeMinutes: 134,
     timeLimitSecs: 8040,
     attemptsCount: 1420,
@@ -68,7 +71,9 @@ const EXPANDED_MOCK_TESTS: MockTest[] = [
     description: 'Calibrated for students targeting 1450-1600 scores. Contains high-frequency Module 2 Hard questions with advanced Desmos strategies.',
     category: 'OFFICIAL_MOCK',
     isPublished: true,
-    isProOnly: true,
+    isProOnly: false,
+    isPrivate: true,
+    accessCode: 'ASRON-2026',
     totalTimeMinutes: 134,
     timeLimitSecs: 8040,
     attemptsCount: 980,
@@ -84,7 +89,9 @@ const EXPANDED_MOCK_TESTS: MockTest[] = [
     description: 'Comprehensive adaptive test designed to diagnose micro-vulnerabilities across Craft & Structure and Non-linear Systems.',
     category: 'OFFICIAL_MOCK',
     isPublished: true,
-    isProOnly: true,
+    isProOnly: false,
+    isPrivate: true,
+    accessCode: 'ASRON-2026',
     totalTimeMinutes: 134,
     timeLimitSecs: 8040,
     attemptsCount: 840,
@@ -101,6 +108,7 @@ const EXPANDED_MOCK_TESTS: MockTest[] = [
     category: 'PAST_EXAM',
     isPublished: true,
     isProOnly: false,
+    isPrivate: false,
     totalTimeMinutes: 134,
     timeLimitSecs: 8040,
     attemptsCount: 2150,
@@ -116,7 +124,9 @@ const EXPANDED_MOCK_TESTS: MockTest[] = [
     description: 'Actual international test form featuring dense historical passages, scientific hypothesis evaluation, and polynomial division.',
     category: 'PAST_EXAM',
     isPublished: true,
-    isProOnly: true,
+    isProOnly: false,
+    isPrivate: true,
+    accessCode: 'ASRON-2026',
     totalTimeMinutes: 134,
     timeLimitSecs: 8040,
     attemptsCount: 1620,
@@ -132,7 +142,9 @@ const EXPANDED_MOCK_TESTS: MockTest[] = [
     description: 'Latest test release from the Spring 2026 cohort with enhanced emphasis on multi-clause punctuation and circle geometry.',
     category: 'PAST_EXAM',
     isPublished: true,
-    isProOnly: true,
+    isProOnly: false,
+    isPrivate: true,
+    accessCode: 'ASRON-2026',
     totalTimeMinutes: 134,
     timeLimitSecs: 8040,
     attemptsCount: 1100,
@@ -149,6 +161,7 @@ const EXPANDED_MOCK_TESTS: MockTest[] = [
     category: 'SECTIONAL_PRACTICE',
     isPublished: true,
     isProOnly: false,
+    isPrivate: false,
     totalTimeMinutes: 64,
     timeLimitSecs: 3840,
     attemptsCount: 3400,
@@ -164,7 +177,9 @@ const EXPANDED_MOCK_TESTS: MockTest[] = [
     description: 'Math-only sprint: 2 adaptive modules with full Desmos integration under official 70-minute countdown.',
     category: 'SECTIONAL_PRACTICE',
     isPublished: true,
-    isProOnly: true,
+    isProOnly: false,
+    isPrivate: true,
+    accessCode: 'ASRON-2026',
     totalTimeMinutes: 70,
     timeLimitSecs: 4200,
     attemptsCount: 2900,
@@ -215,7 +230,46 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
   >('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED'>('ALL');
-  const [accessFilter, setAccessFilter] = useState<'ALL' | 'FREE' | 'PRO'>('ALL');
+  const [accessFilter, setAccessFilter] = useState<'ALL' | 'PUBLIC' | 'PRIVATE'>('ALL');
+
+  // Unlocked Mocks Engine (Stores permanently unlocked private course mocks)
+  const [unlockedMockIds, setUnlockedMockIds] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem(`asron_unlocked_mocks_${user.id}`);
+      if (saved) {
+        return new Set(JSON.parse(saved));
+      }
+      return new Set<string>();
+    } catch {
+      return new Set<string>();
+    }
+  });
+
+  const [accessCodeModalTest, setAccessCodeModalTest] = useState<MockTest | null>(null);
+
+  useEffect(() => {
+    const loadRemoteUnlockedMocks = async () => {
+      try {
+        if (supabase && user.id) {
+          const { data, error } = await supabase
+            .from('user_unlocked_mocks')
+            .select('mock_test_id')
+            .eq('user_id', user.id);
+          if (data && !error) {
+            const remoteIds = data.map((d: any) => d.mock_test_id);
+            setUnlockedMockIds((prev) => {
+              const next = new Set([...prev, ...remoteIds]);
+              try {
+                localStorage.setItem(`asron_unlocked_mocks_${user.id}`, JSON.stringify(Array.from(next)));
+              } catch {}
+              return next;
+            });
+          }
+        }
+      } catch {}
+    };
+    loadRemoteUnlockedMocks();
+  }, [user.id]);
 
   // Selected Test for Pre-Test Modal
   const [selectedTestForModal, setSelectedTestForModal] = useState<MockTest | null>(null);
@@ -224,7 +278,7 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
   const [reviewAttemptTest, setReviewAttemptTest] = useState<{ test: MockTest; attempt: TestAttempt } | null>(null);
   const [aiDiagnosticModalData, setAiDiagnosticModalData] = useState<{ test: MockTest; attempt: TestAttempt } | null>(null);
 
-  // Quick stats calculations
+  // Quick stats calculations: Strict 0-State Baseline
   const stats = useMemo(() => {
     const completedAttempts = (Object.values(userAttempts) as TestAttempt[]).filter(
       (a) => a && (a.status === 'COMPLETED' || a.isCompleted)
@@ -246,10 +300,10 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
     return {
       completedCount,
       totalCount,
-      highestScore: highest || (user.baselineScore ? user.baselineScore + 120 : 1440),
-      averageScore: average || 1360,
+      highestScore: highest || 0,
+      averageScore: average || 0,
     };
-  }, [userAttempts, allTests, user.baselineScore]);
+  }, [userAttempts, allTests]);
 
   // Filtered Tests
   const filteredTests = useMemo(() => {
@@ -260,8 +314,8 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
       }
 
       // Access tier filter
-      if (accessFilter === 'FREE' && test.isProOnly) return false;
-      if (accessFilter === 'PRO' && !test.isProOnly) return false;
+      if (accessFilter === 'PUBLIC' && test.isPrivate) return false;
+      if (accessFilter === 'PRIVATE' && !test.isPrivate) return false;
 
       // Status filter
       const attempt = userAttempts[test.id];
@@ -286,6 +340,29 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
     });
   }, [allTests, activeCategoryTab, accessFilter, statusFilter, searchQuery, userAttempts]);
 
+  // Unlock success callback
+  const handleUnlockSuccess = async (unlocked: MockTest) => {
+    setUnlockedMockIds((prev) => {
+      const next = new Set([...prev, unlocked.id]);
+      try {
+        localStorage.setItem(`asron_unlocked_mocks_${user.id}`, JSON.stringify(Array.from(next)));
+      } catch {}
+      return next;
+    });
+
+    try {
+      if (supabase && user.id) {
+        await supabase.from('user_unlocked_mocks').insert({
+          user_id: user.id,
+          mock_test_id: unlocked.id,
+          access_code_used: unlocked.accessCode || 'ASRON-2026',
+        });
+      }
+    } catch {}
+
+    setSelectedTestForModal(unlocked);
+  };
+
   // Launch test handler
   const handleLaunchTest = (test: MockTest) => {
     setSelectedTestForModal(null);
@@ -303,63 +380,44 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 font-sans text-[#1E1B18] animate-in fade-in duration-300">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 font-sans text-[#1E1B18] dark:text-[#F8FAFC] animate-in fade-in duration-300">
       {/* 1. HEADER & EXECUTIVE SUMMARY BANNER (OnePrep Luxury Minimalism) */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-white/90 backdrop-blur-md border border-[#E5E0D8] shadow-xs relative overflow-hidden space-y-6">
+      <div className="p-6 sm:p-8 rounded-3xl bg-white/90 dark:bg-[#121A2F]/90 backdrop-blur-md border border-[#E5E0D8] dark:border-[#1E293B] shadow-xs relative overflow-hidden space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#FAF5F0] text-[#E07A5F] border border-[#FCD9CE]">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#FAF5F0] dark:bg-[#1E293B] text-[#E07A5F] border border-[#FCD9CE] dark:border-[#334155]">
                 Testing Facility
               </span>
-              <span className="text-xs text-[#78716C]">&bull; 100% Bluebook Replicated UI</span>
+              <span className="text-xs text-[#78716C] dark:text-[#94A3B8]">&bull; 100% Bluebook Replicated UI</span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1E1B18] tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1E1B18] dark:text-[#F8FAFC] tracking-tight">
               Full-Length Practice Tests
             </h1>
 
-            <p className="text-xs sm:text-sm text-[#78716C] leading-relaxed">
+            <p className="text-xs sm:text-sm text-[#78716C] dark:text-[#94A3B8] leading-relaxed">
               Official adaptive Digital SAT practice tests replicating the real College Board Bluebook testing experience. Includes 2-Stage Multistage Adaptive Routing (MST), full Desmos calculator integration, and instant psychometric score reports.
             </p>
           </div>
 
-          {/* Quick CTA or Pro Upgrade info */}
-          {user.planTier !== 'PRO' ? (
-            <div className="p-4 rounded-2xl bg-[#FFF4F0] border border-[#FCD9CE] shrink-0 self-start lg:self-auto max-w-xs space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="p-1 rounded-lg bg-[#E07A5F] text-white">
-                  <Sparkles size={12} />
-                </span>
-                <span className="text-xs font-bold text-[#1E1B18]">Unlock All 12+ Mocks</span>
-              </div>
-              <p className="text-[11px] text-[#78716C] leading-snug">
-                Free tier includes 2 tests. Upgrade to PRO for all 2024-2026 real exams, hard Stage 2 routes, and AI diagnostics.
-              </p>
-              <button
-                onClick={onOpenPaywall}
-                className="w-full px-3 py-1.5 rounded-xl bg-[#E07A5F] hover:bg-[#c96a51] text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <span>Upgrade to PRO Pass</span>
-                <ArrowRight size={12} />
-              </button>
+          {/* 100% Free Access Status Banner */}
+          <div className="flex items-center gap-3 p-4 rounded-2xl bg-[#EBF8F5] dark:bg-[#0A0F1D] border border-[#BCE8DE] dark:border-[#1E293B] shrink-0 self-start lg:self-auto">
+            <div className="p-2.5 rounded-xl bg-[#2A9D8F] text-white">
+              <Sparkles size={20} />
             </div>
-          ) : (
-            <div className="flex items-center gap-3 p-4 rounded-2xl bg-[#EBF8F5] border border-[#BCE8DE] shrink-0">
-              <div className="p-2.5 rounded-xl bg-[#2A9D8F] text-white">
-                <Sparkles size={20} />
+            <div>
+              <div className="text-[10px] uppercase font-bold text-[#2A9D8F] tracking-wider">
+                100% Bepul Kirish
               </div>
-              <div>
-                <div className="text-[10px] uppercase font-bold text-[#2A9D8F] tracking-wider">
-                  PRO Member Access
-                </div>
-                <div className="text-sm font-extrabold text-[#1E1B18]">
-                  All Mocks Unlocked
-                </div>
-                <div className="text-[11px] text-[#78716C]">Unlimited AI Trap Diagnostics</div>
+              <div className="text-sm font-extrabold text-[#1E1B18] dark:text-[#F8FAFC]">
+                Barcha Ommaviy Mocklar Ochiq
+              </div>
+              <div className="text-[11px] text-[#78716C] dark:text-[#94A3B8]">
+                Maxsus kurs testlari ustoz kodi bilan
               </div>
             </div>
-          )}
+          </div>
         </div>
 
         {/* Quick Stats Bar */}
@@ -484,19 +542,23 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
             </div>
 
             {/* Access Selector */}
-            <div className="flex items-center gap-1 p-1 bg-white rounded-xl border border-[#E5E0D8] text-xs">
-              <span className="text-[10px] font-bold text-[#78716C] px-2">Access:</span>
-              {(['ALL', 'FREE', 'PRO'] as const).map((a) => (
+            <div className="flex items-center gap-1 p-1 bg-white dark:bg-[#121A2F] rounded-xl border border-[#E5E0D8] dark:border-[#1E293B] text-xs">
+              <span className="text-[10px] font-bold text-[#78716C] dark:text-[#94A3B8] px-2">Kirish:</span>
+              {[
+                { id: 'ALL', label: 'Barchasi' },
+                { id: 'PUBLIC', label: 'Ommaviy' },
+                { id: 'PRIVATE', label: 'Maxsus' },
+              ].map((a) => (
                 <button
-                  key={a}
-                  onClick={() => setAccessFilter(a)}
+                  key={a.id}
+                  onClick={() => setAccessFilter(a.id as any)}
                   className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                    accessFilter === a
+                    accessFilter === a.id
                       ? 'bg-[#E07A5F] text-white'
-                      : 'text-[#78716C] hover:text-[#1E1B18] hover:bg-[#FAF8F5]'
+                      : 'text-[#78716C] dark:text-[#94A3B8] hover:text-[#1E1B18] dark:hover:text-[#F8FAFC] hover:bg-[#FAF8F5] dark:hover:bg-[#1E293B]'
                   }`}
                 >
-                  {a === 'ALL' ? 'All' : a}
+                  {a.label}
                 </button>
               ))}
             </div>
@@ -506,13 +568,13 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
 
       {/* 3. ONEPREP-STYLE MOCK TEST CARD GRID */}
       {filteredTests.length === 0 ? (
-        <div className="p-12 rounded-3xl bg-white border border-[#E5E0D8] text-center space-y-4">
-          <div className="w-12 h-12 rounded-2xl bg-[#FAF8F5] text-[#78716C] flex items-center justify-center mx-auto">
+        <div className="p-12 rounded-3xl bg-white dark:bg-[#121A2F] border border-[#E5E0D8] dark:border-[#1E293B] text-center space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-[#FAF8F5] dark:bg-[#0A0F1D] text-[#78716C] dark:text-[#94A3B8] flex items-center justify-center mx-auto">
             <Search size={22} />
           </div>
           <div>
-            <h3 className="text-base font-bold text-[#1E1B18]">No Practice Tests Found</h3>
-            <p className="text-xs text-[#78716C] mt-1">
+            <h3 className="text-base font-bold text-[#1E1B18] dark:text-[#F8FAFC]">No Practice Tests Found</h3>
+            <p className="text-xs text-[#78716C] dark:text-[#94A3B8] mt-1">
               Try adjusting your search keywords or filter criteria.
             </p>
           </div>
@@ -523,7 +585,7 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
               setStatusFilter('ALL');
               setAccessFilter('ALL');
             }}
-            className="px-4 py-2 rounded-xl bg-[#FAF8F5] hover:bg-[#EBE5DF] text-xs font-bold text-[#1E1B18] transition-all cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-[#FAF8F5] dark:bg-[#0A0F1D] hover:bg-[#EBE5DF] dark:hover:bg-[#1E293B] text-xs font-bold text-[#1E1B18] dark:text-[#F8FAFC] transition-all cursor-pointer"
           >
             Reset All Filters
           </button>
@@ -535,14 +597,13 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
             const isCompleted = attempt?.status === 'COMPLETED' || attempt?.isCompleted;
             const isInProgress = attempt?.status === 'IN_PROGRESS' && !isCompleted;
             const isNotStarted = !attempt || attempt.status === 'NOT_STARTED';
-            const isProLocked = test.isProOnly && user.planTier !== 'PRO';
+            const isPrivate = Boolean(test.isPrivate);
+            const isUnlocked = !isPrivate || user.role === 'ADMIN' || user.role === 'SUPER_ADMIN' || unlockedMockIds.has(test.id);
 
             return (
               <div
                 key={test.id}
-                className={`p-6 sm:p-7 rounded-3xl bg-white/90 backdrop-blur-md border border-[#E5E0D8] shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between space-y-6 relative overflow-hidden group ${
-                  isProLocked ? 'opacity-95' : ''
-                }`}
+                className="p-6 sm:p-7 rounded-3xl bg-white/90 dark:bg-[#121A2F]/90 backdrop-blur-md border border-[#E5E0D8] dark:border-[#1E293B] shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between space-y-6 relative overflow-hidden group"
               >
                 {/* Top Accent Line on hover */}
                 <div className="absolute top-0 left-0 right-0 h-1 bg-transparent group-hover:bg-[#E07A5F] transition-all" />
@@ -551,46 +612,46 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#FAF5F0] text-[#E07A5F] border border-[#FCD9CE]">
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#FAF5F0] dark:bg-[#1E293B] text-[#E07A5F] border border-[#FCD9CE] dark:border-[#334155]">
                         {test.category === 'OFFICIAL_MOCK'
                           ? 'Official Bluebook'
                           : test.category === 'PAST_EXAM'
                           ? 'Real Past Exam'
                           : 'Sectional Sprint'}
                       </span>
-                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-[#FAF8F5] text-[#3D405B] border border-[#EBE5DF] flex items-center gap-1">
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-[#FAF8F5] dark:bg-[#0A0F1D] text-[#3D405B] dark:text-[#94A3B8] border border-[#EBE5DF] dark:border-[#1E293B] flex items-center gap-1">
                         <Clock size={11} /> {test.totalTimeMinutes}m
                       </span>
-                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-[#FAF8F5] text-[#78716C] border border-[#EBE5DF]">
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-[#FAF8F5] dark:bg-[#0A0F1D] text-[#78716C] dark:text-[#94A3B8] border border-[#EBE5DF] dark:border-[#1E293B]">
                         {test.category === 'SECTIONAL_PRACTICE' ? '54/44 Qs' : '98 Qs'}
                       </span>
                     </div>
 
                     {/* Access Tier Badge */}
-                    {test.isProOnly ? (
-                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#FFF4F0] text-[#E07A5F] border border-[#FCD9CE] flex items-center gap-1 shrink-0">
-                        <Lock size={10} /> PRO PASS
+                    {isPrivate ? (
+                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#FFF4F0] dark:bg-[#1E293B] text-[#E07A5F] border border-[#FCD9CE] dark:border-[#334155] flex items-center gap-1 shrink-0">
+                        <Lock size={10} /> {isUnlocked ? 'Ochiq (Kurs)' : 'Maxsus Kurs'}
                       </span>
                     ) : (
-                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#EBF8F5] text-[#2A9D8F] border border-[#BCE8DE] shrink-0">
-                        FREE
+                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#EBF8F5] dark:bg-[#0A0F1D] text-[#2A9D8F] border border-[#BCE8DE] dark:border-[#1E293B] shrink-0">
+                        Ommaviy
                       </span>
                     )}
                   </div>
 
                   {/* Title & Description */}
                   <div>
-                    <h3 className="text-base sm:text-lg font-bold text-[#1E1B18] group-hover:text-[#E07A5F] transition-colors leading-snug">
+                    <h3 className="text-base sm:text-lg font-bold text-[#1E1B18] dark:text-[#F8FAFC] group-hover:text-[#E07A5F] transition-colors leading-snug">
                       {test.title}
                     </h3>
-                    <p className="text-xs text-[#78716C] mt-1 leading-relaxed line-clamp-2">
+                    <p className="text-xs text-[#78716C] dark:text-[#94A3B8] mt-1 leading-relaxed line-clamp-2">
                       {test.description}
                     </p>
                   </div>
                 </div>
 
                 {/* 2. Progress / Completion State Block */}
-                <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#EBE5DF] space-y-3">
+                <div className="p-4 rounded-2xl bg-[#FAF8F5] dark:bg-[#0A0F1D] border border-[#EBE5DF] dark:border-[#1E293B] space-y-3">
                   {isCompleted && attempt ? (
                     /* COMPLETED STATE */
                     <div className="space-y-3">
@@ -598,31 +659,31 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
                         <span className="text-[11px] font-bold uppercase tracking-wider text-[#2A9D8F] flex items-center gap-1.5">
                           <CheckCircle2 size={14} /> Completed Test Score
                         </span>
-                        <span className="text-[11px] text-[#78716C]">
+                        <span className="text-[11px] text-[#78716C] dark:text-[#94A3B8]">
                           {attempt.completedAt ? new Date(attempt.completedAt).toLocaleDateString() : 'Recent'}
                         </span>
                       </div>
 
                       <div className="flex items-baseline justify-between pt-1">
                         <div>
-                          <span className="text-2xl sm:text-3xl font-extrabold font-mono text-[#1E1B18]">
+                          <span className="text-2xl sm:text-3xl font-extrabold font-mono text-[#1E1B18] dark:text-[#F8FAFC]">
                             {attempt.totalScore || 1440}
                           </span>
-                          <span className="text-xs text-[#78716C] font-mono ml-1">/ 1600</span>
+                          <span className="text-xs text-[#78716C] dark:text-[#94A3B8] font-mono ml-1">/ 1600</span>
                         </div>
 
                         <div className="flex items-center gap-3 text-xs font-mono font-bold">
-                          <span className="text-[#3D405B]">RW: <strong>{attempt.rwScore || 710}</strong></span>
+                          <span className="text-[#3D405B] dark:text-[#94A3B8]">RW: <strong>{attempt.rwScore || 710}</strong></span>
                           <span className="text-[#78716C]">&bull;</span>
                           <span className="text-[#E07A5F]">Math: <strong>{attempt.mathScore || 730}</strong></span>
                         </div>
                       </div>
 
                       {/* Diagnostic Summary pill */}
-                      <div className="pt-2 border-t border-[#EBE5DF] flex items-center justify-between text-xs">
+                      <div className="pt-2 border-t border-[#EBE5DF] dark:border-[#1E293B] flex items-center justify-between text-xs">
                         <button
                           onClick={() => setReviewAttemptTest({ test, attempt })}
-                          className="text-[#3D405B] hover:text-[#1E1B18] font-bold underline cursor-pointer flex items-center gap-1"
+                          className="text-[#3D405B] dark:text-[#94A3B8] hover:text-[#1E1B18] dark:hover:text-[#F8FAFC] font-bold underline cursor-pointer flex items-center gap-1"
                         >
                           <Eye size={12} />
                           <span>Review Questions</span>
@@ -645,20 +706,20 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
                           <span className="w-2 h-2 rounded-full bg-[#E07A5F] animate-ping" />
                           Session Paused (In Progress)
                         </span>
-                        <span className="text-[11px] font-mono text-[#78716C]">
+                        <span className="text-[11px] font-mono text-[#78716C] dark:text-[#94A3B8]">
                           {attempt.answeredQuestionsCount || 41} / {attempt.totalQuestionsCount || 98} Qs
                         </span>
                       </div>
 
                       {/* Progress Bar */}
-                      <div className="w-full h-2 rounded-full bg-[#EBE5DF] overflow-hidden">
+                      <div className="w-full h-2 rounded-full bg-[#EBE5DF] dark:bg-[#1E293B] overflow-hidden">
                         <div
                           className="h-full bg-[#E07A5F] rounded-full transition-all"
                           style={{ width: `${Math.round(((attempt.answeredQuestionsCount || 41) / (attempt.totalQuestionsCount || 98)) * 100)}%` }}
                         />
                       </div>
 
-                      <div className="text-[11px] text-[#78716C] flex items-center justify-between">
+                      <div className="text-[11px] text-[#78716C] dark:text-[#94A3B8] flex items-center justify-between">
                         <span>Current: <strong>{attempt.currentModule || 'Reading & Writing Mod 2'}</strong></span>
                         <span>{Math.round(((attempt.answeredQuestionsCount || 41) / (attempt.totalQuestionsCount || 98)) * 100)}% Done</span>
                       </div>
@@ -666,19 +727,19 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
                   ) : (
                     /* NOT STARTED STATE */
                     <div className="space-y-2 text-xs">
-                      <div className="flex items-center justify-between text-[#78716C]">
+                      <div className="flex items-center justify-between text-[#78716C] dark:text-[#94A3B8]">
                         <span>Section Breakdown:</span>
-                        <span className="font-mono font-bold text-[#1E1B18]">4 Modules Total</span>
+                        <span className="font-mono font-bold text-[#1E1B18] dark:text-[#F8FAFC]">4 Modules Total</span>
                       </div>
 
                       <div className="grid grid-cols-2 gap-2 text-[11px]">
-                        <div className="p-2 rounded-xl bg-white border border-[#E5E0D8]">
-                          <div className="font-bold text-[#3D405B]">Reading &amp; Writing</div>
-                          <div className="text-[#78716C]">2 Modules &bull; 54 Qs</div>
+                        <div className="p-2 rounded-xl bg-white dark:bg-[#121A2F] border border-[#E5E0D8] dark:border-[#1E293B]">
+                          <div className="font-bold text-[#3D405B] dark:text-[#94A3B8]">Reading &amp; Writing</div>
+                          <div className="text-[#78716C] dark:text-[#64748B]">2 Modules &bull; 54 Qs</div>
                         </div>
-                        <div className="p-2 rounded-xl bg-white border border-[#E5E0D8]">
-                          <div className="font-bold text-[#3D405B]">Math (Desmos)</div>
-                          <div className="text-[#78716C]">2 Modules &bull; 44 Qs</div>
+                        <div className="p-2 rounded-xl bg-white dark:bg-[#121A2F] border border-[#E5E0D8] dark:border-[#1E293B]">
+                          <div className="font-bold text-[#3D405B] dark:text-[#94A3B8]">Math (Desmos)</div>
+                          <div className="text-[#78716C] dark:text-[#64748B]">2 Modules &bull; 44 Qs</div>
                         </div>
                       </div>
                     </div>
@@ -687,7 +748,7 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
 
                 {/* 3. Card Footer & Primary Action */}
                 <div className="pt-2 flex items-center justify-between gap-3">
-                  <div className="text-[11px] text-[#78716C]">
+                  <div className="text-[11px] text-[#78716C] dark:text-[#94A3B8]">
                     <span>Avg Score: <strong>{test.averageScore || 1320}</strong></span>
                     <span className="mx-1.5">&bull;</span>
                     <span>{test.attemptsCount || 1200} taken</span>
@@ -696,7 +757,7 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
                   {isCompleted ? (
                     <button
                       onClick={() => handleRetakeTest(test)}
-                      className="px-5 py-2.5 rounded-2xl bg-[#FAF8F5] hover:bg-[#EBE5DF] text-[#1E1B18] text-xs font-bold border border-[#E5E0D8] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                      className="px-5 py-2.5 rounded-2xl bg-[#FAF8F5] dark:bg-[#0A0F1D] hover:bg-[#EBE5DF] dark:hover:bg-[#1E293B] text-[#1E1B18] dark:text-[#F8FAFC] text-xs font-bold border border-[#E5E0D8] dark:border-[#1E293B] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
                     >
                       <RotateCcw size={13} />
                       <span>Retake Test</span>
@@ -712,22 +773,18 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
                   ) : (
                     <button
                       onClick={() => {
-                        if (isProLocked) {
-                          onOpenPaywall?.();
+                        if (isPrivate && !isUnlocked) {
+                          setAccessCodeModalTest(test);
                         } else {
                           setSelectedTestForModal(test);
                         }
                       }}
-                      className={`px-6 py-2.5 rounded-2xl text-xs font-extrabold shadow-md transition-all hover:scale-[1.02] flex items-center gap-1.5 cursor-pointer ${
-                        isProLocked
-                          ? 'bg-[#FAF5F0] text-[#E07A5F] border border-[#FCD9CE] hover:bg-[#FFF0EB]'
-                          : 'bg-[#1E1B18] hover:bg-[#3D405B] text-white'
-                      }`}
+                      className="px-6 py-2.5 rounded-2xl text-xs font-extrabold shadow-md transition-all hover:scale-[1.02] flex items-center gap-1.5 cursor-pointer bg-[#1E1B18] dark:bg-[#E07A5F] dark:hover:bg-[#c96a51] hover:bg-[#3D405B] text-white"
                     >
-                      {isProLocked ? (
+                      {isPrivate && !isUnlocked ? (
                         <>
                           <Lock size={13} />
-                          <span>Unlock Test</span>
+                          <span>Kodni Kiritish</span>
                         </>
                       ) : (
                         <>
@@ -751,7 +808,14 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
         user={user}
         onClose={() => setSelectedTestForModal(null)}
         onLaunchTest={handleLaunchTest}
-        onOpenPaywall={onOpenPaywall}
+      />
+
+      {/* 4.1 ACCESS CODE SECURITY MODAL */}
+      <MockAccessCodeModal
+        isOpen={Boolean(accessCodeModalTest)}
+        test={accessCodeModalTest}
+        onClose={() => setAccessCodeModalTest(null)}
+        onSuccessUnlock={handleUnlockSuccess}
       />
 
       {/* 5. DETAILED QUESTION REVIEW MODAL */}

@@ -320,21 +320,11 @@ export const StudentProfileView: React.FC<StudentProfileViewProps> = ({
                     {currentUser.fullName}
                   </h1>
 
-                  {/* Plan Badge */}
-                  {isPro ? (
-                    <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-lg bg-amber-50 text-amber-800 border border-amber-300 flex items-center gap-1">
-                      <Crown size={12} className="text-amber-600 fill-amber-500" />
-                      PRO MEMBER
-                    </span>
-                  ) : isStandard ? (
-                    <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-800 border border-blue-200">
-                      STANDARD
-                    </span>
-                  ) : (
-                    <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-lg bg-stone-100 text-stone-600 border border-stone-200">
-                      FREE TIER
-                    </span>
-                  )}
+                  {/* Scholar Badge */}
+                  <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                    <CheckCircle2 size={12} className="text-emerald-500" />
+                    {currentUser.role === 'SUPER_ADMIN' ? 'ADMIN' : 'TALABA'}
+                  </span>
                 </div>
 
                 {/* Username & Institution */}
@@ -434,16 +424,6 @@ export const StudentProfileView: React.FC<StudentProfileViewProps> = ({
                       <Edit3 size={13} />
                       <span>Profilni Tahrirlash</span>
                     </button>
-                    {!isPro && onOpenPaywall && (
-                      <button
-                        type="button"
-                        onClick={onOpenPaywall}
-                        className="px-4 py-2 rounded-xl text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-black transition-all cursor-pointer shadow-2xs flex items-center gap-1.5"
-                      >
-                        <Crown size={13} />
-                        <span>PRO ga O‘tish</span>
-                      </button>
-                    )}
                   </>
                 )}
               </div>

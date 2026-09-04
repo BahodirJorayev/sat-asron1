@@ -58,7 +58,8 @@ export const AdminMockManager: React.FC<AdminMockManagerProps> = ({
     description: string;
     category: 'OFFICIAL_MOCK' | 'PAST_EXAM' | 'SECTIONAL_PRACTICE' | 'PREDICTION_TEST';
     isPublished: boolean;
-    isProOnly: boolean;
+    isPrivate: boolean;
+    accessCode: string;
     totalTimeMinutes: number;
     tags: string;
     assignedQuestions: MockTestQuestion[];
@@ -67,7 +68,8 @@ export const AdminMockManager: React.FC<AdminMockManagerProps> = ({
     description: '',
     category: 'OFFICIAL_MOCK',
     isPublished: true,
-    isProOnly: false,
+    isPrivate: false,
+    accessCode: 'ASRON-2026',
     totalTimeMinutes: 134,
     tags: 'Official Bluebook, MST Adaptive, Full Length',
     assignedQuestions: [],
@@ -81,7 +83,7 @@ export const AdminMockManager: React.FC<AdminMockManagerProps> = ({
   // Summary Metrics
   const totalTests = mockTests.length;
   const publishedTests = mockTests.filter((t) => t.isPublished).length;
-  const proTests = mockTests.filter((t) => t.isProOnly).length;
+  const privateTests = mockTests.filter((t) => t.isPrivate).length;
   const totalAttempts = mockTests.reduce((acc, t) => acc + (t.attemptsCount || 0), 0);
   const avgOverallScore =
     totalTests > 0
@@ -113,7 +115,8 @@ export const AdminMockManager: React.FC<AdminMockManagerProps> = ({
       description: 'Official 2-Stage Multistage Adaptive Simulation replicating exact College Board blueprints.',
       category: 'OFFICIAL_MOCK',
       isPublished: true,
-      isProOnly: false,
+      isPrivate: false,
+      accessCode: 'ASRON-2026',
       totalTimeMinutes: 134,
       tags: 'Official Blueprint, MST Adaptive, 2026 Edition',
       assignedQuestions: [],
@@ -129,7 +132,8 @@ export const AdminMockManager: React.FC<AdminMockManagerProps> = ({
       description: test.description || '',
       category: test.category || 'OFFICIAL_MOCK',
       isPublished: test.isPublished,
-      isProOnly: test.isProOnly,
+      isPrivate: Boolean(test.isPrivate),
+      accessCode: test.accessCode || 'ASRON-2026',
       totalTimeMinutes: test.totalTimeMinutes || 134,
       tags: test.tags ? test.tags.join(', ') : 'Official Blueprint, MST Adaptive',
       assignedQuestions: test.questions || [],
@@ -238,7 +242,9 @@ export const AdminMockManager: React.FC<AdminMockManagerProps> = ({
         description: formData.description,
         category: formData.category,
         isPublished: formData.isPublished,
-        isProOnly: formData.isProOnly,
+        isProOnly: false,
+        isPrivate: formData.isPrivate,
+        accessCode: formData.isPrivate ? (formData.accessCode.trim().toUpperCase() || 'ASRON-2026') : undefined,
         totalTimeMinutes: Number(formData.totalTimeMinutes) || 134,
         tags: parsedTags,
         questions: formData.assignedQuestions,
@@ -252,7 +258,9 @@ export const AdminMockManager: React.FC<AdminMockManagerProps> = ({
         description: formData.description,
         category: formData.category,
         isPublished: formData.isPublished,
-        isProOnly: formData.isProOnly,
+        isProOnly: false,
+        isPrivate: formData.isPrivate,
+        accessCode: formData.isPrivate ? (formData.accessCode.trim().toUpperCase() || 'ASRON-2026') : undefined,
         totalTimeMinutes: Number(formData.totalTimeMinutes) || 134,
         timeLimitSecs: (Number(formData.totalTimeMinutes) || 134) * 60,
         tags: parsedTags,
@@ -395,13 +403,13 @@ export const AdminMockManager: React.FC<AdminMockManagerProps> = ({
 
                     {/* Access Tier */}
                     <td className="py-3.5 px-4">
-                      {test.isProOnly ? (
+                      {test.isPrivate ? (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FFF4F0] text-[#E07A5F] border border-[#FCD9CE] flex items-center gap-1 w-fit">
-                          <Lock size={10} /> PRO PASS
+                          <Lock size={10} /> Maxsus ({test.accessCode || 'ASRON-2026'})
                         </span>
                       ) : (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#EBF8F5] text-[#2A9D8F] border border-[#BCE8DE] w-fit">
-                          FREE
+                          Ommaviy
                         </span>
                       )}
                     </td>
@@ -554,26 +562,47 @@ export const AdminMockManager: React.FC<AdminMockManagerProps> = ({
                   />
                 </div>
 
-                <div className="flex items-center gap-6 sm:col-span-2 pt-1">
-                  <label className="flex items-center gap-2 text-xs font-bold text-[#1E1B18] cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.isPublished}
-                      onChange={(e) => setFormData({ ...formData, isPublished: e.target.checked })}
-                      className="rounded border-[#E5E0D8] text-[#E07A5F] focus:ring-0 cursor-pointer"
-                    />
-                    <span>Publish Immediately to Student Catalog</span>
-                  </label>
+                <div className="flex flex-col gap-3 sm:col-span-2 pt-1">
+                  <div className="flex flex-wrap items-center gap-6">
+                    <label className="flex items-center gap-2 text-xs font-bold text-[#1E1B18] cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.isPublished}
+                        onChange={(e) => setFormData({ ...formData, isPublished: e.target.checked })}
+                        className="rounded border-[#E5E0D8] text-[#E07A5F] focus:ring-0 cursor-pointer"
+                      />
+                      <span>Katalogda e’lon qilish (Published)</span>
+                    </label>
 
-                  <label className="flex items-center gap-2 text-xs font-bold text-[#E07A5F] cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.isProOnly}
-                      onChange={(e) => setFormData({ ...formData, isProOnly: e.target.checked })}
-                      className="rounded border-[#E5E0D8] text-[#E07A5F] focus:ring-0 cursor-pointer"
-                    />
-                    <span>PRO Pass Only (Paywall Locked)</span>
-                  </label>
+                    <label className="flex items-center gap-2 text-xs font-bold text-[#E07A5F] cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.isPrivate}
+                        onChange={(e) => setFormData({ ...formData, isPrivate: e.target.checked })}
+                        className="rounded border-[#E5E0D8] text-[#E07A5F] focus:ring-0 cursor-pointer"
+                      />
+                      <span>Maxsus Kurs Mock Testi (Kod bilan himoyalangan)</span>
+                    </label>
+                  </div>
+
+                  {formData.isPrivate && (
+                    <div className="p-3.5 rounded-2xl bg-[#FAF5F0] border border-[#FCD9CE] space-y-1.5 max-w-md">
+                      <label className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#E07A5F] flex items-center gap-1">
+                        <Lock size={12} />
+                        <span>Maxsus Kirish Kodi (Access Code)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.accessCode}
+                        onChange={(e) => setFormData({ ...formData, accessCode: e.target.value.toUpperCase() })}
+                        placeholder="ASRON-2026"
+                        className="w-full px-3.5 py-2 rounded-xl bg-white border border-[#FCD9CE] text-xs font-mono font-bold uppercase tracking-widest text-[#1E1B18] focus:outline-none focus:ring-2 focus:ring-[#E07A5F]"
+                      />
+                      <p className="text-[10px] text-[#78716C]">
+                        O‘quvchilar ushbu mock testni boshlash uchun mazkur maxsus kodni kiritishi shart.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 

@@ -36,7 +36,7 @@ interface Props {
   siteBranding?: SiteBrandingConfig;
   onOpenDailyWorkout: () => void;
   onOpenDiagnostic: () => void;
-  onOpenPaywall: () => void;
+  onOpenPaywall?: () => void;
   onOpenTelegramLogs: () => void;
   onSwitchUserRole: () => void;
   onOpenAuthModal: (mode?: 'signin' | 'signup') => void;
@@ -157,12 +157,6 @@ export const Header: React.FC<Props> = ({
             >
               10-Min Drills
             </button>
-            <button
-              onClick={onOpenPaywall}
-              className="hover:text-[#2563EB] dark:hover:text-[#4EA8DE] transition-colors cursor-pointer"
-            >
-              Pricing Plans
-            </button>
           </div>
         )}
 
@@ -215,8 +209,8 @@ export const Header: React.FC<Props> = ({
                 <div className="text-left">
                   <div className="text-[12px] font-bold text-[#0F172A] dark:text-[#F8FAFC] leading-tight flex items-center gap-1">
                     <span>{user.fullName.split(' ')[0]}</span>
-                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 dark:bg-[#1E293B] text-[#0F172A] dark:text-[#94A3B8] border border-[#E2E8F0] dark:border-[#334155]">
-                      {user.planTier}
+                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      {user.role === 'SUPER_ADMIN' ? 'ADMIN' : 'TALABA'}
                     </span>
                   </div>
                   <div className="text-[10px] text-[#64748B] dark:text-[#94A3B8] font-mono">

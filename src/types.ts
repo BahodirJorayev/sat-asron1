@@ -231,6 +231,9 @@ export interface MockTest {
   category?: 'OFFICIAL_MOCK' | 'PAST_EXAM' | 'SECTIONAL_PRACTICE' | 'PREDICTION_TEST';
   isPublished: boolean;
   isProOnly: boolean;
+  isPrivate?: boolean;
+  accessCode?: string;
+  isUnlocked?: boolean;
   totalTimeMinutes: number;
   timeLimitSecs?: number; // e.g. 8040 (2h 14m)
   questions: MockTestQuestion[];
@@ -240,6 +243,14 @@ export interface MockTest {
   tags?: string[];
   createdAt: string;
   updatedAt?: string;
+}
+
+export interface UserUnlockedMock {
+  id: string;
+  userId: string;
+  mockTestId: string;
+  accessCodeUsed?: string;
+  unlockedAt: string;
 }
 
 export interface TestAttempt {

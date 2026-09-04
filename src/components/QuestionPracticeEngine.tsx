@@ -257,11 +257,6 @@ export const QuestionPracticeEngine: React.FC<QuestionPracticeEngineProps> = ({
 
   // Socratic Coach AI Handler
   const handleAskCoach = async (initialHint = false) => {
-    if (!isPro && onOpenPaywall) {
-      onOpenPaywall();
-      return;
-    }
-
     setShowSocraticCoach(true);
     setIsCoachLoading(true);
 

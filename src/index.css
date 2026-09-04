@@ -2,39 +2,43 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-:root {
-  --bg-primary: #0A0F1D;
-  --bg-secondary: #0E1528;
-  --bg-card: #121A2F;
-  --border-color: #1E293B;
-  --text-primary: #F8FAFC;
-  --text-muted: #94A3B8;
-  --accent-terracotta: #E76F51;
-  --accent-slate: #38BDF8;
-  --accent-emerald: #14B8A6;
-  --accent-navy: #0B1B3D;
+/* ------------------------------------------------------------------------- */
+/* ASRON SAT: GLOBAL THEME SYNCHRONIZATION (Light Mode & Dark Mode)          */
+/* ------------------------------------------------------------------------- */
+:root, html.light {
+  --bg-primary: #F8FAFC;
+  --bg-sidebar: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --bg-dropdown: #FFFFFF;
+  --border-color: #E2E8F0;
+  --text-primary: #0F172A;
+  --text-muted: #64748B;
+  --accent-terracotta: #E07A5F;
+  --hover-state: #F1F5F9;
+  color-scheme: light;
 }
 
-.dark {
+html.dark, .dark {
   --bg-primary: #0A0F1D;
-  --bg-secondary: #0E1528;
+  --bg-sidebar: #121A2F;
   --bg-card: #121A2F;
+  --bg-dropdown: #1E293B;
   --border-color: #1E293B;
   --text-primary: #F8FAFC;
   --text-muted: #94A3B8;
-  --accent-terracotta: #E76F51;
-  --accent-slate: #38BDF8;
-  --accent-emerald: #14B8A6;
-  --accent-navy: #0B1B3D;
+  --accent-terracotta: #E07A5F;
+  --hover-state: #1E293B;
+  color-scheme: dark;
 }
 
 body {
-  background-color: #0A0F1D;
-  color: #F8FAFC;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   letter-spacing: -0.01em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 150ms ease, color 150ms ease;
 }
 
 /* Monospace numerals and IDs */
@@ -42,13 +46,7 @@ body {
   font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
-/* Hairline border utility */
-.border-hairline {
-  border-width: 1px;
-  border-color: #1E293B;
-}
-
-/* Crisp button transitions */
+/* Crisp transitions */
 button, a {
   transition: background-color 150ms cubic-bezier(0.16, 1, 0.3, 1), border-color 150ms cubic-bezier(0.16, 1, 0.3, 1), color 150ms cubic-bezier(0.16, 1, 0.3, 1);
 }

@@ -63,7 +63,7 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
 
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-    const minutes = Math.floor((diff / (1000 * 60 * 60)) % 60);
+    const minutes = Math.floor((diff / (1000 * 60)) % 60);
     const seconds = Math.floor((diff / 1000) % 60);
 
     return { days, hours, minutes, seconds, totalMs: diff };
@@ -99,19 +99,16 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
     setStatusFeedback(null);
 
     try {
-      // Local storage persistence
       if (typeof window !== 'undefined') {
         localStorage.setItem('asron_target_exam_date', newDateIso);
       }
 
       setTargetDate(newDateIso);
 
-      // Notify parent callback
       if (onTargetDateChange) {
         onTargetDateChange(newDateIso);
       }
 
-      // Supabase synchronization
       const supabase = getSupabaseClient();
       if (supabase) {
         let activeUserId = userId;
@@ -148,7 +145,6 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
     handleSaveDate(isoFormat);
   };
 
-  // Formatted display date (Uzbek / Academic)
   const formattedTargetLabel = new Date(targetDate).toLocaleDateString('uz-UZ', {
     day: 'numeric',
     month: 'long',
@@ -160,30 +156,30 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
   return (
     <>
       {/* ========================================================================= */}
-      {/* MAIN COUNTDOWN CONTAINER (High-Density Minimalist Banner)                  */}
+      {/* MAIN COUNTDOWN CONTAINER (Theme Adaptive: Light & Dark)                  */}
       {/* ========================================================================= */}
       <section
         aria-label="Rasmiy SAT Imtihon Taymeri"
-        className={`w-full rounded-2xl bg-[#0B132B] border border-[#1E293B] p-5 sm:p-6 text-[#F8FAFC] shadow-sm relative overflow-hidden ${className}`}
+        className={`w-full rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] p-5 sm:p-6 text-[#0F172A] dark:text-[#F8FAFC] shadow-sm relative overflow-hidden transition-colors ${className}`}
       >
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           {/* Left Block: Meta & Context */}
           <div className="space-y-2">
             <div className="flex items-center gap-2.5">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#1E293B] text-[#94A3B8] border border-[#334155]/60 text-[10px] font-mono font-semibold uppercase tracking-wider">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#F1F5F9] dark:bg-[#1E293B] text-[#0F172A] dark:text-[#94A3B8] border border-[#E2E8F0] dark:border-[#334155]/60 text-[10px] font-mono font-semibold uppercase tracking-wider">
                 <Clock size={12} className="text-[#E07A5F]" />
                 Rasmiy Digital SAT
               </span>
-              <span className="text-xs font-mono text-[#64748B]">
+              <span className="text-xs font-mono text-[#64748B] dark:text-[#94A3B8]">
                 {formattedTargetLabel}
               </span>
             </div>
 
             <div>
-              <h2 className="text-sm sm:text-base font-bold text-[#F8FAFC] tracking-tight">
+              <h2 className="text-base sm:text-lg font-bold text-[#0F172A] dark:text-[#F8FAFC] tracking-tight">
                 Imtihongacha Qolgan Vaqt
               </h2>
-              <p className="text-xs text-[#94A3B8] mt-0.5 leading-relaxed max-w-md">
+              <p className="text-xs text-[#64748B] dark:text-[#94A3B8] mt-0.5 leading-relaxed max-w-md">
                 College Board rasmiy test sanasiga asoslangan aniq muddat va tayyorgarlik rejasi.
               </p>
             </div>
@@ -194,41 +190,41 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
             {/* 4 Unit Metric Blocks */}
             <div className="grid grid-cols-4 gap-2 sm:gap-3 text-center">
               {/* Days */}
-              <div className="min-w-[64px] sm:min-w-[80px] p-2.5 sm:p-3 rounded-xl bg-[#0F172A] border border-[#1E293B]">
-                <div className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-mono tabular-nums text-[#F8FAFC] tracking-tight leading-none">
+              <div className="min-w-[64px] sm:min-w-[80px] p-2.5 sm:p-3 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B]">
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC] tracking-tight leading-none">
                   {timeLeft.days}
                 </div>
-                <div className="text-[10px] tracking-widest text-[#64748B] font-mono font-bold uppercase mt-1.5">
+                <div className="text-[10px] tracking-widest text-[#64748B] dark:text-[#64748B] font-mono font-bold uppercase mt-1.5">
                   KUN
                 </div>
               </div>
 
               {/* Hours */}
-              <div className="min-w-[64px] sm:min-w-[80px] p-2.5 sm:p-3 rounded-xl bg-[#0F172A] border border-[#1E293B]">
-                <div className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-mono tabular-nums text-[#F8FAFC] tracking-tight leading-none">
+              <div className="min-w-[64px] sm:min-w-[80px] p-2.5 sm:p-3 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B]">
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC] tracking-tight leading-none">
                   {pad(timeLeft.hours)}
                 </div>
-                <div className="text-[10px] tracking-widest text-[#64748B] font-mono font-bold uppercase mt-1.5">
+                <div className="text-[10px] tracking-widest text-[#64748B] dark:text-[#64748B] font-mono font-bold uppercase mt-1.5">
                   SOAT
                 </div>
               </div>
 
               {/* Minutes */}
-              <div className="min-w-[64px] sm:min-w-[80px] p-2.5 sm:p-3 rounded-xl bg-[#0F172A] border border-[#1E293B]">
-                <div className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-mono tabular-nums text-[#F8FAFC] tracking-tight leading-none">
+              <div className="min-w-[64px] sm:min-w-[80px] p-2.5 sm:p-3 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B]">
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC] tracking-tight leading-none">
                   {pad(timeLeft.minutes)}
                 </div>
-                <div className="text-[10px] tracking-widest text-[#64748B] font-mono font-bold uppercase mt-1.5">
+                <div className="text-[10px] tracking-widest text-[#64748B] dark:text-[#64748B] font-mono font-bold uppercase mt-1.5">
                   DAQIQA
                 </div>
               </div>
 
               {/* Seconds */}
-              <div className="min-w-[64px] sm:min-w-[80px] p-2.5 sm:p-3 rounded-xl bg-[#0F172A] border border-[#1E293B]">
+              <div className="min-w-[64px] sm:min-w-[80px] p-2.5 sm:p-3 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B]">
                 <div className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-mono tabular-nums text-[#E07A5F] tracking-tight leading-none">
                   {pad(timeLeft.seconds)}
                 </div>
-                <div className="text-[10px] tracking-widest text-[#64748B] font-mono font-bold uppercase mt-1.5">
+                <div className="text-[10px] tracking-widest text-[#64748B] dark:text-[#64748B] font-mono font-bold uppercase mt-1.5">
                   SEKUND
                 </div>
               </div>
@@ -238,7 +234,7 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
             <button
               type="button"
               onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#1E293B] hover:bg-[#2D3748] text-[#F8FAFC] border border-[#334155]/80 text-xs font-mono font-semibold transition-all cursor-pointer shrink-0 shadow-xs active:scale-98"
+              className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#F1F5F9] dark:bg-[#1E293B] hover:bg-[#E2E8F0] dark:hover:bg-[#2D3748] text-[#0F172A] dark:text-[#F8FAFC] border border-[#E2E8F0] dark:border-[#334155]/80 text-xs font-mono font-semibold transition-all cursor-pointer shrink-0 shadow-xs active:scale-98"
               title="Imtihon sanasini o'zgartirish"
             >
               <Calendar size={14} className="text-[#E07A5F]" />
@@ -256,23 +252,23 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
           role="dialog"
           aria-modal="true"
           aria-labelledby="exam-date-modal-title"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xs p-4 font-sans animate-in fade-in duration-150"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-xs p-4 font-sans animate-in fade-in duration-150"
         >
           <div
-            className="w-full max-w-lg bg-[#0F172A] border border-[#1E293B] text-[#F8FAFC] rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150"
+            className="w-full max-w-lg bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="px-5 py-4 border-b border-[#1E293B] flex items-center justify-between">
+            <div className="px-5 py-4 border-b border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-between bg-[#F8FAFC] dark:bg-[#0A0F1D]">
               <div className="flex items-center gap-2.5">
-                <div className="p-1.5 rounded-lg bg-[#1E293B] text-[#E07A5F]">
+                <div className="p-1.5 rounded-lg bg-[#F1F5F9] dark:bg-[#1E293B] text-[#E07A5F]">
                   <Calendar size={16} />
                 </div>
                 <div>
-                  <h3 id="exam-date-modal-title" className="text-sm font-bold text-[#F8FAFC]">
+                  <h3 id="exam-date-modal-title" className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC]">
                     SAT Imtihon Sanasini Tanlash
                   </h3>
-                  <p className="text-[11px] font-mono text-[#64748B]">
+                  <p className="text-[11px] font-mono text-[#64748B] dark:text-[#94A3B8]">
                     Hozirgi sana: {formattedTargetLabel}
                   </p>
                 </div>
@@ -281,7 +277,7 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="p-1.5 rounded-lg text-[#64748B] hover:text-[#F8FAFC] hover:bg-[#1E293B] transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] transition-colors cursor-pointer"
               >
                 <X size={16} />
               </button>
@@ -291,7 +287,7 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
             <div className="p-5 space-y-5 max-h-[75vh] overflow-y-auto">
               {/* Presets List */}
               <div className="space-y-2">
-                <label className="text-[11px] font-mono uppercase tracking-wider text-[#94A3B8] font-bold block">
+                <label className="text-[11px] font-mono uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8] font-bold block">
                   Rasmiy Digital SAT Sanalari (2026)
                 </label>
 
@@ -307,21 +303,21 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
                         onClick={() => handleSaveDate(preset.dateString)}
                         className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
                           isSelected
-                            ? 'bg-[#1E293B] border-[#E07A5F] text-[#F8FAFC]'
-                            : 'bg-[#0B132B] border-[#1E293B] text-[#94A3B8] hover:border-[#334155] hover:text-[#F8FAFC]'
+                            ? 'bg-[#F1F5F9] dark:bg-[#1E293B] border-[#E07A5F] text-[#0F172A] dark:text-[#F8FAFC]'
+                            : 'bg-white dark:bg-[#0A0F1D] border-[#E2E8F0] dark:border-[#1E293B] text-[#64748B] dark:text-[#94A3B8] hover:border-[#CBD5E1] dark:hover:border-[#334155] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]'
                         }`}
                       >
                         <div>
-                          <div className="text-xs font-bold text-[#F8FAFC]">
+                          <div className="text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC]">
                             {preset.label}
                           </div>
-                          <div className="text-[10px] font-mono text-[#64748B] mt-0.5">
+                          <div className="text-[10px] font-mono text-[#64748B] dark:text-[#94A3B8] mt-0.5">
                             {preset.season}
                           </div>
                         </div>
 
                         {isSelected && (
-                          <div className="w-5 h-5 rounded-full bg-[#E07A5F] text-[#0A0F1D] flex items-center justify-center shrink-0">
+                          <div className="w-5 h-5 rounded-full bg-[#E07A5F] text-white flex items-center justify-center shrink-0">
                             <Check size={12} strokeWidth={3} />
                           </div>
                         )}
@@ -332,8 +328,8 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
               </div>
 
               {/* Custom Date Selector */}
-              <div className="space-y-2 pt-2 border-t border-[#1E293B]">
-                <label className="text-[11px] font-mono uppercase tracking-wider text-[#94A3B8] font-bold block">
+              <div className="space-y-2 pt-2 border-t border-[#E2E8F0] dark:border-[#1E293B]">
+                <label className="text-[11px] font-mono uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8] font-bold block">
                   Boshqa (Maxsus) Sana Belgilash
                 </label>
 
@@ -343,13 +339,13 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
                     value={customInputDate}
                     onChange={(e) => setCustomInputDate(e.target.value)}
                     min={new Date().toISOString().slice(0, 10)}
-                    className="flex-1 px-3 py-2 rounded-xl bg-[#0B132B] border border-[#1E293B] text-xs font-mono text-[#F8FAFC] focus:outline-hidden focus:border-[#E07A5F]"
+                    className="flex-1 px-3 py-2 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] text-xs font-mono text-[#0F172A] dark:text-[#F8FAFC] focus:outline-hidden focus:border-[#E07A5F]"
                   />
 
                   <button
                     type="submit"
                     disabled={!customInputDate || isSaving}
-                    className="px-4 py-2 rounded-xl bg-[#E07A5F] hover:bg-[#c96c53] text-[#0A0F1D] text-xs font-mono font-bold transition-colors cursor-pointer disabled:opacity-40 shrink-0"
+                    className="px-4 py-2 rounded-xl bg-[#E07A5F] hover:bg-[#c96c53] text-white text-xs font-mono font-bold transition-colors cursor-pointer disabled:opacity-40 shrink-0"
                   >
                     Saqlash
                   </button>
@@ -358,7 +354,7 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
 
               {/* Status feedback */}
               {statusFeedback && (
-                <div className="p-2.5 rounded-xl bg-emerald-950/60 border border-emerald-800 text-emerald-300 text-xs font-mono flex items-center gap-2">
+                <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-mono flex items-center gap-2">
                   <Check size={14} />
                   <span>{statusFeedback}</span>
                 </div>
@@ -366,12 +362,12 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
             </div>
 
             {/* Modal Footer */}
-            <div className="px-5 py-3 bg-[#0B132B] border-t border-[#1E293B] flex items-center justify-between text-[11px] font-mono text-[#64748B]">
+            <div className="px-5 py-3 bg-[#F8FAFC] dark:bg-[#0A0F1D] border-t border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-between text-[11px] font-mono text-[#64748B] dark:text-[#94A3B8]">
               <span>Sana barcha qurilmalarda saqlanadi</span>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer"
+                className="text-[#0F172A] dark:text-[#F8FAFC] font-medium hover:underline cursor-pointer"
               >
                 Yopish
               </button>
@@ -382,3 +378,5 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
     </>
   );
 };
+
+export default ExamCountdownWidget;

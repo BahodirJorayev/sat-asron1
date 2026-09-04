@@ -123,14 +123,14 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
   // =========================================================================
   if (isCollapsed) {
     return (
-      <div className="sticky bottom-0 z-20 w-full bg-[#FAF8F5]/95 dark:bg-[#0F1117]/95 backdrop-blur-md p-2.5 border-t border-[#EBE5DF] dark:border-[#262B3D] flex items-center justify-center shrink-0">
+      <div className="sticky bottom-0 z-20 w-full bg-white/95 dark:bg-[#121A2F]/95 backdrop-blur-md p-2.5 border-t border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-center shrink-0">
         <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
           <div className="relative group">
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
                 aria-label="Foydalanuvchi menyusi"
-                className="w-10 h-10 rounded-2xl bg-white/90 dark:bg-[#181B26] border border-[#E5E0D8] dark:border-[#262B3D] p-0.5 hover:border-[#1E1B18] dark:hover:border-[#FAF8F5] transition-all cursor-pointer relative shadow-2xs flex items-center justify-center overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#1E1B18]/20"
+                className="w-10 h-10 rounded-2xl bg-[#F1F5F9] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] p-0.5 hover:border-[#E07A5F] transition-all cursor-pointer relative shadow-2xs flex items-center justify-center overflow-hidden focus:outline-hidden"
               >
                 <img
                   src={avatarSrc}
@@ -218,12 +218,12 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
   // EXPANDED VIEW (isCollapsed === false)
   // =========================================================================
   return (
-    <div className="sticky bottom-0 z-20 w-full bg-[#FAF8F5]/95 dark:bg-[#0F1117]/95 backdrop-blur-md p-3 border-t border-[#EBE5DF] dark:border-[#262B3D] shrink-0 space-y-2">
+    <div className="sticky bottom-0 z-20 w-full bg-white/95 dark:bg-[#121A2F]/95 backdrop-blur-md p-3 border-t border-[#E2E8F0] dark:border-[#1E293B] shrink-0 space-y-2">
       <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
         {/* Pinned User Profile Card with Interactive Profile Navigation */}
         <div
           onClick={handleProfileClick}
-          className="w-full flex items-center justify-between p-2.5 rounded-2xl bg-white/80 dark:bg-[#181B26] border border-[#E5E0D8] dark:border-[#262B3D] hover:bg-white dark:hover:bg-[#202534] hover:border-[#D5CEC5] dark:hover:border-[#3D405B] transition-all cursor-pointer shadow-2xs group"
+          className="w-full flex items-center justify-between p-2.5 rounded-2xl bg-[#F1F5F9]/80 dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] hover:border-[#CBD5E1] dark:hover:border-[#334155] transition-all cursor-pointer shadow-2xs group"
           title="Mening Profilim sahifasiga o'tish"
         >
           {/* Left: Avatar + Green Online Dot */}
@@ -231,16 +231,16 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
             <img
               src={avatarSrc}
               alt={user.fullName || 'User'}
-              className="w-8 h-8 rounded-xl object-cover border border-[#EBE5DF] dark:border-[#262B3D] bg-white dark:bg-[#181B26] shadow-2xs"
+              className="w-8 h-8 rounded-xl object-cover border border-[#E2E8F0] dark:border-[#1E293B] bg-white dark:bg-[#0A0F1D] shadow-2xs"
             />
             {/* Clean Green Online Status Dot */}
-            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-white dark:border-[#181B26] rounded-full shadow-xs" />
+            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-white dark:border-[#121A2F] rounded-full shadow-xs" />
           </div>
 
           {/* Middle: Name, Handle & Tier Badge */}
           <div className="flex-1 min-w-0 text-left leading-tight pr-1">
             <div className="flex items-center gap-1.5 min-w-0">
-              <span className="text-xs font-semibold text-[#1E1B18] dark:text-[#EAEBED] truncate group-hover:text-[#E07A5F] dark:group-hover:text-[#E76F51] transition-colors">
+              <span className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] truncate group-hover:text-[#E07A5F] transition-colors">
                 {user.fullName || 'Student'}
               </span>
             </div>

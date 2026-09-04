@@ -23,6 +23,8 @@ import { ProfileView } from './components/ProfileView';
 import { MilestoneCelebrationModal } from './components/MilestoneCelebrationModal';
 import { FloatingDesmosWidget } from './components/FloatingDesmosWidget';
 import { VocabTrainerModal } from './components/VocabTrainerModal';
+import { VocabFlashcards } from './components/VocabFlashcards';
+import { COLLEGE_PANDA_400_WORDS } from './data/collegePandaVocab';
 import { MultiplayerArenaModal } from './components/MultiplayerArenaModal';
 import { MultiplayerArenaView } from './components/MultiplayerArenaView';
 import { DailyWorkoutView } from './components/DailyWorkoutView';
@@ -938,7 +940,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5] dark:bg-[#0A0F1D] text-[#0B1B3D] dark:text-[#EAEBED] flex font-sans selection:bg-[#0B1B3D] selection:text-white transition-colors duration-200">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#0F172A] dark:text-[#F8FAFC] flex font-sans selection:bg-[#E07A5F] selection:text-white transition-colors duration-150">
       {/* 1. Left Fixed Sidebar (Visible in Dashboard & Study Views) */}
       {activeTab !== 'landing' && activeTab !== 'blog' && (
         <Sidebar
@@ -1053,6 +1055,28 @@ export default function App() {
               onOpenChat={() => setActiveTab('community')}
               onOpenArena={() => setActiveTab('arena')}
             />
+          )}
+
+          {activeTab === 'settings' && (
+            <ProfileView
+              currentUser={currentUser}
+              onUpdateUser={handleUpdateCurrentUser}
+              onOpenPaywall={() => setIsPaywallOpen(true)}
+              onOpenAuthModal={() => handleOpenAuth('signin')}
+              onSignOut={handleSignOut}
+            />
+          )}
+
+          {activeTab === 'vocab' && (
+            <div className="max-w-6xl mx-auto p-4 sm:p-6 animate-in fade-in duration-150">
+              <VocabFlashcards
+                words={COLLEGE_PANDA_400_WORDS}
+                user={currentUser}
+                userProgressMap={{}}
+                onUpdateProgress={() => {}}
+                onOpenPaywall={() => setIsPaywallOpen(true)}
+              />
+            </div>
           )}
 
           {activeTab === 'daily-workout' && (

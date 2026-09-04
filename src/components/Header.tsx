@@ -70,7 +70,7 @@ export const Header: React.FC<Props> = ({
   const isLandingOrBlog = activeTab === 'landing' || activeTab === 'blog';
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-[#FFFFFF]/95 dark:bg-[#13161F]/95 backdrop-blur-md border-b border-[#E8E2D5] dark:border-[#262B3D] select-none font-sans transition-colors">
+    <header className="sticky top-0 z-40 w-full bg-white/95 dark:bg-[#121A2F]/95 backdrop-blur-md border-b border-[#E2E8F0] dark:border-[#1E293B] select-none font-sans transition-colors text-[#0F172A] dark:text-[#F8FAFC]">
       {/* Main Nav Header */}
       <div className="px-4 sm:px-8 flex items-center justify-between h-16">
         {/* Left Section: Active View Title / Breadcrumbs or Logo */}
@@ -82,13 +82,13 @@ export const Header: React.FC<Props> = ({
             >
               <AsronLogo size={36} variant="mark-only" />
               <div>
-                <div className="text-base font-extrabold text-[#0B1B3D] dark:text-[#EAEBED] tracking-tight leading-none flex items-center gap-1.5">
+                <div className="text-base font-extrabold text-[#0F172A] dark:text-[#F8FAFC] tracking-tight leading-none flex items-center gap-1.5">
                   <span>{brandName}</span>
-                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-md bg-[#0B1B3D]/10 dark:bg-blue-900/40 text-[#0B1B3D] dark:text-blue-400 border border-[#0B1B3D]/20 dark:border-blue-800">
+                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-md bg-[#0B1B3D]/10 dark:bg-blue-900/40 text-[#0F172A] dark:text-blue-400 border border-[#0B1B3D]/20 dark:border-blue-800">
                     {siteBranding?.logoBadgeYear || '2026'}
                   </span>
                 </div>
-                <div className="text-[10px] uppercase font-mono tracking-wider text-[#78716C] dark:text-[#94A3B8] mt-0.5">
+                <div className="text-[10px] uppercase font-mono tracking-wider text-[#64748B] dark:text-[#94A3B8] mt-0.5">
                   {brandTagline}
                 </div>
               </div>
@@ -98,25 +98,27 @@ export const Header: React.FC<Props> = ({
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setActiveTab('landing')}
-                  className="text-[10px] font-bold uppercase tracking-wider text-[#78716C] dark:text-[#94A3B8] hover:text-[#2563EB] dark:hover:text-[#4EA8DE] transition-colors cursor-pointer"
+                  className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8] hover:text-[#E07A5F] transition-colors cursor-pointer"
                 >
                   {brandName}
                 </button>
-                <span className="text-[10px] text-[#A8A29E]">•</span>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] dark:text-[#64748B]">
+                <span className="text-[10px] text-[#94A3B8]">•</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] dark:text-[#64748B]">
                   Bosh Sahifa
                 </span>
               </div>
-              <div className="text-xs sm:text-sm font-extrabold text-[#1C1917] dark:text-[#EAEBED] capitalize truncate max-w-[160px] sm:max-w-xs md:max-w-none">
+              <div className="text-xs sm:text-sm font-extrabold text-[#0F172A] dark:text-[#F8FAFC] capitalize truncate max-w-[160px] sm:max-w-xs md:max-w-none">
                 {activeTab === 'dashboard' && 'Bosh sahifa'}
-                {activeTab === 'vault' && 'Xatolar Banki'}
-                {activeTab === 'bluebook' && 'Bluebook Testlar'}
+                {activeTab === 'vault' && 'Xatolar Ombori'}
+                {activeTab === 'bluebook' && 'Mock Testlar'}
                 {activeTab === 'qbank' && 'Savollar Banki (SQB)'}
-                {activeTab === 'roadmap' && 'O‘quv Rejasi'}
+                {activeTab === 'vocab' && 'SAT Lug‘at'}
                 {activeTab === 'community' && 'Hamjamiyat'}
+                {activeTab === 'profile' && 'Profil'}
+                {activeTab === 'settings' && 'Sozlamalar'}
+                {activeTab === 'roadmap' && 'O‘quv Rejasi'}
                 {activeTab === 'blog' && 'Blog & Yangiliklar'}
                 {activeTab === 'admin' && 'Admin Panel'}
-                {activeTab === 'profile' && 'Profil & Sozlamalar'}
                 {activeTab === 'arena' && 'Multiplayer Arena'}
               </div>
             </div>

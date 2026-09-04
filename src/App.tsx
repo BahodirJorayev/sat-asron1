@@ -56,6 +56,7 @@ import {
   User,
   MistakeVaultItem,
   MockTest,
+  MockCategory,
   PaymentReceipt,
   TelegramNotification,
   Question,
@@ -66,7 +67,15 @@ import {
   DesmosSatHack
 } from './types';
 import { getSupabaseClient, mapSupabaseUserToAppUser, signOutUser, saveUserProfile } from './lib/supabase';
-import { fetchGlobalPlatformSettings, saveGlobalPlatformSettings, DEFAULT_GLOBAL_SETTINGS } from './lib/adminApi';
+import {
+  fetchGlobalPlatformSettings,
+  saveGlobalPlatformSettings,
+  DEFAULT_GLOBAL_SETTINGS,
+  INITIAL_MOCK_CATEGORIES,
+  fetchMockCategories,
+  saveMockCategoryRemote,
+  deleteMockCategoryRemote,
+} from './lib/adminApi';
 
 export default function App() {
   // State management with Supabase and localStorage persistence
@@ -153,6 +162,34 @@ export default function App() {
       return INITIAL_MOCK_TESTS;
     }
   });
+  const [mockCategories, setMockCategories] = useState<MockCategory[]>(() => {
+    try {
+      const saved = localStorage.getItem('asron_mock_categories');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+      return INITIAL_MOCK_CATEGORIES;
+    } catch {
+      return INITIAL_MOCK_CATEGORIES;
+    }
+  });
+
+  // Load and synchronize dynamic mock categories from database
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const remote = await fetchMockCategories();
+        if (remote && remote.length > 0) {
+          setMockCategories(remote);
+          localStorage.setItem('asron_mock_categories', JSON.stringify(remote));
+        }
+      } catch (err) {
+        console.warn('Failed to load remote mock categories:', err);
+      }
+    };
+    loadCategories();
+  }, []);
+
   const [receipts, setReceipts] = useState<PaymentReceipt[]>(INITIAL_RECEIPTS);
   const [notifications, setNotifications] = useState<TelegramNotification[]>(INITIAL_TELEGRAM_NOTIFICATIONS);
 
@@ -471,6 +508,46 @@ export default function App() {
       localStorage.setItem('aurasat_mock_tests', JSON.stringify(next));
       return next;
     });
+  };
+
+  // Mock Categories CMS CRUD Handlers
+  const handleAddMockCategory = async (newCategory: MockCategory) => {
+    setMockCategories((prev) => {
+      const next = [...prev, newCategory];
+      localStorage.setItem('asron_mock_categories', JSON.stringify(next));
+      return next;
+    });
+    try {
+      await saveMockCategoryRemote(newCategory);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleUpdateMockCategory = async (updatedCategory: MockCategory) => {
+    setMockCategories((prev) => {
+      const next = prev.map((c) => (c.id === updatedCategory.id ? updatedCategory : c));
+      localStorage.setItem('asron_mock_categories', JSON.stringify(next));
+      return next;
+    });
+    try {
+      await saveMockCategoryRemote(updatedCategory);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleDeleteMockCategory = async (categoryId: string) => {
+    setMockCategories((prev) => {
+      const next = prev.filter((c) => c.id !== categoryId);
+      localStorage.setItem('asron_mock_categories', JSON.stringify(next));
+      return next;
+    });
+    try {
+      await deleteMockCategoryRemote(categoryId);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   // Modals & Drawers
@@ -1128,7 +1205,9 @@ export default function App() {
             <MockTestsCatalogView
               user={currentUser}
               mockTests={mockTests}
+              categories={mockCategories}
               onLaunchTest={(test) => setActiveBluebookTest(test)}
+              onStartBluebookTest={(test) => setActiveBluebookTest(test)}
               onOpenPaywall={() => setIsPaywallOpen(true)}
             />
           )}
@@ -1206,6 +1285,10 @@ export default function App() {
               receipts={receipts}
               questions={questions}
               mockTests={mockTests}
+              mockCategories={mockCategories}
+              onAddMockCategory={handleAddMockCategory}
+              onUpdateMockCategory={handleUpdateMockCategory}
+              onDeleteMockCategory={handleDeleteMockCategory}
               blogArticles={blogArticles}
               testimonials={testimonials}
               pricingPlans={pricingPlans}

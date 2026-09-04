@@ -1,22 +1,37 @@
 import React, { useState } from 'react';
 import {
-  ShieldAlert, LayoutDashboard, Users, CreditCard,
-  Globe, Terminal, Sparkles, Settings, BookOpen,
-  MapPin, MessageSquare, Radio, ExternalLink, ArrowRight,
-  ShieldCheck, Eye, RefreshCw, Layers, Calculator
+  LayoutDashboard,
+  Terminal,
+  BookOpen,
+  Users,
+  Settings,
+  ShieldCheck,
+  Radio,
+  Eye,
+  FileText,
+  Sparkles,
+  Calculator,
+  MessageSquare
 } from 'lucide-react';
-import { User, PaymentReceipt, PlanTier, Question, MockTest, PricingPlanConfig, GlobalPlatformSettings, DesmosSatHack } from '../types';
+import { 
+  User, 
+  PaymentReceipt, 
+  PlanTier, 
+  Question, 
+  MockTest, 
+  MockCategory,
+  PricingPlanConfig, 
+  GlobalPlatformSettings, 
+  DesmosSatHack 
+} from '../types';
 import { AdminDashboardView } from './AdminDashboardView';
 import { AdminUsersManager } from './AdminUsersManager';
-import { AdminPlansEditor, INITIAL_DEFAULT_PLANS } from './AdminPlansEditor';
-import { AdminLandingCMS } from './AdminLandingCMS';
 import { AdminQuestionFixer } from './AdminQuestionFixer';
 import { AdminPDFIngestion } from './AdminPDFIngestion';
 import { AdminGlobalSettings } from './AdminGlobalSettings';
 import { AdminMockManager } from './AdminMockManager';
-import { AdminChatManager } from './AdminChatManager';
-import { AdminRoadmapMonitor } from './AdminRoadmapMonitor';
 import { AdminDesmosCMS } from './AdminDesmosCMS';
+import { AdminChatManager } from './AdminChatManager';
 import { INITIAL_SAT_DESMOS_HACKS } from '../data/desmosHacksData';
 import { SiteBrandingConfig, AdminCredentials, BlogArticle, UserTestimonial } from '../data/blogAndBrandingData';
 
@@ -26,6 +41,7 @@ interface AdminPanelViewProps {
   receipts: PaymentReceipt[];
   questions?: Question[];
   mockTests?: MockTest[];
+  mockCategories?: MockCategory[];
   blogArticles?: BlogArticle[];
   testimonials?: UserTestimonial[];
   pricingPlans?: PricingPlanConfig[];
@@ -55,6 +71,9 @@ interface AdminPanelViewProps {
   onUpdateMockTest?: (test: MockTest) => void;
   onDeleteMockTest?: (testId: string) => void;
   onPreviewMockTest?: (test: MockTest) => void;
+  onAddMockCategory?: (newCategory: MockCategory) => void;
+  onUpdateMockCategory?: (updatedCategory: MockCategory) => void;
+  onDeleteMockCategory?: (categoryId: string) => void;
   onNavigateToStudentView?: () => void;
 }
 
@@ -64,9 +83,7 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
   receipts,
   questions = [],
   mockTests = [],
-  blogArticles = [],
-  testimonials = [],
-  pricingPlans = INITIAL_DEFAULT_PLANS,
+  mockCategories = [],
   globalSettings = {
     platformName: 'ASRON SAT',
     platformTagline: 'Digital SAT Intelligence Platform',
@@ -77,7 +94,7 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
     landingHeroSubtitle: 'Master the 1550+ score threshold with authentic Bluebook MST engine, 20-second Desmos shortcuts, and 3-stage Leitner spaced error eradication.',
     landingHeroCtaText: 'Unlock 1550+ Elite Workspace',
     announcementEnabled: true,
-    announcementText: '🔥 Fall 2026 Digital SAT Testing Cohort is LIVE. Early Scholar Passes Active.',
+    announcementText: 'Fall 2026 Digital SAT imtihon mavsumi boshlandi.',
     isMaintenance: false,
     arenaEnabled: true,
     liveStreamEnabled: true,
@@ -85,20 +102,12 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
     updatedAt: new Date().toISOString(),
   },
   desmosHacks = INITIAL_SAT_DESMOS_HACKS,
-  siteBranding,
   adminCredentials,
-  onUpdateSiteBranding,
   onUpdateAdminCredentials,
-  onSavePricingPlans,
   onSaveGlobalSettings,
   onSaveDesmosHacks,
   onSaveTestimonials,
   onApproveReceipt,
-  onRejectReceipt,
-  onAddReceipt,
-  onDeleteReceipt,
-  onUpdateUserPlan,
-  onAddUser,
   onUpdateUser,
   onDeleteUser,
   onAddQuestion,
@@ -109,59 +118,89 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
   onUpdateMockTest,
   onDeleteMockTest,
   onPreviewMockTest,
+  onAddMockCategory,
+  onUpdateMockCategory,
+  onDeleteMockCategory,
   onNavigateToStudentView,
 }) => {
+  // Main Navigation: Exactly 5 specified items in Uzbek
   const [activeAdminTab, setActiveAdminTab] = useState<string>('dashboard');
 
-  const adminTabs = [
-    { id: 'dashboard', label: 'Executive Pulse', icon: <LayoutDashboard className="w-4 h-4" /> },
-    { id: 'users', label: 'Scholars & Billing', icon: <Users className="w-4 h-4" />, count: usersList.length },
-    { id: 'plans', label: 'Dynamic Pricing CMS', icon: <CreditCard className="w-4 h-4" /> },
-    { id: 'landing', label: 'Landing & Copy CMS', icon: <Globe className="w-4 h-4" /> },
-    { id: 'desmos', label: 'Desmos & SAT Hacks', icon: <Calculator className="w-4 h-4 text-[#D4AF37]" />, count: desmosHacks.length },
-    { id: 'questions', label: 'Question Hot-Fixer', icon: <Terminal className="w-4 h-4" />, count: questions.length },
-    { id: 'ingestion', label: 'PDF & Vocab Ingestion', icon: <Sparkles className="w-4 h-4" /> },
-    { id: 'mocks', label: 'Mock Tests Manager', icon: <BookOpen className="w-4 h-4" />, count: mockTests.length },
-    { id: 'roadmaps', label: 'Roadmap Telemetry', icon: <MapPin className="w-4 h-4" /> },
-    { id: 'community', label: 'Chat Moderation', icon: <MessageSquare className="w-4 h-4" /> },
-    { id: 'settings', label: 'Brand & Settings', icon: <Settings className="w-4 h-4" /> },
+  // Sub-tab state for Question Bank
+  const [questionsSubTab, setQuestionsSubTab] = useState<'list' | 'ingestion'>('list');
+
+  // Sub-tab state for Settings & Security
+  const [settingsSubTab, setSettingsSubTab] = useState<'governance' | 'desmos' | 'chat'>('governance');
+
+  const adminNavItems = [
+    {
+      id: 'dashboard',
+      label: 'Boshqaruv paneli',
+      icon: <LayoutDashboard className="w-4 h-4" />,
+    },
+    {
+      id: 'questions',
+      label: 'Savollar banki',
+      icon: <Terminal className="w-4 h-4" />,
+      count: questions.length,
+    },
+    {
+      id: 'mocks',
+      label: 'Mock testlar & Kategoriyalar',
+      icon: <BookOpen className="w-4 h-4" />,
+      count: mockTests.length,
+    },
+    {
+      id: 'users',
+      label: 'Foydalanuvchilar',
+      icon: <Users className="w-4 h-4" />,
+      count: usersList.length,
+    },
+    {
+      id: 'settings',
+      label: 'Sozlamalar & Xavfsizlik',
+      icon: <Settings className="w-4 h-4" />,
+    },
   ];
 
-  const currentTabInfo = adminTabs.find((t) => t.id === activeAdminTab) || adminTabs[0];
+  const currentTabInfo = adminNavItems.find((t) => t.id === activeAdminTab) || adminNavItems[0];
 
   return (
-    <div id="admin-panel-view" className="flex flex-col lg:flex-row min-h-[calc(100vh-6rem)] bg-[#FAF8F5] dark:bg-[#0A0F1D] text-[#1E1B18] dark:text-[#EAEBED] rounded-2xl overflow-hidden border border-[#E5E0D8] dark:border-[#1E293B] shadow-sm">
+    <div
+      id="admin-panel-view"
+      className="flex flex-col lg:flex-row min-h-[calc(100vh-6rem)] bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#0F172A] dark:text-[#F8FAFC] rounded-2xl overflow-hidden border border-[#E2E8F0] dark:border-[#1E293B] shadow-xs font-sans"
+    >
       {/* LEFT ADMIN SIDEBAR PANEL */}
-      <aside className="w-full lg:w-64 bg-white dark:bg-[#0F1424] border-b lg:border-b-0 lg:border-r border-[#E5E0D8] dark:border-[#1E293B] flex flex-col justify-between shrink-0 p-4 space-y-4">
+      <aside className="w-full lg:w-64 bg-white dark:bg-[#121A2F] border-b lg:border-b-0 lg:border-r border-[#E2E8F0] dark:border-[#1E293B] flex flex-col justify-between shrink-0 p-4 space-y-4">
         {/* Admin Header */}
         <div className="space-y-3">
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-[#0B1B3D] text-white shadow-xs">
-            <div className="p-1.5 rounded-lg bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#D4AF37] shrink-0">
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-[#0F172A] text-white shadow-xs">
+            <div className="p-1.5 rounded-lg bg-[#E07A5F]/20 border border-[#E07A5F]/40 text-[#E07A5F] shrink-0">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <div className="text-xs font-extrabold tracking-wider text-[#D4AF37] uppercase truncate">
+              <div className="text-xs font-extrabold tracking-wider text-[#E07A5F] uppercase truncate">
                 {globalSettings.platformName || 'ASRON SAT'}
               </div>
-              <div className="text-[11px] text-slate-300 font-mono truncate">Admin Control Panel</div>
+              <div className="text-[11px] text-slate-300 font-mono truncate">Admin Boshqaruv Markazi</div>
             </div>
           </div>
 
           <div className="px-3 py-1.5 flex items-center justify-between text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
             <span className="flex items-center gap-1.5">
               <Radio className="w-3.5 h-3.5 animate-pulse text-emerald-500" />
-              <span>Realtime Live</span>
+              <span>Jonli Tizim</span>
             </span>
-            <span className="text-[10px] text-slate-400 uppercase font-bold">SUPER_ADMIN</span>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold">SUPER ADMIN</span>
           </div>
         </div>
 
-        {/* Admin Module Navigation List */}
+        {/* 5 Core Navigation Sections */}
         <nav className="flex-1 space-y-1 overflow-y-auto pr-1">
-          <div className="px-2 pb-1 text-[10px] font-mono font-bold uppercase tracking-wider text-[#A8A29E] dark:text-[#64748B]">
-            Boshqaruv Bo'limlari
+          <div className="px-2 pb-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8]">
+            Asosiy Bo'limlar
           </div>
-          {adminTabs.map((tab) => {
+          {adminNavItems.map((tab) => {
             const isActive = activeAdminTab === tab.id;
             return (
               <button
@@ -170,8 +209,8 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
                 onClick={() => setActiveAdminTab(tab.id)}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-mono font-bold transition-all text-left cursor-pointer ${
                   isActive
-                    ? 'bg-[#0B1B3D] text-white dark:bg-white dark:text-[#0B1B3D] shadow-sm'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#182035] hover:text-[#0B1B3D] dark:hover:text-white'
+                    ? 'bg-[#0F172A] text-white dark:bg-white dark:text-[#0F172A] shadow-xs'
+                    : 'text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]'
                 }`}
               >
                 <div className="flex items-center gap-2.5 truncate">
@@ -182,8 +221,8 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
                   <span
                     className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold shrink-0 ${
                       isActive
-                        ? 'bg-white/20 text-white dark:bg-black/10 dark:text-[#0B1B3D]'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                        ? 'bg-white/20 text-white dark:bg-black/10 dark:text-[#0F172A]'
+                        : 'bg-[#F1F5F9] dark:bg-[#1E293B] text-[#64748B] dark:text-[#94A3B8]'
                     }`}
                   >
                     {tab.count}
@@ -195,46 +234,49 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
         </nav>
 
         {/* Bottom Action: Return to Student View */}
-        <div className="pt-2 border-t border-[#E5E0D8] dark:border-[#1E293B]">
+        <div className="pt-2 border-t border-[#E2E8F0] dark:border-[#1E293B]">
           {onNavigateToStudentView && (
             <button
               id="btn-switch-to-student-view"
               onClick={onNavigateToStudentView}
-              className="w-full py-2.5 px-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[#0B1B3D] dark:text-slate-200 text-xs font-mono font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-xs"
+              className="w-full py-2.5 px-3 rounded-xl bg-[#F1F5F9] dark:bg-[#1E293B] hover:bg-[#E2E8F0] dark:hover:bg-[#334155] text-[#0F172A] dark:text-[#F8FAFC] text-xs font-mono font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-xs"
             >
-              <Eye className="w-3.5 h-3.5" />
-              <span>Student View ga o'tish</span>
+              <Eye className="w-3.5 h-3.5 text-[#E07A5F]" />
+              <span>O'quvchi Rejimiga O'tish</span>
             </button>
           )}
         </div>
       </aside>
 
-      {/* MAIN RIGHT CONTENT AREA */}
-      <main className="flex-1 p-4 lg:p-6 overflow-y-auto min-w-0 space-y-6">
-        {/* Active Module Header */}
-        <div className="flex items-center justify-between gap-4 pb-4 border-b border-[#E5E0D8] dark:border-[#1E293B]">
+      {/* RIGHT MAIN WORKSPACE AREA */}
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Workspace Top Bar */}
+        <header className="h-16 px-6 bg-white dark:bg-[#121A2F] border-b border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-[#0B1B3D] text-white flex items-center justify-center shadow-xs">
+            <div className="p-2 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] text-[#E07A5F]">
               {currentTabInfo.icon}
             </div>
             <div>
-              <h1 className="text-base sm:text-lg font-extrabold text-[#0B1B3D] dark:text-[#EAEBED] tracking-tight flex items-center gap-2">
-                <span>{currentTabInfo.label}</span>
-                {currentTabInfo.count !== undefined && (
-                  <span className="px-2 py-0.5 rounded text-xs font-mono font-bold bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30">
-                    {currentTabInfo.count} ta
-                  </span>
-                )}
+              <h1 className="text-sm sm:text-base font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                {currentTabInfo.label}
               </h1>
-              <p className="text-xs text-[#78716C] dark:text-[#94A3B8]">
-                Boshqaruv Paneli • Barcha Ma'lumotlar Jonli Boshqariladi
+              <p className="text-[11px] font-mono text-[#64748B] dark:text-[#94A3B8]">
+                ASRON SAT Boshqaruv Portali
               </p>
             </div>
           </div>
-        </div>
 
-        {/* Active Module View Component */}
-        <div className="transition-opacity duration-200">
+          <div className="flex items-center gap-3 text-xs font-mono">
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] text-[#64748B] dark:text-[#94A3B8]">
+              <span>Admin:</span>
+              <span className="font-bold text-[#0F172A] dark:text-[#F8FAFC]">{currentUser.fullName || 'Bahodir'}</span>
+            </div>
+          </div>
+        </header>
+
+        {/* Dynamic Tab Body */}
+        <div className="flex-1 p-4 sm:p-6 overflow-y-auto">
+          {/* 1. Boshqaruv paneli */}
           {activeAdminTab === 'dashboard' && (
             <AdminDashboardView
               users={usersList}
@@ -247,6 +289,72 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
             />
           )}
 
+          {/* 2. Savollar banki (Unified with Question Fixer and PDF Ingestion) */}
+          {activeAdminTab === 'questions' && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 border-b border-[#E2E8F0] dark:border-[#1E293B] pb-3">
+                <button
+                  onClick={() => setQuestionsSubTab('list')}
+                  className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                    questionsSubTab === 'list'
+                      ? 'bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] shadow-xs'
+                      : 'text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
+                  }`}
+                >
+                  <Terminal className="w-3.5 h-3.5" />
+                  <span>Savollar Ro'yxati ({questions.length})</span>
+                </button>
+
+                <button
+                  onClick={() => setQuestionsSubTab('ingestion')}
+                  className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                    questionsSubTab === 'ingestion'
+                      ? 'bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] shadow-xs'
+                      : 'text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
+                  }`}
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+                  <span>PDF Orqali Yuklash (AI Ingestion)</span>
+                </button>
+              </div>
+
+              {questionsSubTab === 'list' ? (
+                <AdminQuestionFixer
+                  questions={questions}
+                  onUpdateQuestion={(q) => onUpdateQuestion && onUpdateQuestion(q)}
+                  onAddQuestion={(q) => onAddQuestion && onAddQuestion(q)}
+                />
+              ) : (
+                <AdminPDFIngestion
+                  onImportQuestions={(newQs, title) => {
+                    if (onIngestQuestions) {
+                      onIngestQuestions(newQs, title);
+                    } else if (onAddQuestion) {
+                      newQs.forEach((q) => onAddQuestion(q));
+                    }
+                  }}
+                />
+              )}
+            </div>
+          )}
+
+          {/* 3. Mock testlar & Kategoriyalar */}
+          {activeAdminTab === 'mocks' && (
+            <AdminMockManager
+              mockTests={mockTests}
+              questions={questions}
+              mockCategories={mockCategories}
+              onAddMockTest={onAddMockTest || (() => {})}
+              onUpdateMockTest={onUpdateMockTest || (() => {})}
+              onDeleteMockTest={onDeleteMockTest || (() => {})}
+              onPreviewMockTest={onPreviewMockTest || (() => {})}
+              onAddMockCategory={onAddMockCategory}
+              onUpdateMockCategory={onUpdateMockCategory}
+              onDeleteMockCategory={onDeleteMockCategory}
+            />
+          )}
+
+          {/* 4. Foydalanuvchilar */}
           {activeAdminTab === 'users' && (
             <AdminUsersManager
               users={usersList}
@@ -256,86 +364,72 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
             />
           )}
 
-          {activeAdminTab === 'plans' && (
-            <AdminPlansEditor
-              plans={pricingPlans}
-              onSavePlans={(plans) => onSavePricingPlans && onSavePricingPlans(plans)}
-              adminTelegram={globalSettings.contactTelegram || '@rcmnx'}
-            />
-          )}
-
-          {activeAdminTab === 'landing' && (
-            <AdminLandingCMS
-              globalSettings={globalSettings}
-              testimonials={testimonials}
-              onSaveSettings={(settings) => onSaveGlobalSettings && onSaveGlobalSettings(settings)}
-              onSaveTestimonials={(tests) => onSaveTestimonials && onSaveTestimonials(tests)}
-            />
-          )}
-
-          {activeAdminTab === 'desmos' && (
-            <AdminDesmosCMS
-              hacks={desmosHacks}
-              globalSettings={globalSettings}
-              onSaveHacks={(updatedHacks) => onSaveDesmosHacks && onSaveDesmosHacks(updatedHacks)}
-              onSaveSettings={(settings) => onSaveGlobalSettings && onSaveGlobalSettings(settings)}
-            />
-          )}
-
-          {activeAdminTab === 'questions' && (
-            <AdminQuestionFixer
-              questions={questions}
-              onUpdateQuestion={(q) => onUpdateQuestion && onUpdateQuestion(q)}
-              onAddQuestion={(q) => onAddQuestion && onAddQuestion(q)}
-            />
-          )}
-
-          {activeAdminTab === 'ingestion' && (
-            <AdminPDFIngestion
-              onImportQuestions={(newQs, title) => {
-                if (onIngestQuestions) {
-                  onIngestQuestions(newQs, title);
-                } else if (onAddQuestion) {
-                  newQs.forEach((q) => onAddQuestion(q));
-                }
-              }}
-            />
-          )}
-
+          {/* 5. Sozlamalar & Xavfsizlik (Unified with Settings, Desmos, and Chat Moderation) */}
           {activeAdminTab === 'settings' && (
-            <AdminGlobalSettings
-              globalSettings={globalSettings}
-              onSaveSettings={(settings) => onSaveGlobalSettings && onSaveGlobalSettings(settings)}
-              adminCredentials={adminCredentials}
-              onUpdateAdminCredentials={onUpdateAdminCredentials}
-            />
-          )}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 border-b border-[#E2E8F0] dark:border-[#1E293B] pb-3">
+                <button
+                  onClick={() => setSettingsSubTab('governance')}
+                  className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                    settingsSubTab === 'governance'
+                      ? 'bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] shadow-xs'
+                      : 'text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
+                  }`}
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                  <span>Platforma & Xavfsizlik Sozlamalari</span>
+                </button>
 
-          {activeAdminTab === 'mocks' && (
-            <AdminMockManager
-              mockTests={mockTests}
-              questions={questions}
-              onAddMockTest={onAddMockTest || (() => {})}
-              onUpdateMockTest={onUpdateMockTest || (() => {})}
-              onDeleteMockTest={onDeleteMockTest || (() => {})}
-              onPreviewMockTest={onPreviewMockTest || (() => {})}
-            />
-          )}
+                <button
+                  onClick={() => setSettingsSubTab('desmos')}
+                  className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                    settingsSubTab === 'desmos'
+                      ? 'bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] shadow-xs'
+                      : 'text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
+                  }`}
+                >
+                  <Calculator className="w-3.5 h-3.5 text-[#E07A5F]" />
+                  <span>Desmos & SAT Xaklari ({desmosHacks.length})</span>
+                </button>
 
-          {activeAdminTab === 'roadmaps' && (
-            <AdminRoadmapMonitor
-              usersList={usersList}
-              onInspectUser={(u) => {
-                setActiveAdminTab('users');
-              }}
-            />
-          )}
+                <button
+                  onClick={() => setSettingsSubTab('chat')}
+                  className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                    settingsSubTab === 'chat'
+                      ? 'bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] shadow-xs'
+                      : 'text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
+                  }`}
+                >
+                  <MessageSquare className="w-3.5 h-3.5 text-sky-500" />
+                  <span>Chat Moderatsiyasi</span>
+                </button>
+              </div>
 
-          {activeAdminTab === 'community' && (
-            <AdminChatManager
-              currentUser={currentUser}
-              usersList={usersList}
-            />
+              {settingsSubTab === 'governance' && (
+                <AdminGlobalSettings
+                  globalSettings={globalSettings}
+                  onSaveSettings={(settings) => onSaveGlobalSettings && onSaveGlobalSettings(settings)}
+                  adminCredentials={adminCredentials}
+                  onUpdateAdminCredentials={onUpdateAdminCredentials}
+                />
+              )}
+
+              {settingsSubTab === 'desmos' && (
+                <AdminDesmosCMS
+                  hacks={desmosHacks}
+                  globalSettings={globalSettings}
+                  onSaveHacks={(updatedHacks) => onSaveDesmosHacks && onSaveDesmosHacks(updatedHacks)}
+                  onSaveSettings={(settings) => onSaveGlobalSettings && onSaveGlobalSettings(settings)}
+                />
+              )}
+
+              {settingsSubTab === 'chat' && (
+                <AdminChatManager
+                  currentUser={currentUser}
+                  usersList={usersList}
+                />
+              )}
+            </div>
           )}
         </div>
       </main>

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { 
-  Users, Activity, CreditCard, BookOpen, TrendingUp, 
-  ShieldCheck, AlertTriangle, ArrowUpRight, CheckCircle2, 
-  RefreshCw, Radio, Sparkles, MessageSquare, Terminal, Eye,
-  Zap, Download, Clock, ChevronRight
+  Users, BookOpen, HelpCircle, CheckCircle2, 
+  RefreshCw, Radio, ArrowUpRight, Terminal, 
+  ShieldCheck, Layers, ChevronRight, BarChart3,
+  Sparkles, Settings, Eye
 } from 'lucide-react';
 import { User, Question, MockTest, PaymentReceipt, GlobalPlatformSettings } from '../types';
 
@@ -25,195 +25,193 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   receipts,
   globalSettings,
   onNavigateTab,
-  onApproveReceipt,
-  onTriggerEmergencyMode,
 }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [presenceCount, setPresenceCount] = useState(() => Math.floor(Math.random() * 8) + 14);
+  const [activeOnlineCount, setActiveOnlineCount] = useState(() => Math.floor(Math.random() * 8) + 14);
 
-  const totalUsers = users.length;
-  const freeUsers = users.filter((u) => u.planTier === 'FREE' || !u.planTier).length;
-  const standardUsers = users.filter((u) => u.planTier === 'STANDARD').length;
-  const proUsers = users.filter((u) => u.planTier === 'PRO').length;
-  const vipUsers = users.filter((u) => u.planTier === 'VIP').length;
-  const paidUsersCount = standardUsers + proUsers + vipUsers;
-
-  const totalQuestions = questions.length;
-  const publishedMocks = mockTests.filter((m) => m.isPublished).length;
-  const pendingReceipts = receipts.filter((r) => r.status === 'PENDING');
+  // Exact 4 KPI Metrics requested
+  const totalUsersCount = users.length;
+  const activePublishedMocksCount = mockTests.filter((m) => m.isPublished).length;
+  const totalQuestionsCount = questions.length;
+  const totalSubmissionsCount = mockTests.reduce((acc, t) => acc + (t.attemptsCount || 0), 0);
 
   const handleRefreshPulse = () => {
     setIsRefreshing(true);
     setTimeout(() => {
-      setPresenceCount(Math.floor(Math.random() * 6) + 16);
+      setActiveOnlineCount(Math.floor(Math.random() * 6) + 16);
       setIsRefreshing(false);
-    }, 600);
+    }, 500);
   };
 
-  // Recent simulated and real events stream
-  const [activityLogs, setActivityLogs] = useState([
+  // Recent system logs in Uzbek (Executive Minimalism, no cartoon emojis)
+  const [activityLogs] = useState([
     {
       id: 'act-1',
-      type: 'UPGRADE',
-      text: 'Scholar @alex_chen upgraded to PRO SCHOLAR tier',
-      time: '2 minutes ago',
-      badge: 'PRO TIER',
-      color: 'text-[#D4AF37] bg-[#D4AF37]/10 border-[#D4AF37]/30',
+      type: 'MOCK_SUBMIT',
+      text: 'O‘quvchi @jasurbek_sat "Bluebook Rasmiy Mock #1" testini yakunladi (Natija: 1510)',
+      time: '3 daqiqa oldin',
+      badge: 'MOCK TEST',
+      badgeClass: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
     },
     {
       id: 'act-2',
-      type: 'MOCK_SUBMIT',
-      text: 'Scholar @sarah_jenkins completed Official Bluebook Mock #1 (Score: 1540)',
-      time: '8 minutes ago',
-      badge: 'MOCK EXAM',
-      color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
+      type: 'NEW_SCHOLAR',
+      text: 'Yangi talaba @aziza_sat platformada ro‘yxatdan o‘tdi (Maqsad: 1550+)',
+      time: '12 daqiqa oldin',
+      badge: 'RO‘YXATDAN O‘TISH',
+      badgeClass: 'text-sky-400 bg-sky-500/10 border-sky-500/30',
     },
     {
       id: 'act-3',
-      type: 'HOTFIX',
-      text: 'Question #MATH-102 LaTeX formula re-rendered & published to live bank',
-      time: '24 minutes ago',
-      badge: 'HOT-FIX',
-      color: 'text-sky-400 bg-sky-500/10 border-sky-500/30',
+      type: 'QUESTION_BANK',
+      text: 'Savollar bankiga 20 ta yangi "Advanced Math" masalalari kiritildi',
+      time: '28 daqiqa oldin',
+      badge: 'SAVOLLAR BANKI',
+      badgeClass: 'text-purple-400 bg-purple-500/10 border-purple-500/30',
     },
     {
       id: 'act-4',
-      type: 'NEW_SCHOLAR',
-      text: 'New scholar @jasur_sat registered via Supabase Auth (Target: 1550)',
-      time: '42 minutes ago',
-      badge: 'REGISTRATION',
-      color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/30',
+      type: 'ACCESS_CODE',
+      text: 'Maxsus kurs mock testi uchun "ASRON-2026" kodi bilan muvaffaqiyatli kirish qayd etildi',
+      time: '45 daqiqa oldin',
+      badge: 'XAVFSIZLIK',
+      badgeClass: 'text-[#E07A5F] bg-[#E07A5F]/10 border-[#E07A5F]/30',
     },
     {
       id: 'act-5',
-      type: 'BILLING',
-      text: 'Manual payment receipt submitted for 3-Month PRO Pass ($99)',
-      time: '1 hour ago',
-      badge: 'PAYMENT',
-      color: 'text-[#E07A5F] bg-[#E07A5F]/10 border-[#E07A5F]/30',
+      type: 'SYSTEM',
+      text: 'Platforma sozlamalari va Desmos formulalari replikatsiyasi yangilandi',
+      time: '1 soat oldin',
+      badge: 'TIZIM',
+      badgeClass: 'text-amber-400 bg-amber-500/10 border-amber-500/30',
     },
   ]);
 
   return (
-    <div id="admin-dashboard-view" className="space-y-6">
+    <div id="admin-dashboard-view" className="space-y-6 font-sans">
       {/* Top Banner / Pulse Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-[#0B1B3D] via-[#121A2F] to-[#0A0F1D] border border-white/10 text-white shadow-md">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-xs">
         <div className="flex items-center gap-3.5">
-          <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400">
+          <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 shrink-0">
             <Radio className="w-5 h-5 animate-pulse" />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full animate-ping" />
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-base font-extrabold tracking-tight">Supabase Realtime Live Network</h2>
-              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase">
-                100% Operational
+              <h2 className="text-sm sm:text-base font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                ASRON SAT Boshqaruv Markazi
+              </h2>
+              <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/30 uppercase">
+                Tizim Faol
               </span>
             </div>
-            <p className="text-xs text-slate-400">
-              Live bi-directional sync active across {totalUsers} registered scholars and {presenceCount} active viewports.
+            <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">
+              Hozirda platformada {totalUsersCount} nafar o‘quvchi ro‘yxatdan o‘tgan, {activeOnlineCount} nafar foydalanuvchi faol holatda.
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 shrink-0">
           <button
             id="btn-refresh-pulse"
             onClick={handleRefreshPulse}
             disabled={isRefreshing}
-            className="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono text-slate-200 flex items-center gap-1.5 transition-colors disabled:opacity-50"
+            className="px-3.5 py-2 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] hover:bg-[#F1F5F9] dark:hover:bg-[#1A233A] border border-[#E2E8F0] dark:border-[#1E293B] text-xs font-mono text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-            <span>Poll Health</span>
+            <span>Yangilash</span>
           </button>
 
           <button
-            id="btn-quick-manage-users"
-            onClick={() => onNavigateTab('users')}
-            className="px-3.5 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#c59b27] text-[#0B1B3D] text-xs font-extrabold flex items-center gap-1.5 transition-all shadow-sm"
+            id="btn-quick-manage-mocks"
+            onClick={() => onNavigateTab('mocks')}
+            className="px-4 py-2 rounded-xl bg-[#E07A5F] hover:bg-[#c96c53] text-white text-xs font-mono font-bold flex items-center gap-2 transition-all shadow-xs cursor-pointer"
           >
-            <span>Manage Scholars</span>
+            <span>Mock Testlar</span>
             <ArrowUpRight className="w-3.5 h-3.5 stroke-[2.5]" />
           </button>
         </div>
       </div>
 
-      {/* KPI Grid (4 High Impact Cards) */}
+      {/* KPI Grid: Exactly the 4 Specified Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* KPI 1: Registered Scholars */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E5E0D8] dark:border-[#1E293B] shadow-xs space-y-3">
+        {/* KPI 1: Jami o'quvchilar soni */}
+        <div className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-xs space-y-2.5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-[#78716C] dark:text-[#94A3B8] uppercase tracking-wider">Total Scholars</span>
-            <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-[#0B1B3D] dark:text-blue-300">
+            <span className="text-xs font-mono text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider">
+              Jami o'quvchilar soni
+            </span>
+            <div className="p-2 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-500">
               <Users className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-[#0B1B3D] dark:text-[#EAEBED] font-mono">
-              {totalUsers}
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] dark:text-[#F8FAFC] font-mono">
+              {totalUsersCount}
             </div>
-            <div className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-1">
-              <TrendingUp className="w-3 h-3" />
-              <span>+18% this month • 100% retention</span>
-            </div>
-          </div>
-        </div>
-
-        {/* KPI 2: Active Online Now */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E5E0D8] dark:border-[#1E293B] shadow-xs space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-[#78716C] dark:text-[#94A3B8] uppercase tracking-wider">Online Presence</span>
-            <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">
-              <Activity className="w-4 h-4" />
-            </div>
-          </div>
-          <div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-[#0B1B3D] dark:text-[#EAEBED] font-mono">
-              {presenceCount}
-            </div>
-            <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-              <span>Active in Bluebook / Daily Drills</span>
+            <div className="text-[11px] text-[#64748B] dark:text-[#94A3B8] mt-1 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span>100% bepul to‘liq kirish</span>
             </div>
           </div>
         </div>
 
-        {/* KPI 3: Paid Subscriptions Breakdown */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E5E0D8] dark:border-[#1E293B] shadow-xs space-y-3">
+        {/* KPI 2: Faol testlar */}
+        <div className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-xs space-y-2.5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-[#78716C] dark:text-[#94A3B8] uppercase tracking-wider">Paid Subscriptions</span>
-            <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-900/30 text-[#D4AF37]">
-              <CreditCard className="w-4 h-4" />
-            </div>
-          </div>
-          <div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-[#0B1B3D] dark:text-[#EAEBED] font-mono">
-              {paidUsersCount}
-            </div>
-            <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-500 dark:text-slate-400 mt-1">
-              <span className="text-sky-500 font-bold">{standardUsers} Std</span>
-              <span>•</span>
-              <span className="text-[#D4AF37] font-bold">{proUsers} PRO</span>
-              <span>•</span>
-              <span className="text-[#E07A5F] font-bold">{vipUsers} VIP</span>
-            </div>
-          </div>
-        </div>
-
-        {/* KPI 4: Questions & Full Mocks Published */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E5E0D8] dark:border-[#1E293B] shadow-xs space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-[#78716C] dark:text-[#94A3B8] uppercase tracking-wider">Content Inventory</span>
-            <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">
+            <span className="text-xs font-mono text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider">
+              Faol testlar
+            </span>
+            <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500">
               <BookOpen className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-[#0B1B3D] dark:text-[#EAEBED] font-mono">
-              {totalQuestions}
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] dark:text-[#F8FAFC] font-mono">
+              {activePublishedMocksCount}
             </div>
-            <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-              <span>{publishedMocks} Full-Length Adaptive Mocks live</span>
+            <div className="text-[11px] text-[#64748B] dark:text-[#94A3B8] mt-1 flex items-center gap-1.5">
+              <span>{mockTests.length} jami mock testdan</span>
+            </div>
+          </div>
+        </div>
+
+        {/* KPI 3: Jami savollar */}
+        <div className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-xs space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-mono text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider">
+              Jami savollar
+            </span>
+            <div className="p-2 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-500">
+              <HelpCircle className="w-4 h-4" />
+            </div>
+          </div>
+          <div>
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] dark:text-[#F8FAFC] font-mono">
+              {totalQuestionsCount}
+            </div>
+            <div className="text-[11px] text-[#64748B] dark:text-[#94A3B8] mt-1 flex items-center gap-1.5">
+              <span>Reading & Writing va Math</span>
+            </div>
+          </div>
+        </div>
+
+        {/* KPI 4: Topshirilgan mocklar soni */}
+        <div className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-xs space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-mono text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider">
+              Topshirilgan mocklar soni
+            </span>
+            <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
+          </div>
+          <div>
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] dark:text-[#F8FAFC] font-mono">
+              {totalSubmissionsCount}
+            </div>
+            <div className="text-[11px] text-[#64748B] dark:text-[#94A3B8] mt-1 flex items-center gap-1.5">
+              <span>Umumiy topshirilgan urinishlar</span>
             </div>
           </div>
         </div>
@@ -221,186 +219,138 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
 
       {/* Main Two-Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left 2 Cols: Activity Stream & Pending Receipts */}
+        {/* Left 2 Cols: Realtime Activity Stream */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Pending Manual Receipts Alert if any */}
-          {pendingReceipts.length > 0 && (
-            <div className="p-5 rounded-2xl bg-[#E07A5F]/10 border border-[#E07A5F]/30 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-[#E07A5F] font-bold text-sm">
-                  <AlertTriangle className="w-4 h-4" />
-                  <span>{pendingReceipts.length} Pending Payment Receipts Require Verification</span>
-                </div>
-                <button
-                  onClick={() => onNavigateTab('users')}
-                  className="text-xs font-bold text-[#E07A5F] underline hover:opacity-80"
-                >
-                  Review All
-                </button>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {pendingReceipts.slice(0, 2).map((r) => (
-                  <div key={r.id} className="p-3 rounded-xl bg-white dark:bg-[#121A2F] border border-[#E07A5F]/20 flex items-center justify-between text-xs">
-                    <div>
-                      <div className="font-bold text-[#0B1B3D] dark:text-slate-200">{r.userName || r.userEmail}</div>
-                      <div className="text-[10px] text-slate-500 font-mono">Plan: {r.planRequested} • ${r.amount}</div>
-                    </div>
-                    {onApproveReceipt && (
-                      <button
-                        onClick={() => onApproveReceipt(r.id)}
-                        className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] flex items-center gap-1 shadow-xs"
-                      >
-                        <CheckCircle2 className="w-3 h-3" />
-                        <span>Approve</span>
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Realtime Activity Stream */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-[#121A2F] border border-[#E5E0D8] dark:border-[#1E293B] shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="p-6 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#1E293B] pb-4">
               <div className="space-y-0.5">
-                <h3 className="text-base font-extrabold text-[#0B1B3D] dark:text-[#EAEBED]">
-                  Live Platform Activity Stream
+                <h3 className="text-sm sm:text-base font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                  So'nggi Harakatlar va Tizim Jurnali
                 </h3>
-                <p className="text-xs text-[#78716C] dark:text-[#94A3B8]">
-                  Direct neural telemetry from student submissions, payments, and system hot-fixes.
+                <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">
+                  Talabalar faoliyati, topshirilgan testlar va platforma yangilanishlari.
                 </p>
               </div>
-              <div className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] font-mono font-bold">
-                REALTIME
+              <div className="px-2.5 py-1 rounded-md bg-[#F1F5F9] dark:bg-[#0A0F1D] text-[#64748B] dark:text-[#94A3B8] border border-[#E2E8F0] dark:border-[#1E293B] text-[10px] font-mono font-bold">
+                JONLI OQIM
               </div>
             </div>
 
-            <div className="divide-y divide-[#E5E0D8] dark:divide-[#1E293B]">
+            <div className="divide-y divide-[#E2E8F0] dark:divide-[#1E293B]">
               {activityLogs.map((log) => (
                 <div key={log.id} className="py-3.5 flex items-start justify-between gap-3 text-xs">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold border ${log.color}`}>
+                      <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold border ${log.badgeClass}`}>
                         {log.badge}
                       </span>
-                      <span className="text-[11px] font-mono text-[#78716C] dark:text-[#94A3B8]">{log.time}</span>
+                      <span className="text-[11px] font-mono text-[#64748B] dark:text-[#94A3B8]">{log.time}</span>
                     </div>
-                    <p className="text-[#0B1B3D] dark:text-slate-200 font-medium">{log.text}</p>
+                    <p className="text-[#0F172A] dark:text-[#F8FAFC] font-medium leading-relaxed">{log.text}</p>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-slate-400 mt-1 shrink-0" />
+                  <ChevronRight className="w-4 h-4 text-[#94A3B8] mt-1 shrink-0" />
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Right 1 Col: Quick Command Hub & Platform Health */}
+        {/* Right 1 Col: Quick Command Hub & System Status */}
         <div className="space-y-6">
           {/* Quick Hub Actions */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-[#121A2F] border border-[#E5E0D8] dark:border-[#1E293B] shadow-xs space-y-4">
-            <h3 className="text-sm font-extrabold text-[#0B1B3D] dark:text-[#EAEBED] uppercase tracking-wider font-mono">
-              Quick Admin Actions
+          <div className="p-6 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-xs space-y-4">
+            <h3 className="text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC] uppercase tracking-wider font-mono">
+              Tezkor Boshqaruv
             </h3>
 
             <div className="space-y-2">
               <button
-                id="btn-nav-grant-tier"
-                onClick={() => onNavigateTab('users')}
-                className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-left flex items-center justify-between transition-colors"
+                id="btn-nav-mocks"
+                onClick={() => onNavigateTab('mocks')}
+                className="w-full p-3 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] hover:bg-[#F1F5F9] dark:hover:bg-[#1A233A] border border-[#E2E8F0] dark:border-[#1E293B] text-left flex items-center justify-between transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-2.5">
-                  <Zap className="w-4 h-4 text-[#D4AF37]" />
+                  <Layers className="w-4 h-4 text-[#E07A5F]" />
                   <div>
-                    <div className="text-xs font-bold text-[#0B1B3D] dark:text-slate-200">Grant Tier / Arm 3D Pass</div>
-                    <div className="text-[10px] text-slate-500">Upgrade user with custom duration</div>
+                    <div className="text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC]">Mock Testlar & Toifalar</div>
+                    <div className="text-[10px] text-[#64748B] dark:text-[#94A3B8]">Toifalarni sozlash va test yaratish</div>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
+                <ChevronRight className="w-4 h-4 text-[#94A3B8]" />
               </button>
 
               <button
-                id="btn-nav-fix-question"
+                id="btn-nav-questions"
                 onClick={() => onNavigateTab('questions')}
-                className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-left flex items-center justify-between transition-colors"
+                className="w-full p-3 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] hover:bg-[#F1F5F9] dark:hover:bg-[#1A233A] border border-[#E2E8F0] dark:border-[#1E293B] text-left flex items-center justify-between transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-2.5">
                   <Terminal className="w-4 h-4 text-sky-500" />
                   <div>
-                    <div className="text-xs font-bold text-[#0B1B3D] dark:text-slate-200">Live Question Hot-Fixer</div>
-                    <div className="text-[10px] text-slate-500">KaTeX preview & instant patch</div>
+                    <div className="text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC]">Savollar Banki</div>
+                    <div className="text-[10px] text-[#64748B] dark:text-[#94A3B8]">Savollarni tahrirlash va PDF yuklash</div>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
+                <ChevronRight className="w-4 h-4 text-[#94A3B8]" />
               </button>
 
               <button
-                id="btn-nav-ingest-pdf"
-                onClick={() => onNavigateTab('ingestion')}
-                className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-left flex items-center justify-between transition-colors"
+                id="btn-nav-users"
+                onClick={() => onNavigateTab('users')}
+                className="w-full p-3 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] hover:bg-[#F1F5F9] dark:hover:bg-[#1A233A] border border-[#E2E8F0] dark:border-[#1E293B] text-left flex items-center justify-between transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-2.5">
-                  <Sparkles className="w-4 h-4 text-purple-500" />
+                  <Users className="w-4 h-4 text-purple-500" />
                   <div>
-                    <div className="text-xs font-bold text-[#0B1B3D] dark:text-slate-200">PDF Ingestion Pipeline</div>
-                    <div className="text-[10px] text-slate-500">Extract SAT tests with Gemini AI</div>
+                    <div className="text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC]">Foydalanuvchilar Ro'yxati</div>
+                    <div className="text-[10px] text-[#64748B] dark:text-[#94A3B8]">Talabalar va admin huquqlari</div>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
+                <ChevronRight className="w-4 h-4 text-[#94A3B8]" />
               </button>
 
               <button
-                id="btn-nav-plans-editor"
-                onClick={() => onNavigateTab('plans')}
-                className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-left flex items-center justify-between transition-colors"
+                id="btn-nav-settings"
+                onClick={() => onNavigateTab('settings')}
+                className="w-full p-3 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] hover:bg-[#F1F5F9] dark:hover:bg-[#1A233A] border border-[#E2E8F0] dark:border-[#1E293B] text-left flex items-center justify-between transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-2.5">
-                  <CreditCard className="w-4 h-4 text-[#E07A5F]" />
+                  <Settings className="w-4 h-4 text-amber-500" />
                   <div>
-                    <div className="text-xs font-bold text-[#0B1B3D] dark:text-slate-200">Dynamic Pricing CMS</div>
-                    <div className="text-[10px] text-slate-500">Modify cards, prices & @rcmnx links</div>
+                    <div className="text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC]">Sozlamalar & Xavfsizlik</div>
+                    <div className="text-[10px] text-[#64748B] dark:text-[#94A3B8]">Admin paroli va brending</div>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
+                <ChevronRight className="w-4 h-4 text-[#94A3B8]" />
               </button>
             </div>
           </div>
 
-          {/* System Telemetry & Kill Switch status */}
-          <div className="p-6 rounded-3xl bg-slate-900 text-white border border-slate-800 space-y-4 shadow-md">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-mono text-slate-400 uppercase tracking-wider">System Governance</span>
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+          {/* System Telemetry & Status */}
+          <div className="p-6 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] space-y-4 shadow-xs">
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#1E293B] pb-3">
+              <span className="text-xs font-mono font-bold text-[#0F172A] dark:text-[#F8FAFC] uppercase tracking-wider">
+                Tizim Holati
+              </span>
+              <ShieldCheck className="w-4 h-4 text-emerald-500" />
             </div>
 
-            <div className="space-y-2.5 text-xs">
-              <div className="flex items-center justify-between p-2 rounded-lg bg-white/5">
-                <span className="text-slate-300">Platform Status</span>
-                <span className="font-mono font-bold text-emerald-400">
-                  {globalSettings.isMaintenance ? 'MAINTENANCE MODE' : 'LIVE ONLINE'}
+            <div className="space-y-2 text-xs font-mono">
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B]">
+                <span className="text-[#64748B] dark:text-[#94A3B8]">Platforma Rejimi</span>
+                <span className="font-bold text-emerald-500">
+                  {globalSettings.isMaintenance ? 'TEXNIK TA\'MIR' : 'FAOL (ONLAYN)'}
                 </span>
               </div>
-              <div className="flex items-center justify-between p-2 rounded-lg bg-white/5">
-                <span className="text-slate-300">Multiplayer Arena</span>
-                <span className={`font-mono font-bold ${globalSettings.arenaEnabled ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  {globalSettings.arenaEnabled ? 'ENABLED' : 'PAUSED'}
-                </span>
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B]">
+                <span className="text-[#64748B] dark:text-[#94A3B8]">Adaptiv Mock Dvigateli</span>
+                <span className="font-bold text-emerald-500">2-BOSQICHLI MST</span>
               </div>
-              <div className="flex items-center justify-between p-2 rounded-lg bg-white/5">
-                <span className="text-slate-300">WebRTC Streaming</span>
-                <span className={`font-mono font-bold ${globalSettings.liveStreamEnabled ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  {globalSettings.liveStreamEnabled ? 'ENABLED' : 'MUTED'}
-                </span>
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B]">
+                <span className="text-[#64748B] dark:text-[#94A3B8]">Desmos Kalkulyator</span>
+                <span className="font-bold text-emerald-500">ULANGAN</span>
               </div>
             </div>
-
-            <button
-              onClick={() => onNavigateTab('settings')}
-              className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-mono font-bold text-slate-200 transition-colors flex items-center justify-center gap-1.5"
-            >
-              <span>Manage System Switches</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </button>
           </div>
         </div>
       </div>

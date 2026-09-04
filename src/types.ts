@@ -212,6 +212,15 @@ export interface DailyWorkoutSubmission {
 export type MockTestCategory = 'ALL' | 'OFFICIAL_MOCK' | 'PAST_EXAM' | 'SECTIONAL_PRACTICE' | 'PREDICTION_TEST';
 export type MockModuleType = 'RW_M1' | 'RW_M2_EASY' | 'RW_M2_HARD' | 'MATH_M1' | 'MATH_M2_EASY' | 'MATH_M2_HARD';
 
+export interface MockCategory {
+  id: string;
+  name: string;
+  slug: string;
+  orderIndex: number;
+  description?: string;
+  createdAt?: string;
+}
+
 export interface MockTestQuestion {
   id: string;
   mockTestId: string;
@@ -229,6 +238,8 @@ export interface MockTest {
   title: string;
   description?: string;
   category?: 'OFFICIAL_MOCK' | 'PAST_EXAM' | 'SECTIONAL_PRACTICE' | 'PREDICTION_TEST';
+  categoryId?: string;
+  categorySlug?: string;
   isPublished: boolean;
   isProOnly: boolean;
   isPrivate?: boolean;

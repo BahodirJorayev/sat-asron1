@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { GlobalPlatformSettings, User, PlanTier, Question } from '../types';
+import { GlobalPlatformSettings, User, PlanTier, Question, MockCategory } from '../types';
 
 export const DEFAULT_GLOBAL_SETTINGS: GlobalPlatformSettings = {
   id: 'global_config',
@@ -255,3 +255,103 @@ export async function uploadBrandAsset(file: File): Promise<{ url: string | null
     });
   }
 }
+
+/**
+ * Default Seed Mock Categories
+ */
+export const INITIAL_MOCK_CATEGORIES: MockCategory[] = [
+  {
+    id: '11111111-c001-4000-8000-000000000001',
+    name: 'Rasmiy Bluebook Testlari',
+    slug: 'official-bluebook',
+    orderIndex: 1,
+    description: 'Rasmiy College Board formati va adaptiv MST tizimidagi to‘liq mock testlar.',
+    createdAt: '2026-08-01T00:00:00Z',
+  },
+  {
+    id: '22222222-c002-4000-8000-000000000002',
+    name: 'Maxsus Kurs Mocklari',
+    slug: 'private-course',
+    orderIndex: 2,
+    description: 'Faqat maxsus kurs talabalari uchun kod orqali ochiladigan eksklyuziv testlar.',
+    createdAt: '2026-08-01T00:00:00Z',
+  },
+  {
+    id: '33333333-c003-4000-8000-000000000003',
+    name: 'Diagnostik Testlar',
+    slug: 'diagnostic',
+    orderIndex: 3,
+    description: 'Talabaning kuchli va zaif tomonlarini aniqlashga mo‘ljallangan diagnostik testlar.',
+    createdAt: '2026-08-01T00:00:00Z',
+  },
+];
+
+/**
+ * Fetch Mock Categories from Supabase / localStorage cache
+ */
+export async function fetchMockCategories(): Promise<MockCategory[]> {
+  let categories: MockCategory[] = INITIAL_MOCK_CATEGORIES;
+  if (typeof localStorage !== 'undefined') {
+    try {
+      const cached = localStorage.getItem('asron_mock_categories');
+      if (cached) {
+        categories = JSON.parse(cached);
+      }
+    } catch {}
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('mock_categories')
+      .select('*')
+      .order('order_index', { ascending: true });
+
+    if (data && !error && data.length > 0) {
+      categories = data.map((d: any) => ({
+        id: d.id,
+        name: d.name,
+        slug: d.slug,
+        orderIndex: d.order_index ?? 0,
+        description: d.description || '',
+        createdAt: d.created_at,
+      }));
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('asron_mock_categories', JSON.stringify(categories));
+      }
+    }
+  } catch (err) {
+    console.warn('Supabase fetch mock_categories notice:', err);
+  }
+
+  return categories;
+}
+
+/**
+ * Persist or Update a Mock Category in Supabase
+ */
+export async function saveMockCategoryRemote(category: MockCategory): Promise<void> {
+  try {
+    await supabase.from('mock_categories').upsert({
+      id: category.id,
+      name: category.name,
+      slug: category.slug,
+      description: category.description || '',
+      order_index: category.orderIndex,
+      created_at: category.createdAt || new Date().toISOString(),
+    });
+  } catch (err) {
+    console.warn('Supabase upsert mock_category notice:', err);
+  }
+}
+
+/**
+ * Delete a Mock Category from Supabase
+ */
+export async function deleteMockCategoryRemote(categoryId: string): Promise<void> {
+  try {
+    await supabase.from('mock_categories').delete().eq('id', categoryId);
+  } catch (err) {
+    console.warn('Supabase delete mock_category notice:', err);
+  }
+}
+

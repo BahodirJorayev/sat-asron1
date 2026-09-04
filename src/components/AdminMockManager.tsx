@@ -14,7 +14,6 @@ import {
   Eye,
   Clock,
   Lock,
-  Flame,
   Check,
   X,
   Play,
@@ -23,40 +22,74 @@ import {
   ChevronDown,
   BarChart3,
   FileText,
-  AlertCircle
+  AlertCircle,
+  Tag,
+  Hash,
+  HelpCircle,
+  KeyRound,
+  ArrowUpDown
 } from 'lucide-react';
-import { MockTest, MockTestQuestion, Question, MockTestCategory, MockModuleType, Difficulty } from '../types';
+import { 
+  MockTest, 
+  MockTestQuestion, 
+  Question, 
+  MockCategory, 
+  MockModuleType, 
+  Difficulty 
+} from '../types';
+import { INITIAL_MOCK_CATEGORIES } from '../lib/adminApi';
 
 interface AdminMockManagerProps {
   mockTests: MockTest[];
   questions: Question[];
+  mockCategories?: MockCategory[];
   onAddMockTest?: (newTest: MockTest) => void;
   onUpdateMockTest?: (updatedTest: MockTest) => void;
   onDeleteMockTest?: (testId: string) => void;
   onPreviewMockTest?: (test: MockTest) => void;
+  onAddMockCategory?: (newCategory: MockCategory) => void;
+  onUpdateMockCategory?: (updatedCategory: MockCategory) => void;
+  onDeleteMockCategory?: (categoryId: string) => void;
 }
 
 export const AdminMockManager: React.FC<AdminMockManagerProps> = ({
   mockTests,
   questions,
+  mockCategories = INITIAL_MOCK_CATEGORIES,
   onAddMockTest,
   onUpdateMockTest,
   onDeleteMockTest,
   onPreviewMockTest,
+  onAddMockCategory,
+  onUpdateMockCategory,
+  onDeleteMockCategory,
 }) => {
-  // Search and Category Filter
-  const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<'ALL' | MockTestCategory>('ALL');
+  // Navigation sub-tab: Mocks List vs Categories CMS
+  const [activeSubTab, setActiveSubTab] = useState<'mocks' | 'categories'>('mocks');
 
-  // Modal / Drawer State
+  // Search and Category Filter for Mocks table
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('ALL');
+
+  // Mock Test Modal State
   const [isTestModalOpen, setIsTestModalOpen] = useState(false);
   const [editingTest, setEditingTest] = useState<MockTest | null>(null);
 
-  // Form State
-  const [formData, setFormData] = useState<{
+  // Category Modal State
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<MockCategory | null>(null);
+  const [categoryFormData, setCategoryFormData] = useState({
+    name: '',
+    slug: '',
+    description: '',
+    orderIndex: 1,
+  });
+
+  // Mock Form State
+  const [mockFormData, setMockFormData] = useState<{
     title: string;
     description: string;
-    category: 'OFFICIAL_MOCK' | 'PAST_EXAM' | 'SECTIONAL_PRACTICE' | 'PREDICTION_TEST';
+    categoryId: string;
     isPublished: boolean;
     isPrivate: boolean;
     accessCode: string;
@@ -66,16 +99,16 @@ export const AdminMockManager: React.FC<AdminMockManagerProps> = ({
   }>({
     title: '',
     description: '',
-    category: 'OFFICIAL_MOCK',
+    categoryId: mockCategories[0]?.id || '11111111-c001-4000-8000-000000000001',
     isPublished: true,
     isPrivate: false,
     accessCode: 'ASRON-2026',
     totalTimeMinutes: 134,
-    tags: 'Official Bluebook, MST Adaptive, Full Length',
+    tags: 'Rasmiy Bluebook, Adaptiv MST, To‘liq format',
     assignedQuestions: [],
   });
 
-  // Active module tab in the question assignor drawer
+  // Active module tab in Question Assignor Drawer
   const [activeModuleTab, setActiveModuleTab] = useState<MockModuleType>('RW_M1');
   const [assignorSearch, setAssignorSearch] = useState('');
   const [assignorDomainFilter, setAssignorDomainFilter] = useState('ALL');
@@ -85,17 +118,15 @@ export const AdminMockManager: React.FC<AdminMockManagerProps> = ({
   const publishedTests = mockTests.filter((t) => t.isPublished).length;
   const privateTests = mockTests.filter((t) => t.isPrivate).length;
   const totalAttempts = mockTests.reduce((acc, t) => acc + (t.attemptsCount || 0), 0);
-  const avgOverallScore =
-    totalTests > 0
-      ? Math.round(
-          mockTests.reduce((acc, t) => acc + (t.averageScore || 1320), 0) / totalTests
-        )
-      : 1320;
 
   // Filtered mock tests
   const filteredTests = useMemo(() => {
     return mockTests.filter((test) => {
-      if (categoryFilter !== 'ALL' && test.category !== categoryFilter) return false;
+      if (selectedCategoryFilter !== 'ALL') {
+        const matchesId = test.categoryId === selectedCategoryFilter;
+        const matchesSlug = test.categorySlug === selectedCategoryFilter;
+        if (!matchesId && !matchesSlug) return false;
+      }
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchTitle = test.title.toLowerCase().includes(q);
@@ -105,88 +136,121 @@ export const AdminMockManager: React.FC<AdminMockManagerProps> = ({
       }
       return true;
     });
-  }, [mockTests, categoryFilter, searchQuery]);
+  }, [mockTests, selectedCategoryFilter, searchQuery]);
 
-  // Open Add Modal
-  const handleOpenAdd = () => {
+  // Helper to find category name for a mock
+  const getCategoryName = (categoryId?: string, categorySlug?: string) => {
+    const found = mockCategories.find((c) => c.id === categoryId || c.slug === categorySlug);
+    return found ? found.name : 'Boshqa toifa';
+  };
+
+  // -------------------------------------------------------------
+  // MOCK TEST CRUD HANDLERS
+  // -------------------------------------------------------------
+  const handleOpenAddMock = () => {
     setEditingTest(null);
-    setFormData({
+    setMockFormData({
       title: '',
-      description: 'Official 2-Stage Multistage Adaptive Simulation replicating exact College Board blueprints.',
-      category: 'OFFICIAL_MOCK',
+      description: 'Rasmiy 2-bosqichli College Board adaptiv Bluebook simulyatsiyasi.',
+      categoryId: mockCategories[0]?.id || '11111111-c001-4000-8000-000000000001',
       isPublished: true,
       isPrivate: false,
       accessCode: 'ASRON-2026',
       totalTimeMinutes: 134,
-      tags: 'Official Blueprint, MST Adaptive, 2026 Edition',
+      tags: 'Rasmiy Bluebook, Adaptiv MST, 2026 Yangi',
       assignedQuestions: [],
     });
     setIsTestModalOpen(true);
   };
 
-  // Open Edit Modal
-  const handleOpenEdit = (test: MockTest) => {
+  const handleOpenEditMock = (test: MockTest) => {
     setEditingTest(test);
-    setFormData({
+    setMockFormData({
       title: test.title,
       description: test.description || '',
-      category: test.category || 'OFFICIAL_MOCK',
+      categoryId: test.categoryId || mockCategories[0]?.id || '',
       isPublished: test.isPublished,
       isPrivate: Boolean(test.isPrivate),
       accessCode: test.accessCode || 'ASRON-2026',
       totalTimeMinutes: test.totalTimeMinutes || 134,
-      tags: test.tags ? test.tags.join(', ') : 'Official Blueprint, MST Adaptive',
+      tags: test.tags ? test.tags.join(', ') : 'Rasmiy Bluebook, Adaptiv MST',
       assignedQuestions: test.questions || [],
     });
     setIsTestModalOpen(true);
   };
 
-  // Auto-Fill algorithm from Question Bank
-  const handleAutoFillModule = (moduleType: MockModuleType) => {
-    const isRW = moduleType.startsWith('RW');
-    const targetSection = isRW ? 'READING_AND_WRITING' : 'MATH';
-    const targetCount = isRW ? 27 : 22;
+  const handleSaveMock = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mockFormData.title.trim()) return;
 
-    const availablePool = questions.filter((q) => q.section === targetSection);
-    if (availablePool.length === 0) return;
+    const parsedTags = mockFormData.tags
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean);
 
-    // Filter by difficulty if Stage 2 Easy vs Hard
-    let filteredPool = availablePool;
-    if (moduleType.includes('EASY')) {
-      filteredPool = availablePool.filter((q) => q.difficulty === 'EASY' || q.difficulty === 'MEDIUM');
-    } else if (moduleType.includes('HARD')) {
-      filteredPool = availablePool.filter((q) => q.difficulty === 'HARD' || q.difficulty === 'MEDIUM');
+    const selectedCategory = mockCategories.find((c) => c.id === mockFormData.categoryId);
+
+    if (editingTest) {
+      const updated: MockTest = {
+        ...editingTest,
+        title: mockFormData.title.trim(),
+        description: mockFormData.description.trim(),
+        categoryId: mockFormData.categoryId,
+        categorySlug: selectedCategory?.slug,
+        isPublished: mockFormData.isPublished,
+        isProOnly: false,
+        isPrivate: mockFormData.isPrivate,
+        accessCode: mockFormData.isPrivate
+          ? mockFormData.accessCode.trim().toUpperCase() || 'ASRON-2026'
+          : undefined,
+        totalTimeMinutes: Number(mockFormData.totalTimeMinutes) || 134,
+        timeLimitSecs: (Number(mockFormData.totalTimeMinutes) || 134) * 60,
+        tags: parsedTags,
+        questions: mockFormData.assignedQuestions,
+        updatedAt: new Date().toISOString(),
+      };
+      onUpdateMockTest?.(updated);
+    } else {
+      const newTest: MockTest = {
+        id: `mock-${Date.now()}`,
+        title: mockFormData.title.trim(),
+        description: mockFormData.description.trim(),
+        categoryId: mockFormData.categoryId,
+        categorySlug: selectedCategory?.slug,
+        isPublished: mockFormData.isPublished,
+        isProOnly: false,
+        isPrivate: mockFormData.isPrivate,
+        accessCode: mockFormData.isPrivate
+          ? mockFormData.accessCode.trim().toUpperCase() || 'ASRON-2026'
+          : undefined,
+        totalTimeMinutes: Number(mockFormData.totalTimeMinutes) || 134,
+        timeLimitSecs: (Number(mockFormData.totalTimeMinutes) || 134) * 60,
+        tags: parsedTags,
+        questions: mockFormData.assignedQuestions,
+        attemptsCount: 0,
+        averageScore: 0,
+        createdAt: new Date().toISOString(),
+      };
+      onAddMockTest?.(newTest);
     }
 
-    if (filteredPool.length === 0) filteredPool = availablePool;
-
-    // Pick target count items
-    const selectedSlice = filteredPool.slice(0, targetCount);
-    const newModuleQs: MockTestQuestion[] = selectedSlice.map((q, idx) => ({
-      id: `mq-${moduleType}-${Date.now()}-${idx}`,
-      mockTestId: editingTest?.id || 'new-mock',
-      questionId: q.id,
-      question: q,
-      moduleType,
-      moduleNumber: moduleType.includes('M1') ? 1 : 2,
-      section: targetSection,
-      difficultyTier: q.difficulty,
-      orderIndex: idx + 1,
-    }));
-
-    // Replace questions of this moduleType in form data
-    setFormData((prev) => ({
-      ...prev,
-      assignedQuestions: [
-        ...prev.assignedQuestions.filter((mq) => mq.moduleType !== moduleType),
-        ...newModuleQs,
-      ],
-    }));
+    setIsTestModalOpen(false);
   };
 
-  // Full Test Auto-Fill (all 4 modules at once)
+  const handleTogglePublish = (test: MockTest) => {
+    onUpdateMockTest?.({ ...test, isPublished: !test.isPublished });
+  };
+
+  // Auto-Fill algorithm from Question Bank
   const handleAutoFillEntireTest = () => {
-    const modules: MockModuleType[] = ['RW_M1', 'RW_M2_EASY', 'RW_M2_HARD', 'MATH_M1', 'MATH_M2_EASY', 'MATH_M2_HARD'];
+    const modules: MockModuleType[] = [
+      'RW_M1',
+      'RW_M2_EASY',
+      'RW_M2_HARD',
+      'MATH_M1',
+      'MATH_M2_EASY',
+      'MATH_M2_HARD',
+    ];
     let allAssigned: MockTestQuestion[] = [];
 
     modules.forEach((mod) => {
@@ -210,7 +274,7 @@ export const AdminMockManager: React.FC<AdminMockManagerProps> = ({
         questionId: q.id,
         question: q,
         moduleType: mod,
-        moduleNumber: mod.includes('M1') ? 1 : 2,
+        moduleNumber: (mod.includes('M1') ? 1 : 2) as 1 | 2,
         section: targetSection,
         difficultyTier: q.difficulty,
         orderIndex: idx + 1,
@@ -219,525 +283,801 @@ export const AdminMockManager: React.FC<AdminMockManagerProps> = ({
       allAssigned = [...allAssigned, ...generated];
     });
 
-    setFormData((prev) => ({
+    setMockFormData((prev) => ({
       ...prev,
       assignedQuestions: allAssigned,
     }));
   };
 
-  // Save Test Handler
-  const handleSaveTest = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.title.trim()) return;
-
-    const parsedTags = formData.tags
-      .split(',')
-      .map((t) => t.trim())
-      .filter(Boolean);
-
-    if (editingTest) {
-      const updated: MockTest = {
-        ...editingTest,
-        title: formData.title,
-        description: formData.description,
-        category: formData.category,
-        isPublished: formData.isPublished,
-        isProOnly: false,
-        isPrivate: formData.isPrivate,
-        accessCode: formData.isPrivate ? (formData.accessCode.trim().toUpperCase() || 'ASRON-2026') : undefined,
-        totalTimeMinutes: Number(formData.totalTimeMinutes) || 134,
-        tags: parsedTags,
-        questions: formData.assignedQuestions,
-        updatedAt: new Date().toISOString(),
-      };
-      onUpdateMockTest?.(updated);
-    } else {
-      const newTest: MockTest = {
-        id: `mock-custom-${Date.now()}`,
-        title: formData.title,
-        description: formData.description,
-        category: formData.category,
-        isPublished: formData.isPublished,
-        isProOnly: false,
-        isPrivate: formData.isPrivate,
-        accessCode: formData.isPrivate ? (formData.accessCode.trim().toUpperCase() || 'ASRON-2026') : undefined,
-        totalTimeMinutes: Number(formData.totalTimeMinutes) || 134,
-        timeLimitSecs: (Number(formData.totalTimeMinutes) || 134) * 60,
-        tags: parsedTags,
-        questions: formData.assignedQuestions,
-        attemptsCount: 0,
-        averageScore: 1320,
-        createdAt: new Date().toISOString(),
-      };
-      onAddMockTest?.(newTest);
-    }
-
-    setIsTestModalOpen(false);
+  // -------------------------------------------------------------
+  // CATEGORY CRUD HANDLERS
+  // -------------------------------------------------------------
+  const handleOpenAddCategory = () => {
+    setEditingCategory(null);
+    setCategoryFormData({
+      name: '',
+      slug: '',
+      description: '',
+      orderIndex: mockCategories.length + 1,
+    });
+    setIsCategoryModalOpen(true);
   };
 
-  // Toggle Publish Status
-  const handleTogglePublish = (test: MockTest) => {
-    const updated = { ...test, isPublished: !test.isPublished };
-    onUpdateMockTest?.(updated);
+  const handleOpenEditCategory = (cat: MockCategory) => {
+    setEditingCategory(cat);
+    setCategoryFormData({
+      name: cat.name,
+      slug: cat.slug,
+      description: cat.description || '',
+      orderIndex: cat.orderIndex,
+    });
+    setIsCategoryModalOpen(true);
+  };
+
+  const handleCategoryNameChange = (name: string) => {
+    const slug = name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-');
+    setCategoryFormData((prev) => ({
+      ...prev,
+      name,
+      slug: editingCategory ? prev.slug : slug,
+    }));
+  };
+
+  const handleSaveCategory = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!categoryFormData.name.trim()) return;
+
+    const slugClean =
+      categoryFormData.slug.trim() ||
+      categoryFormData.name
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-');
+
+    if (editingCategory) {
+      const updated: MockCategory = {
+        ...editingCategory,
+        name: categoryFormData.name.trim(),
+        slug: slugClean,
+        description: categoryFormData.description.trim(),
+        orderIndex: Number(categoryFormData.orderIndex) || 1,
+      };
+      onUpdateMockCategory?.(updated);
+    } else {
+      const newCat: MockCategory = {
+        id: `cat-${Date.now()}`,
+        name: categoryFormData.name.trim(),
+        slug: slugClean,
+        description: categoryFormData.description.trim(),
+        orderIndex: Number(categoryFormData.orderIndex) || mockCategories.length + 1,
+        createdAt: new Date().toISOString(),
+      };
+      onAddMockCategory?.(newCat);
+    }
+
+    setIsCategoryModalOpen(false);
+  };
+
+  const handleDeleteCategory = (cat: MockCategory) => {
+    const linkedCount = mockTests.filter(
+      (t) => t.categoryId === cat.id || t.categorySlug === cat.slug
+    ).length;
+
+    let confirmMsg = `Haqiqatan ham "${cat.name}" toifasini o‘chirmoqchimisiz?`;
+    if (linkedCount > 0) {
+      confirmMsg = `DIQQAT: Ushbu toifaga ${linkedCount} ta mock test biriktirilgan. Toifani o‘chirish testlarning toifasiz qolishiga olib keladi. Davom etasizmi?`;
+    }
+
+    if (window.confirm(confirmMsg)) {
+      onDeleteMockCategory?.(cat.id);
+    }
   };
 
   return (
-    <div className="space-y-6 font-sans text-[#1E1B18]">
+    <div className="space-y-6 font-sans text-[#0F172A] dark:text-[#F8FAFC]">
       {/* 1. Header & Quick Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-4 rounded-2xl bg-white border border-[#E5E0D8] shadow-xs">
-          <div className="text-2xl font-extrabold font-mono text-[#1E1B18]">{totalTests}</div>
-          <div className="text-[10px] uppercase font-bold text-[#78716C] tracking-wider mt-0.5">
-            Total Mock Tests
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-xs">
+          <div className="text-2xl font-extrabold font-mono text-[#0F172A] dark:text-[#F8FAFC]">
+            {totalTests}
+          </div>
+          <div className="text-[10px] uppercase font-bold font-mono text-[#64748B] dark:text-[#94A3B8] tracking-wider mt-0.5">
+            Jami Mock Testlar
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-[#E5E0D8] shadow-xs">
-          <div className="text-2xl font-extrabold font-mono text-[#2A9D8F]">{publishedTests}</div>
-          <div className="text-[10px] uppercase font-bold text-[#78716C] tracking-wider mt-0.5">
-            Live &amp; Published
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-xs">
+          <div className="text-2xl font-extrabold font-mono text-emerald-500">
+            {publishedTests}
+          </div>
+          <div className="text-[10px] uppercase font-bold font-mono text-[#64748B] dark:text-[#94A3B8] tracking-wider mt-0.5">
+            Faol va Jonli
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-[#E5E0D8] shadow-xs">
-          <div className="text-2xl font-extrabold font-mono text-[#E07A5F]">{proTests}</div>
-          <div className="text-[10px] uppercase font-bold text-[#78716C] tracking-wider mt-0.5">
-            PRO Pass Only
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-xs">
+          <div className="text-2xl font-extrabold font-mono text-[#E07A5F]">
+            {privateTests}
+          </div>
+          <div className="text-[10px] uppercase font-bold font-mono text-[#64748B] dark:text-[#94A3B8] tracking-wider mt-0.5">
+            Maxsus Kurs Mocklari
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-[#E5E0D8] shadow-xs">
-          <div className="text-2xl font-extrabold font-mono text-[#3D405B]">
-            {totalAttempts.toLocaleString()}
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-xs">
+          <div className="text-2xl font-extrabold font-mono text-indigo-500">
+            {mockCategories.length}
           </div>
-          <div className="text-[10px] uppercase font-bold text-[#78716C] tracking-wider mt-0.5">
-            Student Attempts
+          <div className="text-[10px] uppercase font-bold font-mono text-[#64748B] dark:text-[#94A3B8] tracking-wider mt-0.5">
+            Mavjud Toifalar
           </div>
         </div>
       </div>
 
-      {/* 2. Action Toolbar */}
-      <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E5E0D8] shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
-        {/* Search & Category Filter */}
-        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
-          <div className="relative w-full sm:w-64">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#78716C]" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search mock tests..."
-              className="w-full pl-9 pr-3 py-2 rounded-xl bg-[#FAF8F5] border border-[#E5E0D8] text-xs font-medium text-[#1E1B18] placeholder-[#78716C]/60 focus:outline-none focus:ring-1 focus:ring-[#E07A5F]"
-            />
-          </div>
+      {/* 2. Sub-Tab Switcher (Linear / Apple Minimalist Pill Strip) */}
+      <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#1E293B] pb-3">
+        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[#F1F5F9] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] text-xs font-mono">
+          <button
+            onClick={() => setActiveSubTab('mocks')}
+            className={`px-4 py-2 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-2 ${
+              activeSubTab === 'mocks'
+                ? 'bg-white dark:bg-[#121A2F] text-[#0F172A] dark:text-[#F8FAFC] shadow-xs'
+                : 'text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]'
+            }`}
+          >
+            <BookOpen className="w-3.5 h-3.5 text-[#E07A5F]" />
+            <span>Mock Testlar Ro'yxati</span>
+            <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#E2E8F0] dark:bg-[#1E293B]">
+              {mockTests.length}
+            </span>
+          </button>
 
-          <div className="flex items-center gap-1 p-1 bg-[#FAF8F5] rounded-xl border border-[#E5E0D8] text-xs">
-            {(['ALL', 'OFFICIAL_MOCK', 'PAST_EXAM', 'SECTIONAL_PRACTICE'] as const).map((cat) => (
+          <button
+            onClick={() => setActiveSubTab('categories')}
+            className={`px-4 py-2 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-2 ${
+              activeSubTab === 'categories'
+                ? 'bg-white dark:bg-[#121A2F] text-[#0F172A] dark:text-[#F8FAFC] shadow-xs'
+                : 'text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]'
+            }`}
+          >
+            <Tag className="w-3.5 h-3.5 text-indigo-500" />
+            <span>Kategoriyalar & Filtrlar CMS</span>
+            <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#E2E8F0] dark:bg-[#1E293B]">
+              {mockCategories.length}
+            </span>
+          </button>
+        </div>
+
+        {activeSubTab === 'mocks' ? (
+          <button
+            id="btn-add-new-mock"
+            onClick={handleOpenAddMock}
+            className="px-4 py-2 rounded-xl bg-[#E07A5F] hover:bg-[#c96c53] text-white text-xs font-mono font-bold flex items-center gap-2 transition-all shadow-xs cursor-pointer"
+          >
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <span>Yangi Mock Test Qo'shish</span>
+          </button>
+        ) : (
+          <button
+            id="btn-add-new-category"
+            onClick={handleOpenAddCategory}
+            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-mono font-bold flex items-center gap-2 transition-all shadow-xs cursor-pointer"
+          >
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <span>Yangi Toifa Yaratish</span>
+          </button>
+        )}
+      </div>
+
+      {/* ============================================================= */}
+      {/* SECTION 1: MOCK TESTS LIST & QUESTION ASSIGNOR                */}
+      {/* ============================================================= */}
+      {activeSubTab === 'mocks' && (
+        <div className="space-y-4">
+          {/* Search & Dynamic Category Filter Pill Strip */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-xs">
+            {/* Search Input */}
+            <div className="relative flex-1 w-full">
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94A3B8]" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Mock test nomi yoki kalit so'zlar bo'yicha qidirish..."
+                className="w-full pl-10 pr-4 py-2 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] text-xs text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-hidden focus:border-[#E07A5F]"
+              />
+            </div>
+
+            {/* Dynamic Category Filter */}
+            <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto">
               <button
-                key={cat}
-                onClick={() => setCategoryFilter(cat)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                  categoryFilter === cat
-                    ? 'bg-[#1E1B18] text-white shadow-xs'
-                    : 'text-[#78716C] hover:text-[#1E1B18]'
+                onClick={() => setSelectedCategoryFilter('ALL')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer shrink-0 ${
+                  selectedCategoryFilter === 'ALL'
+                    ? 'bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A]'
+                    : 'text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
                 }`}
               >
-                {cat === 'ALL'
-                  ? 'All'
-                  : cat === 'OFFICIAL_MOCK'
-                  ? 'Official Mocks'
-                  : cat === 'PAST_EXAM'
-                  ? 'Past Exams'
-                  : 'Sectionals'}
+                Barchasi ({mockTests.length})
               </button>
-            ))}
+
+              {mockCategories.map((cat) => {
+                const count = mockTests.filter(
+                  (t) => t.categoryId === cat.id || t.categorySlug === cat.slug
+                ).length;
+                const isSelected = selectedCategoryFilter === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedCategoryFilter(cat.id)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer shrink-0 ${
+                      isSelected
+                        ? 'bg-[#E07A5F] text-white'
+                        : 'text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
+                    }`}
+                  >
+                    {cat.name} ({count})
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Mock Tests Table */}
+          <div className="rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-xs overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#64748B] dark:text-[#94A3B8] font-mono border-b border-[#E2E8F0] dark:border-[#1E293B]">
+                  <tr>
+                    <th className="px-5 py-3.5 font-bold uppercase">Test Nomi</th>
+                    <th className="px-4 py-3.5 font-bold uppercase">Toifasi</th>
+                    <th className="px-4 py-3.5 font-bold uppercase">Savollar</th>
+                    <th className="px-4 py-3.5 font-bold uppercase">Kirish Turi</th>
+                    <th className="px-4 py-3.5 font-bold uppercase">Holati</th>
+                    <th className="px-5 py-3.5 font-bold uppercase text-right">Amallar</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E2E8F0] dark:divide-[#1E293B]">
+                  {filteredTests.map((test) => {
+                    const assignedCount = test.questions?.length || 0;
+                    const catTitle = getCategoryName(test.categoryId, test.categorySlug);
+
+                    return (
+                      <tr
+                        key={test.id}
+                        className="hover:bg-[#F8FAFC] dark:hover:bg-[#1A233A]/50 transition-colors"
+                      >
+                        <td className="px-5 py-4 max-w-xs">
+                          <div className="font-bold text-[#0F172A] dark:text-[#F8FAFC] truncate">
+                            {test.title}
+                          </div>
+                          <div className="text-[11px] text-[#64748B] dark:text-[#94A3B8] truncate mt-0.5">
+                            {test.description || 'College Board adaptiv simulyatsiyasi'}
+                          </div>
+                        </td>
+
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <span className="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-[#F1F5F9] dark:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] border border-[#E2E8F0] dark:border-[#334155]">
+                            {catTitle}
+                          </span>
+                        </td>
+
+                        <td className="px-4 py-4 whitespace-nowrap font-mono">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                              assignedCount >= 98
+                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                                : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                            }`}
+                          >
+                            {assignedCount} / 98 ta savol
+                          </span>
+                        </td>
+
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          {test.isPrivate ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                              <Lock className="w-3 h-3" />
+                              <span>Kod: {test.accessCode || 'ASRON-2026'}</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                              <span>Ochiq (1-bosishda bepul)</span>
+                            </span>
+                          )}
+                        </td>
+
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <button
+                            onClick={() => handleTogglePublish(test)}
+                            className={`px-2.5 py-1 rounded-md text-[11px] font-mono font-bold border transition-colors cursor-pointer ${
+                              test.isPublished
+                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                                : 'bg-[#F1F5F9] dark:bg-[#1E293B] text-[#64748B] dark:text-[#94A3B8] border-[#E2E8F0] dark:border-[#334155]'
+                            }`}
+                          >
+                            {test.isPublished ? 'Faol (Chop etilgan)' : 'Qoralama'}
+                          </button>
+                        </td>
+
+                        <td className="px-5 py-4 whitespace-nowrap text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {onPreviewMockTest && (
+                              <button
+                                onClick={() => onPreviewMockTest(test)}
+                                title="Sinovdan o'tkazish"
+                                className="p-1.5 rounded-lg hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] transition-colors cursor-pointer"
+                              >
+                                <Play className="w-4 h-4" />
+                              </button>
+                            )}
+
+                            <button
+                              onClick={() => handleOpenEditMock(test)}
+                              title="Tahrirlash"
+                              className="p-1.5 rounded-lg hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] transition-colors cursor-pointer"
+                            >
+                              <Edit3 className="w-4 h-4" />
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                if (window.confirm(`"${test.title}" mock testini o'chirishni tasdiqlaysizmi?`)) {
+                                  onDeleteMockTest?.(test.id);
+                                }
+                              }}
+                              title="O'chirish"
+                              className="p-1.5 rounded-lg hover:bg-rose-500/10 text-[#64748B] dark:text-[#94A3B8] hover:text-rose-500 transition-colors cursor-pointer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+
+                  {filteredTests.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-5 py-12 text-center text-[#64748B] dark:text-[#94A3B8] font-mono">
+                        Mock testlar topilmadi. Yangi test yaratish uchun yuqoridagi tugmani bosing.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
+      )}
 
-        {/* Create Test CTA */}
-        <button
-          onClick={handleOpenAdd}
-          className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#1E1B18] hover:bg-[#3D405B] text-white text-xs font-extrabold shadow-sm transition-all hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer"
-        >
-          <Plus size={14} />
-          <span>Create New Mock Test</span>
-        </button>
-      </div>
-
-      {/* 3. Mock Tests Table */}
-      <div className="rounded-3xl bg-white border border-[#E5E0D8] shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-[#1E1B18]">
-            <thead className="bg-[#FAF8F5] border-b border-[#E5E0D8] text-[10px] uppercase font-bold text-[#78716C] tracking-wider">
-              <tr>
-                <th className="py-3.5 px-4">Test Title &amp; Category</th>
-                <th className="py-3.5 px-4">Access Tier</th>
-                <th className="py-3.5 px-4">Questions</th>
-                <th className="py-3.5 px-4">Attempts &amp; Avg</th>
-                <th className="py-3.5 px-4 text-center">Status</th>
-                <th className="py-3.5 px-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#E5E0D8]">
-              {filteredTests.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-8 text-center text-xs text-[#78716C]">
-                    No mock tests match your filter criteria.
-                  </td>
-                </tr>
-              ) : (
-                filteredTests.map((test) => (
-                  <tr key={test.id} className="hover:bg-[#FAF8F5]/60 transition-colors">
-                    {/* Title & Category */}
-                    <td className="py-3.5 px-4 max-w-xs">
-                      <div className="font-bold text-[#1E1B18] truncate">{test.title}</div>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#FAF5F0] text-[#E07A5F] border border-[#FCD9CE]">
-                          {test.category || 'OFFICIAL_MOCK'}
-                        </span>
-                        <span className="text-[10px] text-[#78716C]">
-                          {test.totalTimeMinutes}m
-                        </span>
-                      </div>
-                    </td>
-
-                    {/* Access Tier */}
-                    <td className="py-3.5 px-4">
-                      {test.isPrivate ? (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FFF4F0] text-[#E07A5F] border border-[#FCD9CE] flex items-center gap-1 w-fit">
-                          <Lock size={10} /> Maxsus ({test.accessCode || 'ASRON-2026'})
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#EBF8F5] text-[#2A9D8F] border border-[#BCE8DE] w-fit">
-                          Ommaviy
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Questions Count */}
-                    <td className="py-3.5 px-4">
-                      <span className="font-mono font-bold text-[#3D405B]">
-                        {test.questions?.length || 98} Qs
-                      </span>
-                    </td>
-
-                    {/* Attempts & Avg */}
-                    <td className="py-3.5 px-4">
-                      <div className="font-mono font-bold text-[#1E1B18]">
-                        Avg: {test.averageScore || 1320}
-                      </div>
-                      <div className="text-[10px] text-[#78716C]">
-                        {test.attemptsCount || 0} taken
-                      </div>
-                    </td>
-
-                    {/* Status Toggle */}
-                    <td className="py-3.5 px-4 text-center">
-                      <button
-                        onClick={() => handleTogglePublish(test)}
-                        className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
-                          test.isPublished
-                            ? 'bg-[#EBF8F5] text-[#2A9D8F] border-[#BCE8DE]'
-                            : 'bg-[#FAF8F5] text-[#78716C] border-[#E5E0D8]'
-                        }`}
-                      >
-                        {test.isPublished ? 'Published' : 'Draft'}
-                      </button>
-                    </td>
-
-                    {/* Actions */}
-                    <td className="py-3.5 px-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          onClick={() => onPreviewMockTest?.(test)}
-                          title="Preview Test in Bluebook Engine"
-                          className="p-1.5 rounded-lg bg-[#FAF8F5] hover:bg-[#EBE5DF] text-[#3D405B] transition-all cursor-pointer"
-                        >
-                          <Eye size={14} />
-                        </button>
-                        <button
-                          onClick={() => handleOpenEdit(test)}
-                          title="Edit Mock Test & Assign Questions"
-                          className="p-1.5 rounded-lg bg-[#FAF8F5] hover:bg-[#EBE5DF] text-[#1E1B18] transition-all cursor-pointer"
-                        >
-                          <Edit3 size={14} />
-                        </button>
-                        <button
-                          onClick={() => onDeleteMockTest?.(test.id)}
-                          title="Delete Test"
-                          className="p-1.5 rounded-lg bg-[#FAF8F5] hover:bg-rose-50 text-rose-600 transition-all cursor-pointer"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* 4. TEST BUILDER / QUESTION ASSIGNOR MODAL */}
-      {isTestModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-xs p-4 overflow-y-auto">
-          <div className="bg-white border border-[#E5E0D8] rounded-3xl p-6 sm:p-8 max-w-4xl w-full space-y-6 shadow-2xl my-8 max-h-[90vh] overflow-y-auto">
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-[#F0EBE4] pb-4">
-              <div>
-                <span className="text-[10px] font-mono uppercase font-bold text-[#E07A5F]">
-                  Mock Test CMS Builder
-                </span>
-                <h3 className="text-lg font-bold text-[#1E1B18]">
-                  {editingTest ? `Edit "${editingTest.title}"` : 'Create Full-Length Mock Test'}
-                </h3>
+      {/* ============================================================= */}
+      {/* SECTION 2: CATEGORIES & FILTER CMS                             */}
+      {/* ============================================================= */}
+      {activeSubTab === 'categories' && (
+        <div className="space-y-4">
+          <div className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-md bg-[#F1F5F9] dark:bg-[#0A0F1D] text-[#0F172A] dark:text-[#F8FAFC] border border-[#E2E8F0] dark:border-[#1E293B] text-[11px] font-mono font-bold uppercase">
+                <Tag className="w-3 h-3 text-indigo-500" />
+                <span>Dinamik Mock Toifalari Boshqaruvi</span>
               </div>
+              <h3 className="text-base font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                Mock Test Toifalari va Filtrlar
+              </h3>
+              <p className="text-xs text-[#64748B] dark:text-[#94A3B8] max-w-2xl">
+                Bu yerdagi toifalar o‘quvchilar sahifasida (`/mocks`) yuqori filtr tugmalari sifatida avtomatik aks etadi. Istalgan toifani erkin qo‘shishingiz, tahrirlashingiz yoki o‘chirishingiz mumkin.
+              </p>
+            </div>
+
+            <button
+              onClick={handleOpenAddCategory}
+              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-mono font-bold flex items-center gap-2 transition-all shadow-xs cursor-pointer shrink-0"
+            >
+              <Plus className="w-4 h-4 stroke-[2.5]" />
+              <span>Yangi Toifa Qo'shish</span>
+            </button>
+          </div>
+
+          {/* Categories List Table */}
+          <div className="rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-xs overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#64748B] dark:text-[#94A3B8] font-mono border-b border-[#E2E8F0] dark:border-[#1E293B]">
+                  <tr>
+                    <th className="px-5 py-3.5 font-bold uppercase w-16">Tartib</th>
+                    <th className="px-5 py-3.5 font-bold uppercase">Toifa Nomi</th>
+                    <th className="px-5 py-3.5 font-bold uppercase">Slug (Identifikator)</th>
+                    <th className="px-5 py-3.5 font-bold uppercase">Tavsif</th>
+                    <th className="px-4 py-3.5 font-bold uppercase">Bog'langan Testlar</th>
+                    <th className="px-5 py-3.5 font-bold uppercase text-right">Amallar</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E2E8F0] dark:divide-[#1E293B]">
+                  {mockCategories.map((cat) => {
+                    const linkedCount = mockTests.filter(
+                      (t) => t.categoryId === cat.id || t.categorySlug === cat.slug
+                    ).length;
+
+                    return (
+                      <tr
+                        key={cat.id}
+                        className="hover:bg-[#F8FAFC] dark:hover:bg-[#1A233A]/50 transition-colors"
+                      >
+                        <td className="px-5 py-4 font-mono font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                          #{cat.orderIndex}
+                        </td>
+
+                        <td className="px-5 py-4 font-bold text-[#0F172A] dark:text-[#F8FAFC] whitespace-nowrap">
+                          {cat.name}
+                        </td>
+
+                        <td className="px-5 py-4 font-mono text-indigo-600 dark:text-indigo-400 whitespace-nowrap">
+                          {cat.slug}
+                        </td>
+
+                        <td className="px-5 py-4 text-[#64748B] dark:text-[#94A3B8] max-w-sm">
+                          {cat.description || 'Standart mock toifasi'}
+                        </td>
+
+                        <td className="px-4 py-4 whitespace-nowrap font-mono font-bold">
+                          <span className="px-2.5 py-1 rounded-md bg-[#F1F5F9] dark:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] border border-[#E2E8F0] dark:border-[#334155]">
+                            {linkedCount} ta test
+                          </span>
+                        </td>
+
+                        <td className="px-5 py-4 whitespace-nowrap text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleOpenEditCategory(cat)}
+                              title="Tahrirlash"
+                              className="p-1.5 rounded-lg hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] transition-colors cursor-pointer"
+                            >
+                              <Edit3 className="w-4 h-4" />
+                            </button>
+
+                            <button
+                              onClick={() => handleDeleteCategory(cat)}
+                              title="O'chirish"
+                              className="p-1.5 rounded-lg hover:bg-rose-500/10 text-[#64748B] dark:text-[#94A3B8] hover:text-rose-500 transition-colors cursor-pointer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+
+                  {mockCategories.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-5 py-10 text-center text-[#64748B] dark:text-[#94A3B8] font-mono">
+                        Hozircha birorta toifa mavjud emas. Yangi toifa qo‘shing.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================= */}
+      {/* MODAL 1: MOCK TEST CREATE / EDIT MODAL                         */}
+      {/* ============================================================= */}
+      {isTestModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs font-sans">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            className="w-full max-w-3xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden text-[#0F172A] dark:text-[#F8FAFC]"
+          >
+            {/* Modal Header */}
+            <div className="p-5 border-b border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-[#E07A5F]/10 border border-[#E07A5F]/20 text-[#E07A5F]">
+                  <BookOpen className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                    {editingTest ? 'Mock Testni Tahrirlash' : 'Yangi Mock Test Yaratish'}
+                  </h3>
+                  <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">
+                    College Board 2-bosqichli adaptiv MST spetsifikatsiyasi
+                  </p>
+                </div>
+              </div>
+
               <button
                 onClick={() => setIsTestModalOpen(false)}
-                className="p-1.5 rounded-xl text-[#78716C] hover:text-[#1E1B18] hover:bg-[#FAF8F5] cursor-pointer"
+                className="p-1.5 text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] rounded-lg cursor-pointer"
               >
-                <X size={18} />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveTest} className="space-y-6">
-              {/* Basic Fields */}
+            {/* Modal Body */}
+            <form onSubmit={handleSaveMock} className="p-6 space-y-5 overflow-y-auto flex-1">
+              <div className="space-y-1.5">
+                <label className="text-xs font-mono font-bold uppercase text-[#64748B] dark:text-[#94A3B8]">
+                  Mock Test Nomi
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={mockFormData.title}
+                  onChange={(e) => setMockFormData({ ...mockFormData, title: e.target.value })}
+                  placeholder="Masalan: Bluebook Official Practice Test #4"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] text-xs text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-hidden focus:border-[#E07A5F]"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-mono font-bold uppercase text-[#64748B] dark:text-[#94A3B8]">
+                  Tavsif
+                </label>
+                <textarea
+                  rows={2}
+                  value={mockFormData.description}
+                  onChange={(e) => setMockFormData({ ...mockFormData, description: e.target.value })}
+                  placeholder="Test haqida qisqacha ma'lumot va qiyinlik darajasi..."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] text-xs text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-hidden focus:border-[#E07A5F]"
+                />
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5 sm:col-span-2">
-                  <label className="text-xs font-bold text-[#1E1B18]">Test Title *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="e.g. October 2026 Official Prediction Mock #4"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E5E0D8] text-xs font-medium text-[#1E1B18] focus:outline-none focus:ring-2 focus:ring-[#E07A5F]"
-                  />
-                </div>
-
-                <div className="space-y-1.5 sm:col-span-2">
-                  <label className="text-xs font-bold text-[#1E1B18]">Description</label>
-                  <textarea
-                    rows={2}
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Provide overview of test rigor, question types, and target cohort..."
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E5E0D8] text-xs font-medium text-[#1E1B18] focus:outline-none focus:ring-2 focus:ring-[#E07A5F]"
-                  />
-                </div>
-
+                {/* DYNAMIC CATEGORY SELECTION */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-[#1E1B18]">Category</label>
+                  <label className="text-xs font-mono font-bold uppercase text-[#64748B] dark:text-[#94A3B8] flex items-center gap-1.5">
+                    <Tag className="w-3.5 h-3.5 text-indigo-500" />
+                    <span>Toifasi (Kategoriya)</span>
+                  </label>
                   <select
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E5E0D8] text-xs font-medium text-[#1E1B18] focus:outline-none focus:ring-2 focus:ring-[#E07A5F]"
+                    value={mockFormData.categoryId}
+                    onChange={(e) => setMockFormData({ ...mockFormData, categoryId: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] text-xs text-[#0F172A] dark:text-[#F8FAFC] focus:outline-hidden focus:border-[#E07A5F] cursor-pointer"
                   >
-                    <option value="OFFICIAL_MOCK">Official Bluebook Mock</option>
-                    <option value="PAST_EXAM">Past Real Exam (2024-2026)</option>
-                    <option value="SECTIONAL_PRACTICE">Sectional Practice (RW / Math)</option>
-                    <option value="PREDICTION_TEST">Prediction Diagnostic Mock</option>
+                    {mockCategories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-[#1E1B18]">Total Time (Minutes)</label>
+                  <label className="text-xs font-mono font-bold uppercase text-[#64748B] dark:text-[#94A3B8]">
+                    Ajratilgan Vaqt (daqiqa)
+                  </label>
                   <input
                     type="number"
-                    value={formData.totalTimeMinutes}
-                    onChange={(e) => setFormData({ ...formData, totalTimeMinutes: Number(e.target.value) })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E5E0D8] text-xs font-medium text-[#1E1B18] focus:outline-none focus:ring-2 focus:ring-[#E07A5F]"
+                    value={mockFormData.totalTimeMinutes}
+                    onChange={(e) =>
+                      setMockFormData({
+                        ...mockFormData,
+                        totalTimeMinutes: Number(e.target.value) || 134,
+                      })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] text-xs text-[#0F172A] dark:text-[#F8FAFC] focus:outline-hidden focus:border-[#E07A5F]"
                   />
-                </div>
-
-                <div className="space-y-1.5 sm:col-span-2">
-                  <label className="text-xs font-bold text-[#1E1B18]">Tags (comma separated)</label>
-                  <input
-                    type="text"
-                    value={formData.tags}
-                    onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                    placeholder="Official Blueprint, MST Adaptive, Desmos Graphing"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E5E0D8] text-xs font-medium text-[#1E1B18] focus:outline-none focus:ring-2 focus:ring-[#E07A5F]"
-                  />
-                </div>
-
-                <div className="flex flex-col gap-3 sm:col-span-2 pt-1">
-                  <div className="flex flex-wrap items-center gap-6">
-                    <label className="flex items-center gap-2 text-xs font-bold text-[#1E1B18] cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.isPublished}
-                        onChange={(e) => setFormData({ ...formData, isPublished: e.target.checked })}
-                        className="rounded border-[#E5E0D8] text-[#E07A5F] focus:ring-0 cursor-pointer"
-                      />
-                      <span>Katalogda e’lon qilish (Published)</span>
-                    </label>
-
-                    <label className="flex items-center gap-2 text-xs font-bold text-[#E07A5F] cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.isPrivate}
-                        onChange={(e) => setFormData({ ...formData, isPrivate: e.target.checked })}
-                        className="rounded border-[#E5E0D8] text-[#E07A5F] focus:ring-0 cursor-pointer"
-                      />
-                      <span>Maxsus Kurs Mock Testi (Kod bilan himoyalangan)</span>
-                    </label>
-                  </div>
-
-                  {formData.isPrivate && (
-                    <div className="p-3.5 rounded-2xl bg-[#FAF5F0] border border-[#FCD9CE] space-y-1.5 max-w-md">
-                      <label className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#E07A5F] flex items-center gap-1">
-                        <Lock size={12} />
-                        <span>Maxsus Kirish Kodi (Access Code)</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.accessCode}
-                        onChange={(e) => setFormData({ ...formData, accessCode: e.target.value.toUpperCase() })}
-                        placeholder="ASRON-2026"
-                        className="w-full px-3.5 py-2 rounded-xl bg-white border border-[#FCD9CE] text-xs font-mono font-bold uppercase tracking-widest text-[#1E1B18] focus:outline-none focus:ring-2 focus:ring-[#E07A5F]"
-                      />
-                      <p className="text-[10px] text-[#78716C]">
-                        O‘quvchilar ushbu mock testni boshlash uchun mazkur maxsus kodni kiritishi shart.
-                      </p>
-                    </div>
-                  )}
                 </div>
               </div>
 
-              {/* 5. MODULE QUESTION ASSIGNOR */}
-              <div className="space-y-4 pt-4 border-t border-[#F0EBE4]">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div>
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-[#78716C] flex items-center gap-2">
-                      <Layers size={14} className="text-[#E07A5F]" />
-                      2-Stage MST Module Question Assignor
-                    </h4>
-                    <p className="text-[11px] text-[#78716C]">
-                      Total Assigned: <strong>{formData.assignedQuestions.length} Questions</strong>
+              {/* Private Mock / Access Code Card */}
+              <div className="p-4 rounded-2xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Lock className="w-4 h-4 text-[#E07A5F]" />
+                    <span className="text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                      Maxsus Kurs Mock Testi (Kod bilan himoyalangan)
+                    </span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={mockFormData.isPrivate}
+                    onChange={(e) => setMockFormData({ ...mockFormData, isPrivate: e.target.checked })}
+                    className="w-4 h-4 accent-[#E07A5F] cursor-pointer"
+                  />
+                </div>
+
+                {mockFormData.isPrivate && (
+                  <div className="space-y-1.5 pt-2 border-t border-[#E2E8F0] dark:border-[#1E293B]">
+                    <label className="text-xs font-mono text-[#64748B] dark:text-[#94A3B8] flex items-center justify-between">
+                      <span>Maxsus Kirish Kodi:</span>
+                      <span className="text-[10px] text-emerald-500 font-bold">Talaba kiritishi shart</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={mockFormData.accessCode}
+                      onChange={(e) =>
+                        setMockFormData({ ...mockFormData, accessCode: e.target.value.toUpperCase() })
+                      }
+                      placeholder="ASRON-2026"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] text-xs font-mono font-bold uppercase tracking-wider text-[#E07A5F] focus:outline-hidden focus:border-[#E07A5F]"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Questions Management & Auto-Fill Toolbar */}
+              <div className="p-4 rounded-2xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <span className="text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                      Savollar Majmuasi: {mockFormData.assignedQuestions.length} ta savol
+                    </span>
+                    <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8]">
+                      Standart to‘liq format: 98 ta savol (54 ta RW + 44 ta Math)
                     </p>
                   </div>
 
                   <button
                     type="button"
                     onClick={handleAutoFillEntireTest}
-                    className="px-4 py-2 rounded-xl bg-[#FAF5F0] hover:bg-[#FFF0EB] text-[#E07A5F] text-xs font-bold border border-[#FCD9CE] transition-all flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
+                    className="px-3 py-1.5 rounded-xl bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] text-xs font-mono font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
                   >
-                    <Sparkles size={13} />
-                    <span>Auto-Fill All 4 Modules from Bank</span>
+                    <Sparkles className="w-3.5 h-3.5 text-[#E07A5F]" />
+                    <span>Avto-To'ldirish (98 ta)</span>
                   </button>
-                </div>
-
-                {/* Module Selector Tabs */}
-                <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
-                  {[
-                    { id: 'RW_M1', label: 'RW Mod 1 (Base)', target: 27 },
-                    { id: 'RW_M2_EASY', label: 'RW Mod 2 (Easy)', target: 27 },
-                    { id: 'RW_M2_HARD', label: 'RW Mod 2 (Hard)', target: 27 },
-                    { id: 'MATH_M1', label: 'Math Mod 1 (Base)', target: 22 },
-                    { id: 'MATH_M2_EASY', label: 'Math Mod 2 (Easy)', target: 22 },
-                    { id: 'MATH_M2_HARD', label: 'Math Mod 2 (Hard)', target: 22 },
-                  ].map((m) => {
-                    const count = formData.assignedQuestions.filter((q) => q.moduleType === m.id).length;
-                    const isCurrent = activeModuleTab === m.id;
-                    return (
-                      <button
-                        key={m.id}
-                        type="button"
-                        onClick={() => setActiveModuleTab(m.id as MockModuleType)}
-                        className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                          isCurrent
-                            ? 'bg-[#1E1B18] text-white border-[#1E1B18]'
-                            : 'bg-[#FAF8F5] text-[#78716C] border-[#E5E0D8] hover:border-[#78716C]'
-                        }`}
-                      >
-                        <div className="text-[10px] font-bold leading-tight">{m.label}</div>
-                        <div className="text-[10px] font-mono mt-0.5 opacity-90">
-                          {count} / {m.target} Qs
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Active Module Question Panel */}
-                <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E5E0D8] space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-[#1E1B18]">
-                      Active Module: {activeModuleTab}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleAutoFillModule(activeModuleTab)}
-                      className="text-xs font-bold text-[#E07A5F] hover:underline cursor-pointer flex items-center gap-1"
-                    >
-                      <Sparkles size={12} />
-                      <span>Auto-Fill This Module ({activeModuleTab.startsWith('RW') ? 27 : 22} Qs)</span>
-                    </button>
-                  </div>
-
-                  {/* List of currently assigned questions in this module */}
-                  <div className="max-h-48 overflow-y-auto space-y-2">
-                    {formData.assignedQuestions.filter((q) => q.moduleType === activeModuleTab).length === 0 ? (
-                      <div className="p-4 text-center text-xs text-[#78716C] border border-dashed border-[#E5E0D8] rounded-xl">
-                        No questions assigned to {activeModuleTab} yet. Click "Auto-Fill This Module" above.
-                      </div>
-                    ) : (
-                      formData.assignedQuestions
-                        .filter((q) => q.moduleType === activeModuleTab)
-                        .map((mq, idx) => (
-                          <div
-                            key={mq.id}
-                            className="p-2.5 rounded-xl bg-white border border-[#E5E0D8] flex items-center justify-between text-xs"
-                          >
-                            <div className="flex items-center gap-2 truncate pr-2">
-                              <span className="font-mono font-bold text-[#78716C]">#{idx + 1}</span>
-                              <span className="font-medium text-[#1E1B18] truncate">
-                                {mq.question?.questionText || mq.questionId}
-                              </span>
-                              <span className="text-[10px] font-mono px-1 rounded bg-[#FAF8F5] text-[#3D405B]">
-                                {mq.question?.skill || mq.difficultyTier}
-                              </span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  assignedQuestions: prev.assignedQuestions.filter((q) => q.id !== mq.id),
-                                }));
-                              }}
-                              className="text-rose-500 hover:text-rose-700 p-1 cursor-pointer"
-                            >
-                              <X size={13} />
-                            </button>
-                          </div>
-                        ))
-                    )}
-                  </div>
                 </div>
               </div>
 
-              {/* Submit Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#F0EBE4]">
+              {/* Status and Actions */}
+              <div className="flex items-center justify-between pt-2 border-t border-[#E2E8F0] dark:border-[#1E293B]">
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                  <input
+                    type="checkbox"
+                    checked={mockFormData.isPublished}
+                    onChange={(e) => setMockFormData({ ...mockFormData, isPublished: e.target.checked })}
+                    className="w-4 h-4 accent-[#E07A5F]"
+                  />
+                  <span>Chop etish (Talabalar ko‘rishi mumkin)</span>
+                </label>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsTestModalOpen(false)}
+                    className="px-4 py-2 rounded-xl border border-[#E2E8F0] dark:border-[#1E293B] text-xs font-mono font-bold text-[#64748B] dark:text-[#94A3B8] cursor-pointer"
+                  >
+                    Bekor qilish
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-xl bg-[#E07A5F] hover:bg-[#c96c53] text-white text-xs font-mono font-bold cursor-pointer shadow-xs"
+                  >
+                    Saqlash
+                  </button>
+                </div>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+
+      {/* ============================================================= */}
+      {/* MODAL 2: CATEGORY CREATE / EDIT MODAL                          */}
+      {/* ============================================================= */}
+      {isCategoryModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs font-sans">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            className="w-full max-w-md bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] rounded-3xl shadow-2xl overflow-hidden text-[#0F172A] dark:text-[#F8FAFC]"
+          >
+            <div className="p-5 border-b border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-500">
+                  <Tag className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                    {editingCategory ? 'Toifani Tahrirlash' : 'Yangi Mock Toifasi Yaratish'}
+                  </h3>
+                  <p className="text-[11px] font-mono text-[#64748B] dark:text-[#94A3B8]">
+                    Dinamik filtr menyusi uchun toifa
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setIsCategoryModalOpen(false)}
+                className="p-1.5 text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] rounded-lg cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveCategory} className="p-6 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-mono font-bold uppercase text-[#64748B] dark:text-[#94A3B8]">
+                  Toifa Nomi
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={categoryFormData.name}
+                  onChange={(e) => handleCategoryNameChange(e.target.value)}
+                  placeholder="Masalan: Mini Mock Testlar"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] text-xs text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-hidden focus:border-indigo-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-mono font-bold uppercase text-[#64748B] dark:text-[#94A3B8]">
+                  Slug (URL identifikatori)
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={categoryFormData.slug}
+                  onChange={(e) =>
+                    setCategoryFormData({ ...categoryFormData, slug: e.target.value.toLowerCase() })
+                  }
+                  placeholder="mini-mock-testlar"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] text-xs font-mono text-indigo-600 dark:text-indigo-400 placeholder-[#94A3B8] focus:outline-hidden focus:border-indigo-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-mono font-bold uppercase text-[#64748B] dark:text-[#94A3B8]">
+                  Tartib Raqami
+                </label>
+                <input
+                  type="number"
+                  required
+                  value={categoryFormData.orderIndex}
+                  onChange={(e) =>
+                    setCategoryFormData({
+                      ...categoryFormData,
+                      orderIndex: Number(e.target.value) || 1,
+                    })
+                  }
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] text-xs font-mono text-[#0F172A] dark:text-[#F8FAFC] focus:outline-hidden focus:border-indigo-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-mono font-bold uppercase text-[#64748B] dark:text-[#94A3B8]">
+                  Tavsif (Ixtiyoriy)
+                </label>
+                <textarea
+                  rows={2}
+                  value={categoryFormData.description}
+                  onChange={(e) =>
+                    setCategoryFormData({ ...categoryFormData, description: e.target.value })
+                  }
+                  placeholder="Toifa haqida qisqacha ma'lumot..."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] text-xs text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-hidden focus:border-indigo-500"
+                />
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2 border-t border-[#E2E8F0] dark:border-[#1E293B]">
                 <button
                   type="button"
-                  onClick={() => setIsTestModalOpen(false)}
-                  className="px-5 py-2.5 rounded-xl border border-[#E5E0D8] hover:bg-[#FAF8F5] text-xs font-bold text-[#78716C] cursor-pointer"
+                  onClick={() => setIsCategoryModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-[#E2E8F0] dark:border-[#1E293B] text-xs font-mono font-bold text-[#64748B] dark:text-[#94A3B8] cursor-pointer"
                 >
-                  Cancel
+                  Bekor qilish
                 </button>
-
                 <button
                   type="submit"
-                  className="px-7 py-2.5 rounded-xl bg-[#1E1B18] hover:bg-[#3D405B] text-white text-xs font-extrabold shadow-md transition-all hover:scale-[1.02] cursor-pointer"
+                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-mono font-bold cursor-pointer shadow-xs"
                 >
-                  {editingTest ? 'Save Changes' : 'Create & Publish Mock Test'}
+                  Saqlash
                 </button>
               </div>
             </form>
-          </div>
+          </motion.div>
         </div>
       )}
     </div>

@@ -100,10 +100,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       id: 'vocab',
       label: 'SAT Lug\'at',
       icon: BookOpen,
-      onClick: () => {
-        if (onOpenVocabTrainer) onOpenVocabTrainer();
-        else setActiveTab('vocab');
-      },
+      onClick: () => setActiveTab('vocab'),
     },
     {
       id: 'vault',

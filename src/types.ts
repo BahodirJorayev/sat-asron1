@@ -526,19 +526,39 @@ export interface WorkoutSessionSummary {
 }
 
 // SAT Vocabulary Types
+export interface VocabularyBook {
+  id: string;
+  title: string;
+  slug: string;
+  author?: string;
+  description: string;
+  pdfUrl?: string;
+  orderIndex: number;
+  totalWordsCount?: number;
+  isOfficial?: boolean;
+  coverColor?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface VocabularyWord {
   id: string;
-  wordNumber?: number; // 1 to 400 for College Panda
+  bookId?: string;
+  bookSource?: string; // e.g. "Erica Meltzer SAT Vocabulary"
+  wordNumber?: number;
   word: string;
   partOfSpeech: string; // e.g. 'adj.', 'verb', 'noun', 'adv.'
-  definition: string;
+  phonetic?: string; // e.g. "/ɪˈræt.ɪk/"
+  definition: string; // English definition
+  definitionUz?: string; // Uzbek definition & translation
   synonyms: string[];
+  antonyms?: string[];
   sampleSentence: string;
-  difficulty: Difficulty;
-  bookSource?: string; // e.g. "The College Panda 400"
+  difficulty?: Difficulty;
   tone?: 'Positive' | 'Negative' | 'Neutral';
   etymology?: string; // Root word or mnemonic cue
   createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface UserVocabProgress {
@@ -546,7 +566,8 @@ export interface UserVocabProgress {
   userId: string;
   wordId: string;
   srsStage: number; // 0: New, 1: Learning (1 Day), 2: Review (3 Days), 3: Mastered (7 Days)
-  nextReviewAt: string;
+  isKnown?: boolean;
+  nextReviewAt?: string;
   correctCount: number;
   incorrectCount: number;
   lastReviewedAt?: string;

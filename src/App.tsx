@@ -24,6 +24,7 @@ import { MilestoneCelebrationModal } from './components/MilestoneCelebrationModa
 import { FloatingDesmosWidget } from './components/FloatingDesmosWidget';
 import { VocabTrainerModal } from './components/VocabTrainerModal';
 import { VocabFlashcards } from './components/VocabFlashcards';
+import { VocabularyHub } from './components/vocabulary/VocabularyHub';
 import { COLLEGE_PANDA_400_WORDS } from './data/collegePandaVocab';
 import { MultiplayerArenaModal } from './components/MultiplayerArenaModal';
 import { MultiplayerArenaView } from './components/MultiplayerArenaView';
@@ -138,9 +139,10 @@ export default function App() {
       const hash = window.location.hash.replace('#/', '').replace('#', '').trim();
       const hasSavedUser = !!localStorage.getItem('aurasat_user_profile');
 
-      if (['dashboard', 'daily-workout', 'vault', 'bluebook', 'qbank', 'community', 'arena', 'roadmap', 'profile', 'admin', 'blog'].includes(hash)) {
+      if (['dashboard', 'daily-workout', 'vault', 'bluebook', 'qbank', 'community', 'arena', 'roadmap', 'profile', 'admin', 'blog', 'vocab'].includes(hash)) {
         return hash;
       }
+      if (hash === 'vocabulary') return 'vocab';
       if (hash === 'landing') return 'landing';
       // Auto-route authenticated user to dashboard
       if (hasSavedUser) {
@@ -1145,15 +1147,10 @@ export default function App() {
           )}
 
           {activeTab === 'vocab' && (
-            <div className="max-w-6xl mx-auto p-4 sm:p-6 animate-in fade-in duration-150">
-              <VocabFlashcards
-                words={COLLEGE_PANDA_400_WORDS}
-                user={currentUser}
-                userProgressMap={{}}
-                onUpdateProgress={() => {}}
-                onOpenPaywall={() => setIsPaywallOpen(true)}
-              />
-            </div>
+            <VocabularyHub
+              user={currentUser}
+              onOpenPaywall={() => setIsPaywallOpen(true)}
+            />
           )}
 
           {activeTab === 'daily-workout' && (

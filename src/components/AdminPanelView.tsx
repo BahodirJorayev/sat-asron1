@@ -32,6 +32,7 @@ import { AdminGlobalSettings } from './AdminGlobalSettings';
 import { AdminMockManager } from './AdminMockManager';
 import { AdminDesmosCMS } from './AdminDesmosCMS';
 import { AdminChatManager } from './AdminChatManager';
+import AdminVocabularyPage from '../app/admin/vocabulary/page';
 import { INITIAL_SAT_DESMOS_HACKS } from '../data/desmosHacksData';
 import { SiteBrandingConfig, AdminCredentials, BlogArticle, UserTestimonial } from '../data/blogAndBrandingData';
 
@@ -155,6 +156,11 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
       label: 'Foydalanuvchilar',
       icon: <Users className="w-4 h-4" />,
       count: usersList.length,
+    },
+    {
+      id: 'vocabulary',
+      label: 'Lug\'at CMS',
+      icon: <Sparkles className="w-4 h-4" />,
     },
     {
       id: 'settings',
@@ -364,7 +370,14 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
             />
           )}
 
-          {/* 5. Sozlamalar & Xavfsizlik (Unified with Settings, Desmos, and Chat Moderation) */}
+          {/* 5. SAT Lug'at CMS */}
+          {activeAdminTab === 'vocabulary' && (
+            <div className="bg-white dark:bg-[#0E1526] rounded-xl p-4 border border-[#E2E8F0] dark:border-[#1E293B]">
+              <AdminVocabularyPage />
+            </div>
+          )}
+
+          {/* 6. Sozlamalar & Xavfsizlik (Unified with Settings, Desmos, and Chat Moderation) */}
           {activeAdminTab === 'settings' && (
             <div className="space-y-4">
               <div className="flex items-center gap-2 border-b border-[#E2E8F0] dark:border-[#1E293B] pb-3">

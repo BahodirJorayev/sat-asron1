@@ -41,7 +41,10 @@ import {
   UserPlus,
   BarChart2,
   Eye,
-  Info
+  Info,
+  Edit2,
+  Forward,
+  CornerDownRight
 } from 'lucide-react';
 import {
   Chat,
@@ -53,6 +56,11 @@ import {
   InteractivePoll
 } from '../../types';
 import { KaTeXRenderer } from '../KaTeXRenderer';
+import { RichTextRenderer } from './RichTextRenderer';
+import { CreateEntityModal } from './CreateEntityModal';
+import { MediaCaptionModal } from './MediaCaptionModal';
+import { ChannelInfoDrawer } from './ChannelInfoDrawer';
+import { ForwardMessageModal } from './ForwardMessageModal';
 import { LiveStreamStudio } from './LiveStreamStudio';
 import { InviteLinkModal } from '../InviteLinkModal';
 import {
@@ -64,7 +72,9 @@ import {
   canUserStreamInChat,
   subscribeToRealtimeChat,
   broadcastMessageRealtime,
-  uploadChatMedia
+  uploadChatMedia,
+  editChatMessage,
+  deleteChatMessage
 } from '../../lib/chatRealtimeService';
 
 interface Props {
@@ -97,12 +107,14 @@ export const CommunityChatHub: React.FC<Props> = ({
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageInput, setMessageInput] = useState<string>('');
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+  const [editingMessage, setEditingMessage] = useState<Message | null>(null);
+  const [forwardingMessage, setForwardingMessage] = useState<Message | null>(null);
 
-  // 3. Modals & Sidebars
-  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState<boolean>(false);
+  // 3. Modals & Drawers
+  const [isChannelInfoOpen, setIsChannelInfoOpen] = useState<boolean>(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState<boolean>(false);
   const [isCreateChatModalOpen, setIsCreateChatModalOpen] = useState<boolean>(false);
-  const [createChatTab, setCreateChatTab] = useState<'DIRECT' | 'GROUP' | 'CHANNEL'>('DIRECT');
+  const [pendingUploadFile, setPendingUploadFile] = useState<File | null>(null);
 
   // 4. Voice Recording State
   const [isRecordingVoice, setIsRecordingVoice] = useState<boolean>(false);
@@ -114,19 +126,28 @@ export const CommunityChatHub: React.FC<Props> = ({
   // 5. Live Stream Studio Trigger
   const [isLiveStudioOpen, setIsLiveStudioOpen] = useState<boolean>(false);
 
-  // 6. Online Presence Count
+  // 6. Online Presence Count & User IDs
   const [onlinePresenceCount, setOnlinePresenceCount] = useState<number>(1);
+  const [onlineUserIds, setOnlineUserIds] = useState<string[]>([currentUser.id]);
 
-  // 7. Media Attachment & Audio
-  const [isAttachmentMenuOpen, setIsAttachmentMenuOpen] = useState<boolean>(false);
+  // 7. Media Attachment & Refs
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // FIX 1: Pinned to top-level viewport upon navigating (prevents page jump to footer)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo(0, 0);
+    }
+  }, []);
 
   // Load messages whenever activeChatId changes
   useEffect(() => {
     if (activeChat) {
       const initialMsgs = getChatMessages(activeChat.id);
       setMessages(initialMsgs);
+      setReplyingTo(null);
+      setEditingMessage(null);
     }
   }, [activeChat?.id]);
 
@@ -154,8 +175,11 @@ export const CommunityChatHub: React.FC<Props> = ({
           );
         }
       },
-      (count) => {
+      (count, userIds) => {
         setOnlinePresenceCount(Math.max(1, count));
+        if (userIds && userIds.length > 0) {
+          setOnlineUserIds(userIds);
+        }
       }
     );
 
@@ -164,9 +188,11 @@ export const CommunityChatHub: React.FC<Props> = ({
     };
   }, [activeChat?.id, currentUser.id]);
 
-  // Scroll to bottom on message update
+  // FIX 2: Isolated scroll inside message container (no whole-window jump!)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
   }, [messages.length]);
 
   // Filtered Chats by Folder & Search
@@ -203,10 +229,36 @@ export const CommunityChatHub: React.FC<Props> = ({
     return canUserStreamInChat(currentUser, activeChat);
   }, [currentUser, activeChat]);
 
-  // Handle Send Message
+  // Handle Send Message or Save Edit
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!messageInput.trim() || !activeChat) return;
+
+    // Handle Edit Mode
+    if (editingMessage) {
+      const updatedText = messageInput.trim();
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === editingMessage.id
+            ? {
+                ...m,
+                content: updatedText,
+                caption: m.mediaUrl ? updatedText : undefined,
+                isEdited: true,
+              }
+            : m
+        )
+      );
+      await editChatMessage(
+        editingMessage.id,
+        activeChat.id,
+        updatedText,
+        editingMessage.mediaUrl ? updatedText : undefined
+      );
+      setEditingMessage(null);
+      setMessageInput('');
+      return;
+    }
 
     const newMsg: Message = {
       id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
@@ -222,7 +274,7 @@ export const CommunityChatHub: React.FC<Props> = ({
         ? {
             id: replyingTo.id,
             senderName: replyingTo.senderName,
-            content: replyingTo.content || 'Biriktirilgan fayl',
+            content: replyingTo.caption || replyingTo.content || 'Biriktirilgan fayl',
           }
         : undefined,
       createdAt: new Date().toISOString(),
@@ -262,12 +314,13 @@ export const CommunityChatHub: React.FC<Props> = ({
             const uploadRes = await uploadChatMedia(
               audioBlob,
               `voice-${Date.now()}.webm`,
-              'chat-attachments'
+              'community-media'
             );
 
             const voiceMsg: Message = {
               id: `msg-voice-${Date.now()}`,
               chatId: activeChat.id,
+              channelId: activeChat.id,
               senderId: currentUser.id,
               senderName: currentUser.fullName,
               senderAvatar: currentUser.avatarUrl,
@@ -299,41 +352,93 @@ export const CommunityChatHub: React.FC<Props> = ({
     }
   };
 
-  // File Attachment Upload
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Pick file -> open MediaCaptionModal for Rich Caption
+  const handleFilePicked = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !activeChat) return;
+    if (file) {
+      setPendingUploadFile(file);
+    }
+    e.target.value = '';
+  };
 
-    try {
-      const uploadRes = await uploadChatMedia(file, file.name, 'chat-attachments');
-      const isImg = file.type.startsWith('image/');
-      const newMsg: Message = {
-        id: `msg-file-${Date.now()}`,
-        chatId: activeChat.id,
-        senderId: currentUser.id,
-        senderName: currentUser.fullName,
-        senderAvatar: currentUser.avatarUrl,
-        senderRole: currentUser.role,
-        content: file.name,
-        mediaUrl: uploadRes.url,
-        mediaType: isImg ? 'image' : 'document',
-        mediaName: file.name,
-        createdAt: new Date().toISOString(),
-      };
+  // Upload file + rich caption
+  const handleSendMediaWithCaption = async (file: File, caption: string) => {
+    if (!activeChat) return;
+    const isImg = file.type.startsWith('image/');
+    const uploadRes = await uploadChatMedia(file, file.name, 'community-media');
 
-      setMessages((prev) => [...prev, newMsg]);
-      await persistChatMessage(newMsg);
-      setIsAttachmentMenuOpen(false);
-    } catch (err) {
-      console.warn('File upload notice:', err);
+    const newMsg: Message = {
+      id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      chatId: activeChat.id,
+      channelId: activeChat.id,
+      senderId: currentUser.id,
+      senderName: currentUser.fullName,
+      senderAvatar: currentUser.avatarUrl,
+      senderRole: currentUser.role,
+      content: caption || file.name,
+      caption: caption || undefined,
+      mediaUrl: uploadRes.url,
+      mediaType: isImg ? 'image' : 'document',
+      mediaName: file.name,
+      replyToId: replyingTo?.id,
+      replyToMessage: replyingTo
+        ? {
+            id: replyingTo.id,
+            senderName: replyingTo.senderName,
+            content: replyingTo.caption || replyingTo.content || 'Biriktirilgan fayl',
+          }
+        : undefined,
+      createdAt: new Date().toISOString(),
+      reactions: {},
+    };
+
+    setMessages((prev) => [...prev, newMsg]);
+    setPendingUploadFile(null);
+    setReplyingTo(null);
+    await persistChatMessage(newMsg);
+  };
+
+  // Edit Message
+  const handleStartEdit = (msg: Message) => {
+    setEditingMessage(msg);
+    setMessageInput(msg.caption || msg.content || '');
+    setReplyingTo(null);
+  };
+
+  // Delete Message
+  const handleDeleteMessage = async (msgId: string) => {
+    setMessages((prev) => prev.filter((m) => m.id !== msgId));
+    if (activeChat) {
+      await deleteChatMessage(msgId, activeChat.id);
     }
   };
 
-  // Create new custom chat / group
-  const handleCreateNewChat = (data: {
+  // Forward Message
+  const handleForwardMessage = async (targetChatId: string, msg: Message) => {
+    const forwardedMsg: Message = {
+      ...msg,
+      id: `msg-fwd-${Date.now()}`,
+      chatId: targetChatId,
+      channelId: targetChatId,
+      senderId: currentUser.id,
+      senderName: currentUser.fullName,
+      senderAvatar: currentUser.avatarUrl,
+      senderRole: currentUser.role,
+      createdAt: new Date().toISOString(),
+    };
+
+    if (targetChatId === activeChat?.id) {
+      setMessages((prev) => [...prev, forwardedMsg]);
+    }
+    await persistChatMessage(forwardedMsg);
+  };
+
+  // Create new custom entity (Channel, Group public/private, Direct)
+  const handleCreateNewEntity = (data: {
     name: string;
     description: string;
     type: ChatType;
+    avatarUrl?: string;
     targetUserId?: string;
   }) => {
     const newChat: Chat = {
@@ -346,9 +451,10 @@ export const CommunityChatHub: React.FC<Props> = ({
       isVerified: false,
       isOfficial: false,
       avatarUrl:
-        data.type === 'DIRECT'
+        data.avatarUrl ||
+        (data.type === 'DIRECT'
           ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'
-          : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150',
+          : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150'),
       members: data.targetUserId
         ? [currentUser.id, data.targetUserId]
         : [currentUser.id],
@@ -364,8 +470,15 @@ export const CommunityChatHub: React.FC<Props> = ({
     setIsCreateChatModalOpen(false);
   };
 
+  // Update Chat Metadata (Avatar, Name, Desc)
+  const handleUpdateChatMetadata = (updated: Partial<Chat>) => {
+    const next = chats.map((c) => (c.id === activeChat.id ? { ...c, ...updated } : c));
+    setChats(next);
+    persistChatsList(next);
+  };
+
   return (
-    <div className="h-[calc(100vh-4.5rem)] flex bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#0F172A] dark:text-[#F8FAFC] font-sans overflow-hidden select-none border border-[#E2E8F0] dark:border-[#1E293B] rounded-2xl">
+    <div className="h-[calc(100dvh-4rem)] max-h-[calc(100dvh-4rem)] flex bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#0F172A] dark:text-[#F8FAFC] font-sans overflow-hidden select-none border border-[#E2E8F0] dark:border-[#1E293B] rounded-2xl">
       {/* ============================================================= */}
       {/* 1. LEFT SIDEBAR: FOLDERS & CLEAN CHATS LIST                   */}
       {/* ============================================================= */}
@@ -388,9 +501,10 @@ export const CommunityChatHub: React.FC<Props> = ({
           </div>
 
           <button
+            type="button"
             onClick={() => setIsCreateChatModalOpen(true)}
             className="p-2 rounded-xl bg-[#F1F5F9] dark:bg-[#0A0F1D] hover:bg-[#E2E8F0] dark:hover:bg-[#1A233A] border border-[#E2E8F0] dark:border-[#1E293B] text-[#E07A5F] transition-colors cursor-pointer"
-            title="Yangi Muloqot Yaratish"
+            title="Yangi Muloqot Yaratish (Kanal / Guruh / Shaxsiy)"
           >
             <Pencil className="w-4 h-4" />
           </button>
@@ -456,96 +570,98 @@ export const CommunityChatHub: React.FC<Props> = ({
                   )}
                 </div>
 
-                {/* Chat Title & Last Snippet */}
+                {/* Content Details */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-1 mb-0.5">
-                    <div className="flex items-center gap-1.5 truncate">
-                      <span className="text-xs font-bold truncate text-[#0F172A] dark:text-[#F8FAFC]">
-                        {chat.name}
-                      </span>
-                      {chat.isOfficial && (
-                        <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-[#E07A5F]/10 text-[#E07A5F] border border-[#E07A5F]/30">
-                          RASMIY
-                        </span>
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold truncate text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-1.5">
+                      <span>{chat.name}</span>
+                      {chat.isVerified && (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#E07A5F] shrink-0" />
                       )}
-                    </div>
-                    <span className="text-[10px] font-mono text-[#64748B] dark:text-[#94A3B8] shrink-0">
-                      {chat.isLiveActive ? 'JONLI' : 'Bugun'}
+                    </h4>
+                    <span className="text-[10px] font-mono text-[#94A3B8]">
+                      {chat.lastMessage?.createdAt
+                        ? new Date(chat.lastMessage.createdAt).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : ''}
                     </span>
                   </div>
 
-                  <p className="text-xs text-[#64748B] dark:text-[#94A3B8] truncate font-medium">
-                    {chat.description || 'Xabarlar tarixi'}
+                  <p className="text-xs text-[#64748B] dark:text-[#94A3B8] truncate mt-0.5">
+                    {chat.lastMessage?.content || chat.description || 'Muloqot boshlanmadi'}
                   </p>
                 </div>
               </div>
             );
           })}
-
-          {filteredChats.length === 0 && (
-            <div className="p-8 text-center text-xs text-[#64748B] dark:text-[#94A3B8] font-mono">
-              Hozircha chatlar mavjud emas
-            </div>
-          )}
         </div>
       </aside>
 
       {/* ============================================================= */}
-      {/* 2. MAIN CENTER WORKSPACE: ACTIVE CHAT & STREAM BANNER         */}
+      {/* 2. MAIN ACTIVE CHAT VIEWPORT                                  */}
       {/* ============================================================= */}
       <main
         className={`${
-          !isMobileChatViewOpen ? 'hidden md:flex' : 'flex'
-        } flex-1 flex-col bg-[#F8FAFC] dark:bg-[#0A0F1D] overflow-hidden min-w-0 relative`}
+          isMobileChatViewOpen ? 'flex' : 'hidden md:flex'
+        } flex-1 flex-col bg-white dark:bg-[#0A0F1D] overflow-hidden relative`}
       >
         {activeChat ? (
           <>
-            {/* Top Workspace Header */}
+            {/* Header */}
             <header className="h-16 px-4 sm:px-6 bg-white dark:bg-[#121A2F] border-b border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3 min-w-0">
                 <button
                   onClick={() => setIsMobileChatViewOpen(false)}
-                  className="md:hidden p-1.5 text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]"
+                  className="md:hidden p-1.5 rounded-lg text-[#64748B] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
 
-                <div className="flex items-center gap-2.5 truncate">
+                <div className="relative shrink-0">
                   <img
                     src={
                       activeChat.avatarUrl ||
                       'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150'
                     }
                     alt={activeChat.name}
-                    className="w-9 h-9 rounded-xl object-cover border border-[#E2E8F0] dark:border-[#1E293B]"
+                    className="w-10 h-10 rounded-2xl object-cover border border-[#E2E8F0] dark:border-[#1E293B]"
                   />
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <h2 className="text-xs sm:text-sm font-bold truncate text-[#0F172A] dark:text-[#F8FAFC]">
-                        {activeChat.name}
-                      </h2>
-                      {activeChat.isOfficial && (
-                        <ShieldCheck className="w-3.5 h-3.5 text-[#E07A5F] shrink-0" />
-                      )}
-                    </div>
-                    <div className="text-[11px] font-mono text-[#64748B] dark:text-[#94A3B8] flex items-center gap-2 truncate">
-                      <span>
-                        {activeChat.type === 'SAVED_MESSAGES'
-                          ? 'Shaxsiy bulut xotirasi'
-                          : `${onlinePresenceCount} a'zo faol`}
+                  {activeChat.isLiveActive && (
+                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
+                    </span>
+                  )}
+                </div>
+
+                <div className="min-w-0">
+                  <h3 className="text-xs sm:text-sm font-bold truncate text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-1.5">
+                    <span>{activeChat.name}</span>
+                    {activeChat.isVerified && (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#E07A5F] shrink-0" />
+                    )}
+                  </h3>
+                  <div className="text-[11px] font-mono text-[#64748B] dark:text-[#94A3B8] flex items-center gap-2">
+                    <span>{onlinePresenceCount} nafar onlayn</span>
+                    {activeChat.isLiveActive && (
+                      <span className="text-rose-500 font-bold flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                        Jonli Efirda
                       </span>
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* Right Action Controls */}
-              <div className="flex items-center gap-2 shrink-0">
-                {/* Live Stream Launcher */}
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2">
                 {canStream && (
                   <button
                     onClick={() => setIsLiveStudioOpen(true)}
-                    className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-mono font-bold flex items-center gap-1.5 shadow-sm shadow-rose-600/30 transition-all cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-mono text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                    title="Jonli efir boshlash"
                   >
                     <Radio className="w-3.5 h-3.5 animate-pulse" />
                     <span className="hidden sm:inline">Jonli Efir</span>
@@ -561,13 +677,13 @@ export const CommunityChatHub: React.FC<Props> = ({
                 </button>
 
                 <button
-                  onClick={() => setIsRightSidebarOpen((prev) => !prev)}
+                  onClick={() => setIsChannelInfoOpen((prev) => !prev)}
                   className={`p-2 rounded-xl border border-[#E2E8F0] dark:border-[#1E293B] transition-colors cursor-pointer ${
-                    isRightSidebarOpen
+                    isChannelInfoOpen
                       ? 'bg-[#E07A5F] text-white'
                       : 'bg-[#F1F5F9] dark:bg-[#0A0F1D] text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]'
                   }`}
-                  title="Kanal Ma'lumotlari"
+                  title="A'zolar & Kanal Ma'lumotlari"
                 >
                   <Info className="w-4 h-4" />
                 </button>
@@ -594,15 +710,15 @@ export const CommunityChatHub: React.FC<Props> = ({
               </div>
             )}
 
-            {/* Messages Scroll Area */}
-            <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-3.5">
+            {/* Messages Scroll Area (Isolated Scroll Container) */}
+            <div ref={messagesContainerRef} className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-3.5">
               {messages.map((msg) => {
                 const isMe = msg.senderId === currentUser.id;
 
                 return (
                   <div
                     key={msg.id}
-                    className={`flex items-start gap-2.5 max-w-2xl ${
+                    className={`group flex items-start gap-2.5 max-w-2xl relative ${
                       isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'
                     }`}
                   >
@@ -613,102 +729,238 @@ export const CommunityChatHub: React.FC<Props> = ({
                           'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80'
                         }
                         alt={msg.senderName}
-                        className="w-8 h-8 rounded-full object-cover border border-[#E2E8F0] dark:border-[#1E293B] shrink-0 mt-0.5"
+                        className="w-8 h-8 rounded-full object-cover border border-[#E2E8F0] dark:border-[#1E293B] shrink-0 mt-0.5 cursor-pointer"
+                        onClick={() => {
+                          if (onSelectUserProfile) {
+                            const found = usersList.find((u) => u.id === msg.senderId);
+                            if (found) onSelectUserProfile(found);
+                          }
+                        }}
                       />
                     )}
 
-                    <div
-                      className={`p-3.5 rounded-2xl text-xs space-y-1.5 relative shadow-xs ${
-                        isMe
-                          ? 'bg-[#E07A5F] text-white border border-[#E07A5F]'
-                          : 'bg-[#F1F5F9] dark:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] border border-[#E2E8F0] dark:border-[#334155]/60'
-                      }`}
-                    >
-                      {/* Sender Tag */}
-                      {!isMe && (
-                        <div className="flex items-center gap-1.5 text-[11px] font-mono mb-1">
-                          <span className="font-bold text-[#E07A5F]">{msg.senderName}</span>
-                          {msg.senderRole === 'SUPER_ADMIN' && (
-                            <span className="px-1 py-0.2 rounded bg-rose-500/10 border border-rose-500/20 text-rose-500 dark:text-rose-300 text-[9px] font-bold">
-                              ADMIN
-                            </span>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Reply Reference */}
-                      {msg.replyToMessage && (
-                        <div className={`p-2 rounded-lg border-l-2 border-[#E07A5F] text-[11px] ${
+                    <div className="relative group/msg max-w-full">
+                      <div
+                        className={`p-3.5 rounded-2xl text-xs space-y-2 relative shadow-xs ${
                           isMe
-                            ? 'bg-black/10 text-white/90'
-                            : 'bg-white/80 dark:bg-[#0A0F1D]/80 text-[#64748B] dark:text-[#94A3B8]'
-                        }`}>
-                          <div className={`font-bold ${isMe ? 'text-white' : 'text-[#0F172A] dark:text-[#F8FAFC]'}`}>
-                            {msg.replyToMessage.senderName}
+                            ? 'bg-[#E07A5F] text-white border border-[#E07A5F]'
+                            : 'bg-[#F1F5F9] dark:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] border border-[#E2E8F0] dark:border-[#334155]/60'
+                        }`}
+                      >
+                        {/* Sender Tag */}
+                        {!isMe && (
+                          <div className="flex items-center gap-1.5 text-[11px] font-mono mb-1">
+                            <span className="font-bold text-[#E07A5F]">{msg.senderName}</span>
+                            {msg.senderRole === 'SUPER_ADMIN' && (
+                              <span className="px-1 py-0.2 rounded bg-rose-500/10 border border-rose-500/20 text-rose-500 dark:text-rose-300 text-[9px] font-bold">
+                                ADMIN
+                              </span>
+                            )}
                           </div>
-                          <div className="truncate">{msg.replyToMessage.content}</div>
-                        </div>
-                      )}
+                        )}
 
-                      {/* Video Recording Attachment (Directly Playable & Downloadable) */}
-                      {msg.recordingVideoUrl && (
-                        <div className="rounded-xl overflow-hidden bg-black border border-[#E2E8F0] dark:border-[#1E293B] p-1 space-y-2">
-                          <video
-                            src={msg.recordingVideoUrl}
-                            controls
-                            className="w-full rounded-lg max-h-64 object-contain"
-                          />
-                          <div className="px-2 py-1 flex items-center justify-between text-[11px] font-mono text-[#64748B] dark:text-[#94A3B8]">
-                            <span>{msg.recordingTitle || 'Live Lesson Recording'}</span>
+                        {/* Reply Reference Header */}
+                        {msg.replyToMessage && (
+                          <div className={`p-2 rounded-lg border-l-2 border-[#E07A5F] text-[11px] ${
+                            isMe
+                              ? 'bg-black/10 text-white/90'
+                              : 'bg-white/80 dark:bg-[#0A0F1D]/80 text-[#64748B] dark:text-[#94A3B8]'
+                          }`}>
+                            <div className={`font-bold ${isMe ? 'text-white' : 'text-[#0F172A] dark:text-[#F8FAFC]'}`}>
+                              {msg.replyToMessage.senderName}
+                            </div>
+                            <div className="truncate">{msg.replyToMessage.content}</div>
+                          </div>
+                        )}
+
+                        {/* Video Recording Attachment */}
+                        {msg.recordingVideoUrl && (
+                          <div className="rounded-xl overflow-hidden bg-black border border-[#E2E8F0] dark:border-[#1E293B] p-1 space-y-2">
+                            <video
+                              src={msg.recordingVideoUrl}
+                              controls
+                              className="w-full rounded-lg max-h-64 object-contain"
+                            />
+                            <div className="px-2 py-1 flex items-center justify-between text-[11px] font-mono text-[#64748B] dark:text-[#94A3B8]">
+                              <span>{msg.recordingTitle || 'Live Lesson Recording'}</span>
+                              <a
+                                href={msg.recordingVideoUrl}
+                                download
+                                className="text-[#E07A5F] hover:underline flex items-center gap-1 cursor-pointer"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                                <span>Yuklash</span>
+                              </a>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Media Attachment: Image with Framed Box */}
+                        {msg.mediaUrl && msg.mediaType === 'image' && (
+                          <div className="rounded-xl overflow-hidden border border-black/10 dark:border-white/10 bg-black/20">
+                            <img
+                              src={msg.mediaUrl}
+                              alt={msg.mediaName || "Biriktirilgan rasm"}
+                              className="rounded-xl max-h-80 w-full object-cover"
+                            />
+                          </div>
+                        )}
+
+                        {/* Media Attachment: Document */}
+                        {msg.mediaUrl && msg.mediaType === 'document' && (
+                          <div className="p-3 rounded-xl bg-white/20 dark:bg-[#0A0F1D]/60 border border-white/20 dark:border-[#1E293B] flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <FileText size={20} className={isMe ? 'text-white' : 'text-[#E07A5F]'} />
+                              <div className="min-w-0">
+                                <div className="font-bold truncate text-xs">{msg.mediaName || 'Hujjat'}</div>
+                                <div className="text-[10px] font-mono opacity-80">PDF / Fayl</div>
+                              </div>
+                            </div>
                             <a
-                              href={msg.recordingVideoUrl}
-                              download
-                              className="text-[#E07A5F] hover:underline flex items-center gap-1 cursor-pointer"
+                              href={msg.mediaUrl}
+                              download={msg.mediaName}
+                              target="_blank"
+                              rel="noreferrer"
+                              className={`p-1.5 rounded-lg ${isMe ? 'bg-white/20 text-white' : 'bg-[#E07A5F] text-white'}`}
                             >
-                              <Download className="w-3.5 h-3.5" />
-                              <span>Yuklash</span>
+                              <Download size={13} />
                             </a>
                           </div>
+                        )}
+
+                        {/* Voice Note Player */}
+                        {msg.voiceAudioUrl && (
+                          <div className="flex items-center gap-2 p-2 rounded-xl bg-white/40 dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B]">
+                            <Volume2 className={`w-4 h-4 ${isMe ? 'text-white' : 'text-[#E07A5F]'}`} />
+                            <audio src={msg.voiceAudioUrl} controls className="h-8 max-w-[200px]" />
+                          </div>
+                        )}
+
+                        {/* Rich Telegram Formatted Text / Caption */}
+                        {(msg.caption || msg.content) && (
+                          <RichTextRenderer
+                            content={msg.caption || msg.content}
+                            className="leading-relaxed"
+                          />
+                        )}
+
+                        {/* Timestamp & Flags */}
+                        <div className={`text-[10px] font-mono flex items-center justify-end gap-1.5 ${
+                          isMe ? 'text-white/80' : 'text-[#64748B] dark:text-[#94A3B8]'
+                        }`}>
+                          {msg.isEdited && <span className="italic">(tahrirlandi)</span>}
+                          <span>
+                            {new Date(msg.createdAt).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                          {isMe && <CheckCheck size={11} className="text-white" />}
                         </div>
-                      )}
+                      </div>
 
-                      {/* Image Attachment */}
-                      {msg.mediaUrl && msg.mediaType === 'image' && (
-                        <img
-                          src={msg.mediaUrl}
-                          alt="Attachment"
-                          className="rounded-xl max-h-64 object-cover border border-[#E2E8F0] dark:border-[#1E293B]"
-                        />
-                      )}
+                      {/* Floating Message Action Buttons */}
+                      <div className={`absolute -top-3 ${isMe ? 'left-0' : 'right-0'} opacity-0 group-hover/msg:opacity-100 transition-opacity flex items-center gap-0.5 p-1 bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] rounded-xl shadow-lg z-10 select-none`}>
+                        <button
+                          type="button"
+                          onClick={() => setReplyingTo(msg)}
+                          className="p-1 rounded-md text-[#64748B] hover:text-[#0F172A] dark:hover:text-white hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] cursor-pointer"
+                          title="Javob qaytarish"
+                        >
+                          <CornerUpLeft size={12} />
+                        </button>
 
-                      {/* Voice Note Player */}
-                      {msg.voiceAudioUrl && (
-                        <div className="flex items-center gap-2 p-2 rounded-xl bg-white/40 dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B]">
-                          <Volume2 className={`w-4 h-4 ${isMe ? 'text-white' : 'text-[#E07A5F]'}`} />
-                          <audio src={msg.voiceAudioUrl} controls className="h-8 max-w-[200px]" />
-                        </div>
-                      )}
+                        <button
+                          type="button"
+                          onClick={() => setForwardingMessage(msg)}
+                          className="p-1 rounded-md text-[#64748B] hover:text-[#0F172A] dark:hover:text-white hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] cursor-pointer"
+                          title="Uzatish (Forward)"
+                        >
+                          <Forward size={12} />
+                        </button>
 
-                      {/* Message Text with KaTeX Math Rendering */}
-                      {msg.content && (
-                        <div className="leading-relaxed">
-                          <KaTeXRenderer text={msg.content} />
-                        </div>
-                      )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (navigator.clipboard) {
+                              navigator.clipboard.writeText(msg.caption || msg.content || '');
+                            }
+                          }}
+                          className="p-1 rounded-md text-[#64748B] hover:text-[#0F172A] dark:hover:text-white hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] cursor-pointer"
+                          title="Nusxa olish"
+                        >
+                          <Copy size={12} />
+                        </button>
 
-                      {/* Timestamp */}
-                      <div className={`text-[10px] font-mono text-right ${isMe ? 'text-white/80' : 'text-[#64748B] dark:text-[#94A3B8]'}`}>
-                        {new Date(msg.createdAt).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+                        {isMe && (
+                          <button
+                            type="button"
+                            onClick={() => handleStartEdit(msg)}
+                            className="p-1 rounded-md text-[#64748B] hover:text-[#0F172A] dark:hover:text-white hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] cursor-pointer"
+                            title="Tahrirlash"
+                          >
+                            <Edit2 size={12} />
+                          </button>
+                        )}
+
+                        {(isMe || currentUser.role === 'ADMIN' || currentUser.role === 'SUPER_ADMIN') && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteMessage(msg.id)}
+                            className="p-1 rounded-md text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 cursor-pointer"
+                            title="O'chirish"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
                 );
               })}
-              <div ref={messagesEndRef} />
             </div>
+
+            {/* Replying Banner */}
+            {replyingTo && (
+              <div className="px-4 py-2 bg-[#F1F5F9] dark:bg-[#1E293B] border-t border-[#E2E8F0] dark:border-[#334155] flex items-center justify-between text-xs shrink-0">
+                <div className="flex items-center gap-2 border-l-2 border-[#E07A5F] pl-2 min-w-0">
+                  <CornerUpLeft size={13} className="text-[#E07A5F] shrink-0" />
+                  <div className="min-w-0">
+                    <span className="font-bold text-[#E07A5F]">{replyingTo.senderName}: </span>
+                    <span className="truncate text-[#64748B] dark:text-[#94A3B8]">
+                      {replyingTo.caption || replyingTo.content || 'Biriktirilgan fayl'}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setReplyingTo(null)}
+                  className="p-1 text-[#64748B] hover:text-[#0F172A] dark:hover:text-white cursor-pointer"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+
+            {/* Editing Banner */}
+            {editingMessage && (
+              <div className="px-4 py-2 bg-amber-500/10 border-t border-amber-500/20 flex items-center justify-between text-xs font-mono shrink-0">
+                <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                  <Edit2 size={13} />
+                  <span>Xabarni tahrirlash</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingMessage(null);
+                    setMessageInput('');
+                  }}
+                  className="p-1 text-amber-600 dark:text-amber-400 hover:text-rose-500 cursor-pointer"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            )}
 
             {/* Message Input Bottom Bar */}
             {canPost ? (
@@ -720,31 +972,19 @@ export const CommunityChatHub: React.FC<Props> = ({
                 <div className="relative">
                   <button
                     type="button"
-                    onClick={() => setIsAttachmentMenuOpen((prev) => !prev)}
+                    onClick={() => fileInputRef.current?.click()}
                     className="p-2.5 rounded-xl bg-[#F1F5F9] dark:bg-[#0A0F1D] hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#1E293B] text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] transition-colors cursor-pointer"
+                    title="Fayl yoki Rasm biriktirish (Tagyozuv bilan)"
                   >
                     <Paperclip className="w-4 h-4" />
                   </button>
 
-                  {/* Attachment Dropdown */}
-                  {isAttachmentMenuOpen && (
-                    <div className="absolute bottom-12 left-0 w-44 p-1.5 bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] rounded-xl shadow-2xl space-y-1 text-xs font-mono text-[#0F172A] dark:text-[#F8FAFC]">
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="w-full p-2 rounded-lg hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] flex items-center gap-2 text-left cursor-pointer"
-                      >
-                        <ImageIcon className="w-3.5 h-3.5 text-[#E07A5F]" />
-                        <span>Rasm / Fayl</span>
-                      </button>
-                    </div>
-                  )}
-
                   <input
                     ref={fileInputRef}
                     type="file"
+                    accept="image/*,.pdf,.doc,.docx,.txt"
                     className="hidden"
-                    onChange={handleFileUpload}
+                    onChange={handleFilePicked}
                   />
                 </div>
 
@@ -770,7 +1010,9 @@ export const CommunityChatHub: React.FC<Props> = ({
                   placeholder={
                     isRecordingVoice
                       ? `Ovoz yozilmoqda (${voiceSeconds}s)...`
-                      : "Xabar yozing (Formula uchun $x^2+y^2=r^2$)..."
+                      : editingMessage
+                      ? "Tahrirlangan xabarni kiriting..."
+                      : "Xabar yozing (Formula: $x^2$, spoiler: ||javob||)..."
                   }
                   className="flex-1 px-4 py-2.5 rounded-xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] text-xs text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-hidden focus:border-[#E07A5F]"
                 />
@@ -780,8 +1022,9 @@ export const CommunityChatHub: React.FC<Props> = ({
                   type="submit"
                   disabled={!messageInput.trim()}
                   className="p-2.5 rounded-xl bg-[#E07A5F] hover:bg-[#c96c53] text-white font-bold transition-colors cursor-pointer disabled:opacity-40"
+                  title={editingMessage ? "Saqlash" : "Yuborish"}
                 >
-                  <Send className="w-4 h-4" />
+                  {editingMessage ? <Check className="w-4 h-4" /> : <Send className="w-4 h-4" />}
                 </button>
               </form>
             ) : (
@@ -798,146 +1041,58 @@ export const CommunityChatHub: React.FC<Props> = ({
       </main>
 
       {/* ============================================================= */}
-      {/* 3. RIGHT SIDEBAR: CHANNEL METRICS & DETAILS                   */}
+      {/* 3. RIGHT SIDEBAR: CHANNEL METRICS, METADATA & MEMBERS DRAWER */}
       {/* ============================================================= */}
       <AnimatePresence>
-        {isRightSidebarOpen && activeChat && (
-          <motion.aside
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 300, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            className="h-full bg-white dark:bg-[#121A2F] border-l border-[#E2E8F0] dark:border-[#1E293B] flex flex-col shrink-0 overflow-hidden font-sans"
-          >
-            <div className="h-16 px-4 border-b border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-between">
-              <h3 className="text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC]">Kanal Ma'lumotlari</h3>
-              <button
-                onClick={() => setIsRightSidebarOpen(false)}
-                className="p-1 text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="p-4 space-y-4 overflow-y-auto">
-              <div className="text-center space-y-2">
-                <img
-                  src={
-                    activeChat.avatarUrl ||
-                    'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150'
-                  }
-                  alt={activeChat.name}
-                  className="w-16 h-16 rounded-2xl mx-auto object-cover border border-[#E2E8F0] dark:border-[#1E293B]"
-                />
-                <h4 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC]">{activeChat.name}</h4>
-                <p className="text-xs text-[#64748B] dark:text-[#94A3B8] leading-relaxed">
-                  {activeChat.description || 'ASRON SAT rasmiy kanali.'}
-                </p>
-              </div>
-
-              <div className="p-3 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] space-y-2 text-xs font-mono">
-                <div className="flex justify-between">
-                  <span className="text-[#64748B] dark:text-[#94A3B8]">Turi:</span>
-                  <span className="text-[#0F172A] dark:text-[#F8FAFC]">{activeChat.type}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#64748B] dark:text-[#94A3B8]">Holati:</span>
-                  <span className="text-emerald-500 font-bold">Faol</span>
-                </div>
-              </div>
-            </div>
-          </motion.aside>
+        {isChannelInfoOpen && activeChat && (
+          <ChannelInfoDrawer
+            isOpen={isChannelInfoOpen}
+            chat={activeChat}
+            currentUser={currentUser}
+            usersList={usersList}
+            onlineUserIds={onlineUserIds}
+            onClose={() => setIsChannelInfoOpen(false)}
+            onUpdateChat={handleUpdateChatMetadata}
+          />
         )}
       </AnimatePresence>
 
-      {/* Create Chat Modal */}
-      {isCreateChatModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs font-sans">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 8 }}
-            className="w-full max-w-md bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] rounded-2xl p-6 text-[#0F172A] dark:text-[#F8FAFC] shadow-2xl space-y-4"
-          >
-            <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#1E293B] pb-3">
-              <h3 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC]">Yangi Muloqot Yaratish</h3>
-              <button
-                onClick={() => setIsCreateChatModalOpen(false)}
-                className="p-1 text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+      {/* Telegram-style Create Entity Modal (Channel, Group public/private, Direct) */}
+      <AnimatePresence>
+        {isCreateChatModalOpen && (
+          <CreateEntityModal
+            isOpen={isCreateChatModalOpen}
+            currentUser={currentUser}
+            usersList={usersList}
+            onClose={() => setIsCreateChatModalOpen(false)}
+            onCreateChat={handleCreateNewEntity}
+          />
+        )}
+      </AnimatePresence>
 
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const formElem = e.currentTarget;
-                const title = (formElem.elements.namedItem('chatName') as HTMLInputElement).value;
-                const desc = (formElem.elements.namedItem('chatDesc') as HTMLInputElement).value;
-                if (!title.trim()) return;
-                handleCreateNewChat({
-                  name: title.trim(),
-                  description: desc.trim(),
-                  type: createChatTab === 'DIRECT' ? 'DIRECT' : createChatTab === 'GROUP' ? 'PUBLIC_GROUP' : 'PUBLIC_CHANNEL',
-                });
-              }}
-              className="space-y-4"
-            >
-              <div className="flex rounded-xl p-1 bg-[#F1F5F9] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] text-xs font-mono">
-                {(['DIRECT', 'GROUP', 'CHANNEL'] as const).map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setCreateChatTab(t)}
-                    className={`flex-1 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                      createChatTab === t
-                        ? 'bg-[#E07A5F] text-white font-bold shadow-xs'
-                        : 'text-[#64748B] dark:text-[#94A3B8]'
-                    }`}
-                  >
-                    {t === 'DIRECT' ? 'Shaxsiy' : t === 'GROUP' ? 'Guruh' : 'Kanal'}
-                  </button>
-                ))}
-              </div>
+      {/* Rich Media Caption Attachment Modal */}
+      <AnimatePresence>
+        {pendingUploadFile && (
+          <MediaCaptionModal
+            file={pendingUploadFile}
+            onSend={handleSendMediaWithCaption}
+            onCancel={() => setPendingUploadFile(null)}
+          />
+        )}
+      </AnimatePresence>
 
-              <div className="space-y-1">
-                <label className="text-xs font-mono text-[#64748B] dark:text-[#94A3B8]">Nomi</label>
-                <input
-                  name="chatName"
-                  required
-                  placeholder="Masalan: SAT Math 800 Prep"
-                  className="w-full px-3 py-2 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] text-xs text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-hidden focus:border-[#E07A5F]"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-mono text-[#64748B] dark:text-[#94A3B8]">Tavsif</label>
-                <input
-                  name="chatDesc"
-                  placeholder="Guruh / kanal haqida qisqacha..."
-                  className="w-full px-3 py-2 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] text-xs text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-hidden focus:border-[#E07A5F]"
-                />
-              </div>
-
-              <div className="pt-2 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsCreateChatModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-[#E2E8F0] dark:border-[#1E293B] text-xs text-[#64748B] dark:text-[#94A3B8] cursor-pointer"
-                >
-                  Bekor qilish
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-xl bg-[#E07A5F] hover:bg-[#c96c53] text-white text-xs font-mono font-bold cursor-pointer"
-                >
-                  Yaratish
-                </button>
-              </div>
-            </form>
-          </motion.div>
-        </div>
-      )}
+      {/* Forward Message Modal */}
+      <AnimatePresence>
+        {forwardingMessage && (
+          <ForwardMessageModal
+            isOpen={!!forwardingMessage}
+            messageToForward={forwardingMessage}
+            chats={chats}
+            onClose={() => setForwardingMessage(null)}
+            onForward={handleForwardMessage}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Invite Modal */}
       {isInviteModalOpen && activeChat && (
@@ -946,11 +1101,7 @@ export const CommunityChatHub: React.FC<Props> = ({
           chat={activeChat}
           currentUser={currentUser}
           onClose={() => setIsInviteModalOpen(false)}
-          onUpdateChat={(updated) => {
-            const next = chats.map((c) => (c.id === activeChat.id ? { ...c, ...updated } : c));
-            setChats(next);
-            persistChatsList(next);
-          }}
+          onUpdateChat={handleUpdateChatMetadata}
         />
       )}
 

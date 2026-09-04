@@ -9,6 +9,8 @@ export default defineConfig(() => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
+        'next/link': path.resolve(__dirname, 'src/lib/next-shims.tsx'),
+        'next/navigation': path.resolve(__dirname, 'src/lib/next-shims.tsx'),
       },
     },
     server: {

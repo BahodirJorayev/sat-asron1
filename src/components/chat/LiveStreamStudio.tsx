@@ -72,11 +72,13 @@ export const LiveStreamStudio: React.FC<Props> = ({
   const [isCameraOn, setIsCameraOn] = useState<boolean>(true);
   const [isMicOn, setIsMicOn] = useState<boolean>(true);
   const [isScreenSharing, setIsScreenSharing] = useState<boolean>(false);
-  const [activeTabMode, setActiveTabMode] = useState<'WHITEBOARD' | 'SCREEN' | 'DESMOS'>('SCREEN');
+  const [activeTabMode, setActiveTabMode] = useState<'WHITEBOARD' | 'SCREEN' | 'DESMOS' | 'SPLIT'>('SCREEN');
   const [pipShape, setPipShape] = useState<'RECT' | 'CIRCLE'>('RECT');
   const [pipPosition, setPipPosition] = useState<'BOTTOM_LEFT' | 'BOTTOM_RIGHT' | 'TOP_RIGHT' | 'TOP_LEFT'>('BOTTOM_LEFT');
+  const [isPipMinimized, setIsPipMinimized] = useState<boolean>(false);
 
   // Video & Stream Refs
+  const stageContainerRef = useRef<HTMLDivElement | null>(null);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const screenVideoRef = useRef<HTMLVideoElement | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -248,16 +250,36 @@ export const LiveStreamStudio: React.FC<Props> = ({
   // Build Unified Stream for Recording (Video + Mixed Audio)
   const buildCombinedRecordingStream = (): MediaStream | null => {
     try {
-      const audioTracks: MediaStreamTrack[] = [];
+      const hasScreenAudio = !!(screenStreamRef.current && screenStreamRef.current.getAudioTracks().length > 0);
+      const hasMicAudio = !!(mediaStreamRef.current && isMicOn && mediaStreamRef.current.getAudioTracks().length > 0);
 
-      // Add screen audio if available
-      if (screenStreamRef.current && screenStreamRef.current.getAudioTracks().length > 0) {
-        audioTracks.push(...screenStreamRef.current.getAudioTracks());
-      }
+      let masterAudioTrack: MediaStreamTrack | null = null;
 
-      // Add mic audio if available
-      if (mediaStreamRef.current && isMicOn && mediaStreamRef.current.getAudioTracks().length > 0) {
-        audioTracks.push(...mediaStreamRef.current.getAudioTracks());
+      if (hasScreenAudio && hasMicAudio && typeof window !== 'undefined' && (window.AudioContext || (window as any).webkitAudioContext)) {
+        try {
+          const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+          const audioCtx = new AudioContextClass();
+          audioContextRef.current = audioCtx;
+          const dest = audioCtx.createMediaStreamDestination();
+
+          if (screenStreamRef.current) {
+            const screenSource = audioCtx.createMediaStreamSource(screenStreamRef.current);
+            screenSource.connect(dest);
+          }
+          if (mediaStreamRef.current) {
+            const micSource = audioCtx.createMediaStreamSource(mediaStreamRef.current);
+            micSource.connect(dest);
+          }
+
+          masterAudioTrack = dest.stream.getAudioTracks()[0];
+        } catch (mixErr) {
+          console.warn('AudioContext mixing fallback:', mixErr);
+          masterAudioTrack = mediaStreamRef.current?.getAudioTracks()[0] || screenStreamRef.current?.getAudioTracks()[0] || null;
+        }
+      } else if (hasScreenAudio) {
+        masterAudioTrack = screenStreamRef.current!.getAudioTracks()[0];
+      } else if (hasMicAudio) {
+        masterAudioTrack = mediaStreamRef.current!.getAudioTracks()[0];
       }
 
       // Main video track (Screen share stream first, or webcam stream)
@@ -269,8 +291,9 @@ export const LiveStreamStudio: React.FC<Props> = ({
       }
 
       if (mainVideoTrack) {
-        const combined = new MediaStream([mainVideoTrack, ...audioTracks]);
-        return combined;
+        const tracks = [mainVideoTrack];
+        if (masterAudioTrack) tracks.push(masterAudioTrack);
+        return new MediaStream(tracks);
       }
     } catch (e) {
       console.warn('Audio/Video mixing notice:', e);
@@ -569,6 +592,18 @@ export const LiveStreamStudio: React.FC<Props> = ({
           </button>
 
           <button
+            onClick={() => setActiveTabMode('SPLIT')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              activeTabMode === 'SPLIT'
+                ? 'bg-[#E07A5F] text-[#0A0F1D]'
+                : 'text-[#64748B] hover:text-[#F8FAFC]'
+            }`}
+          >
+            <Sparkles size={13} />
+            <span>Split: Doska + Desmos</span>
+          </button>
+
+          <button
             onClick={() => setIsDesmosOpen((prev) => !prev)}
             className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               isDesmosOpen
@@ -614,11 +649,22 @@ export const LiveStreamStudio: React.FC<Props> = ({
       {/* 2. Main Studio Body */}
       <div className="relative flex-1 flex overflow-hidden">
         {/* Central Stage Area */}
-        <div className="relative flex-1 flex flex-col bg-[#080C17] p-4 overflow-hidden">
+        <div ref={stageContainerRef} className="relative flex-1 flex flex-col bg-[#080C17] p-4 overflow-hidden">
           {/* Active Worksurface View */}
           <div className="relative flex-1 w-full h-full rounded-2xl overflow-hidden bg-[#121A2F] border border-[#1E293B] shadow-2xl">
             {activeTabMode === 'WHITEBOARD' && (
               <LiveWhiteboard className="w-full h-full" isHost={isHost} />
+            )}
+
+            {activeTabMode === 'SPLIT' && (
+              <div className="w-full h-full flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-[#1E293B] overflow-hidden">
+                <div className="flex-1 h-full min-h-[280px]">
+                  <LiveWhiteboard className="w-full h-full" isHost={isHost} />
+                </div>
+                <div className="flex-1 h-full min-h-[280px] bg-white">
+                  <DesmosCalculator isExpanded={true} />
+                </div>
+              </div>
             )}
 
             {activeTabMode === 'SCREEN' && (
@@ -652,64 +698,102 @@ export const LiveStreamStudio: React.FC<Props> = ({
             )}
           </div>
 
-          {/* Draggable & Configurable Webcam PIP Overlay */}
-          <div
-            className={`absolute ${pipPositionClasses} z-30 ${
-              pipShape === 'CIRCLE' ? 'w-40 h-40 rounded-full' : 'w-56 h-36 rounded-2xl'
-            } bg-[#121A2F] border-2 border-[#1E293B] shadow-2xl overflow-hidden group transition-all`}
-          >
-            {isCameraOn ? (
-              <video
-                ref={localVideoRef}
-                autoPlay
-                muted
-                playsInline
-                className="w-full h-full object-cover transform -scale-x-100"
-              />
-            ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-[#0A0F1D] p-3 text-center">
-                <img
-                  src={user.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80'}
-                  alt={user.fullName}
-                  className="w-10 h-10 rounded-full object-cover border border-[#E07A5F] mb-1"
+          {/* Draggable & Configurable Webcam PIP Overlay with discrete X button */}
+          {!isPipMinimized && (
+            <motion.div
+              drag
+              dragConstraints={stageContainerRef}
+              dragElastic={0.05}
+              className={`absolute ${pipPositionClasses} z-30 ${
+                pipShape === 'CIRCLE' ? 'w-44 h-44 rounded-full' : 'w-60 h-40 rounded-2xl'
+              } bg-[#121A2F] border-2 border-[#1E293B] shadow-2xl overflow-hidden group cursor-move select-none`}
+            >
+              {isCameraOn ? (
+                <video
+                  ref={localVideoRef}
+                  autoPlay
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover transform -scale-x-100 pointer-events-none"
                 />
-                <span className="text-[11px] font-bold text-[#F8FAFC] truncate max-w-[120px]">
-                  {user.fullName}
-                </span>
-                <span className="text-[9px] font-mono text-[#64748B]">Kamera o'chiq</span>
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-[#0A0F1D] p-3 text-center">
+                  <img
+                    src={user.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80'}
+                    alt={user.fullName}
+                    className="w-10 h-10 rounded-full object-cover border border-[#E07A5F] mb-1"
+                  />
+                  <span className="text-[11px] font-bold text-[#F8FAFC] truncate max-w-[120px]">
+                    {user.fullName}
+                  </span>
+                  <span className="text-[9px] font-mono text-[#64748B]">Kamera o'chiq</span>
+                </div>
+              )}
+
+              {/* Quick PIP Controls Overlay */}
+              <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 bg-black/80 p-1 rounded-lg">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPipShape((prev) => (prev === 'RECT' ? 'CIRCLE' : 'RECT'));
+                  }}
+                  className="text-neutral-300 hover:text-white p-0.5 cursor-pointer"
+                  title="Shaklni almashtirish"
+                >
+                  {pipShape === 'RECT' ? <Circle size={11} /> : <Square size={11} />}
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPipPosition((prev) => {
+                      if (prev === 'BOTTOM_LEFT') return 'BOTTOM_RIGHT';
+                      if (prev === 'BOTTOM_RIGHT') return 'TOP_RIGHT';
+                      if (prev === 'TOP_RIGHT') return 'TOP_LEFT';
+                      return 'BOTTOM_LEFT';
+                    });
+                  }}
+                  className="text-neutral-300 hover:text-white p-0.5 cursor-pointer"
+                  title="Burchakni almashtirish"
+                >
+                  <Move size={11} />
+                </button>
+                {/* Discrete X button to minimize PIP without killing camera */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsPipMinimized(true);
+                  }}
+                  className="p-0.5 rounded-sm bg-rose-600/80 hover:bg-rose-600 text-white cursor-pointer transition-colors"
+                  title="Kamerani yashirish"
+                >
+                  <X size={11} />
+                </button>
               </div>
-            )}
 
-            {/* Quick PIP Controls Overlay */}
-            <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 bg-black/70 p-1 rounded-lg">
-              <button
-                onClick={() => setPipShape((prev) => (prev === 'RECT' ? 'CIRCLE' : 'RECT'))}
-                className="text-neutral-300 hover:text-white p-0.5 cursor-pointer"
-                title="Shaklni almashtirish"
-              >
-                {pipShape === 'RECT' ? <Circle size={11} /> : <Square size={11} />}
-              </button>
-              <button
-                onClick={() =>
-                  setPipPosition((prev) => {
-                    if (prev === 'BOTTOM_LEFT') return 'BOTTOM_RIGHT';
-                    if (prev === 'BOTTOM_RIGHT') return 'TOP_RIGHT';
-                    if (prev === 'TOP_RIGHT') return 'TOP_LEFT';
-                    return 'BOTTOM_LEFT';
-                  })
-                }
-                className="text-neutral-300 hover:text-white p-0.5 cursor-pointer"
-                title="Burchakni almashtirish"
-              >
-                <Move size={11} />
-              </button>
-            </div>
+              <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between px-2 py-1 rounded-lg bg-black/70 backdrop-blur-xs text-[10px] font-mono text-[#F8FAFC]">
+                <span className="truncate">{user.fullName.split(' ')[0]}</span>
+                {isMicOn ? <Mic size={10} className="text-emerald-400" /> : <MicOff size={10} className="text-rose-400" />}
+              </div>
+            </motion.div>
+          )}
 
-            <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between px-2 py-1 rounded-lg bg-black/70 backdrop-blur-xs text-[10px] font-mono text-[#F8FAFC]">
-              <span className="truncate">{user.fullName.split(' ')[0]}</span>
-              {isMicOn ? <Mic size={10} className="text-emerald-400" /> : <MicOff size={10} className="text-rose-400" />}
-            </div>
-          </div>
+          {/* Floating trigger to restore minimized camera PIP */}
+          {isPipMinimized && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              type="button"
+              onClick={() => setIsPipMinimized(false)}
+              className="absolute bottom-20 left-6 z-30 px-3 py-1.5 rounded-xl bg-[#121A2F]/90 hover:bg-[#1E293B] border border-[#1E293B] text-xs font-mono text-white shadow-xl flex items-center gap-2 cursor-pointer transition-colors"
+              title="Kamerani qayta ko'rsatish"
+            >
+              <Video size={13} className="text-[#E07A5F]" />
+              <span>Kamerani ko'rsatish</span>
+            </motion.button>
+          )}
 
           {/* Floating Desmos PIP */}
           <AnimatePresence>

@@ -223,6 +223,62 @@ export async function persistChatMessage(message: Message): Promise<Message> {
 }
 
 /**
+ * Edit an existing message
+ */
+export async function editChatMessage(
+  messageId: string,
+  chatId: string,
+  newContent: string,
+  newCaption?: string
+): Promise<void> {
+  // Update local storage
+  if (typeof localStorage !== 'undefined') {
+    try {
+      const stored = localStorage.getItem(LOCAL_STORAGE_MESSAGES_KEY);
+      const all: Record<string, Message[]> = stored ? JSON.parse(stored) : {};
+      if (all[chatId]) {
+        all[chatId] = all[chatId].map((m) =>
+          m.id === messageId
+            ? { ...m, content: newContent, caption: newCaption ?? m.caption, isEdited: true }
+            : m
+        );
+        localStorage.setItem(LOCAL_STORAGE_MESSAGES_KEY, JSON.stringify(all));
+      }
+    } catch {}
+  }
+
+  // Update Supabase
+  try {
+    await supabase
+      .from('community_messages')
+      .update({ content: newContent, caption: newCaption, is_edited: true })
+      .eq('id', messageId);
+  } catch {}
+}
+
+/**
+ * Delete a message
+ */
+export async function deleteChatMessage(messageId: string, chatId: string): Promise<void> {
+  // Remove from local storage
+  if (typeof localStorage !== 'undefined') {
+    try {
+      const stored = localStorage.getItem(LOCAL_STORAGE_MESSAGES_KEY);
+      const all: Record<string, Message[]> = stored ? JSON.parse(stored) : {};
+      if (all[chatId]) {
+        all[chatId] = all[chatId].filter((m) => m.id !== messageId);
+        localStorage.setItem(LOCAL_STORAGE_MESSAGES_KEY, JSON.stringify(all));
+      }
+    } catch {}
+  }
+
+  // Delete from Supabase
+  try {
+    await supabase.from('community_messages').delete().eq('id', messageId);
+  } catch {}
+}
+
+/**
  * Save / Update Chats list in storage and sync with Supabase
  */
 export function persistChatsList(chats: Chat[]): void {
@@ -277,7 +333,7 @@ export function canUserStreamInChat(user: User, chat: Chat): boolean {
 export async function uploadChatMedia(
   fileBlob: Blob,
   fileName: string,
-  bucket: 'chat-attachments' | 'stream-recordings' = 'chat-attachments'
+  bucket: 'chat-attachments' | 'stream-recordings' | 'community-media' = 'community-media'
 ): Promise<{ url: string; error: any }> {
   try {
     const fileExt = fileName.split('.').pop() || 'webm';

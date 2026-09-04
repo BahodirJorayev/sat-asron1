@@ -375,6 +375,8 @@ export interface Message {
     senderName: string;
     content: string;
   };
+  caption?: string;
+  isEdited?: boolean;
   isPinned?: boolean;
   reactions?: Record<string, number>;
   userReacted?: string[];
@@ -430,7 +432,7 @@ export interface LiveStreamSession {
 
 export interface WhiteboardElement {
   id: string;
-  type: 'pen' | 'highlighter' | 'line' | 'rect' | 'circle' | 'axes' | 'grid' | 'text' | 'latex';
+  type: 'pen' | 'highlighter' | 'line' | 'rect' | 'circle' | 'axes' | 'grid' | 'text' | 'latex' | 'image';
   points?: { x: number; y: number }[];
   x?: number;
   y?: number;
@@ -441,6 +443,18 @@ export interface WhiteboardElement {
   text?: string;
   latex?: string;
   opacity?: number;
+  imageDataUrl?: string;
+  imageObj?: HTMLImageElement;
+}
+
+export interface LiveRecording {
+  id: string;
+  title: string;
+  videoUrl: string;
+  duration?: number;
+  channelId?: string;
+  createdBy?: string;
+  createdAt?: string;
 }
 
 export type ChatChannel = Chat;

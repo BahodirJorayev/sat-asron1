@@ -15,7 +15,9 @@ import {
   Sigma,
   Plus,
   Maximize2,
-  Minimize2
+  Minimize2,
+  Image as ImageIcon,
+  Clipboard
 } from 'lucide-react';
 import { WhiteboardElement } from '../types';
 import { KaTeXRenderer } from './KaTeXRenderer';
@@ -47,6 +49,7 @@ export const LiveWhiteboard: React.FC<Props> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
 
   const [tool, setTool] = useState<ToolType>('pen');
   const [selectedColor, setSelectedColor] = useState<string>('#1E1B18');
@@ -59,6 +62,94 @@ export const LiveWhiteboard: React.FC<Props> = ({
 
   // Current drawing element in progress
   const currentElementRef = useRef<WhiteboardElement | null>(null);
+
+  // Helper to place image element on canvas
+  const insertImageOnCanvas = (dataUrl: string) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = canvasRef.current;
+      const maxWidth = canvas ? canvas.width * 0.75 : 550;
+      const maxHeight = canvas ? canvas.height * 0.75 : 450;
+      let w = img.naturalWidth || 400;
+      let h = img.naturalHeight || 300;
+
+      if (w > maxWidth) {
+        h = (h * maxWidth) / w;
+        w = maxWidth;
+      }
+      if (h > maxHeight) {
+        w = (w * maxHeight) / h;
+        h = maxHeight;
+      }
+
+      const posX = canvas ? Math.max(20, (canvas.width - w) / 2) : 50;
+      const posY = canvas ? Math.max(20, (canvas.height - h) / 2) : 50;
+
+      const newEl: WhiteboardElement = {
+        id: `img-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        type: 'image',
+        x: posX,
+        y: posY,
+        width: w,
+        height: h,
+        color: '#000000',
+        strokeWidth: 1,
+        imageDataUrl: dataUrl,
+        imageObj: img,
+      };
+
+      setElements((prev) => [...prev, newEl]);
+      setRedoStack([]);
+    };
+    img.src = dataUrl;
+  };
+
+  // Clipboard Paste Engine (Ctrl + V for screenshot images and text)
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const activeTag = document.activeElement?.tagName.toLowerCase();
+      if (activeTag === 'input' || activeTag === 'textarea') return;
+
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.type.indexOf('image') !== -1) {
+          const blob = item.getAsFile();
+          if (blob) {
+            e.preventDefault();
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              const dataUrl = event.target?.result as string;
+              if (dataUrl) insertImageOnCanvas(dataUrl);
+            };
+            reader.readAsDataURL(blob);
+            break;
+          }
+        } else if (item.type === 'text/plain') {
+          const text = e.clipboardData?.getData('text');
+          if (text && text.trim()) {
+            const canvas = canvasRef.current;
+            const newEl: WhiteboardElement = {
+              id: `text-${Date.now()}`,
+              type: 'text',
+              x: canvas ? canvas.width / 4 : 120,
+              y: canvas ? canvas.height / 4 : 120,
+              color: selectedColor,
+              strokeWidth: strokeWidth,
+              text: text.trim(),
+            };
+            setElements((prev) => [...prev, newEl]);
+            setRedoStack([]);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [selectedColor, strokeWidth]);
 
   // LaTeX / Text modal insertion state
   const [latexInput, setLatexInput] = useState<string>('f(x) = ax^2 + bx + c');
@@ -216,6 +307,12 @@ export const LiveWhiteboard: React.FC<Props> = ({
           ctx.font = `${Math.max(14, el.strokeWidth * 5)}px 'Cinzel', serif, sans-serif`;
           ctx.fillStyle = el.color;
           ctx.fillText(el.text || el.latex || '', el.x, el.y);
+        }
+      } else if (el.type === 'image') {
+        if (el.imageObj && el.x !== undefined && el.y !== undefined && el.width && el.height) {
+          try {
+            ctx.drawImage(el.imageObj, el.x, el.y, el.width, el.height);
+          } catch {}
         }
       }
 
@@ -530,6 +627,32 @@ export const LiveWhiteboard: React.FC<Props> = ({
             >
               <Eraser size={14} />
             </button>
+
+            <button
+              onClick={() => imageInputRef.current?.click()}
+              title="Rasm yuklash yoki Ctrl+V skrinshot joylash"
+              className="p-2 rounded-xl text-xs font-bold transition-all text-[#64748B] hover:text-[#1E1B18] hover:bg-[#F5F0EB] cursor-pointer"
+            >
+              <ImageIcon size={14} />
+            </button>
+
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) {
+                  const reader = new FileReader();
+                  reader.onload = (ev) => {
+                    if (ev.target?.result) insertImageOnCanvas(ev.target.result as string);
+                  };
+                  reader.readAsDataURL(f);
+                }
+                e.target.value = '';
+              }}
+            />
           </div>
 
           {/* Color Palette */}

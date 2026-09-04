@@ -20,7 +20,6 @@ import {
   Layers,
   ArrowLeft,
 } from 'lucide-react';
-import Link from 'next/link';
 import { VocabularyBook, VocabularyWord } from '../../../types';
 import {
   fetchVocabBooks,

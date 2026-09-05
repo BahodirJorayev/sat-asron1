@@ -869,11 +869,46 @@ export default function App() {
     }
   }, [activeTab]);
 
-  // Listen to hash changes (back/forward navigation, direct deep links)
+  // Listen to hash and pushState route changes (back/forward navigation, direct deep links)
   useEffect(() => {
-    const handleHashChange = () => {
+    const handleRouteSync = () => {
       const hash = window.location.hash.replace('#/', '').replace('#', '').trim();
+      const pathname = window.location.pathname;
       const authenticated = isUserAuthenticated();
+
+      // Canonical pathname mappings
+      if (pathname === '/dashboard') {
+        setActiveTab('dashboard');
+        return;
+      }
+      if (pathname === '/questions') {
+        setActiveTab('qbank');
+        return;
+      }
+      if (pathname === '/mocks') {
+        setActiveTab('bluebook');
+        return;
+      }
+      if (pathname === '/vocabulary') {
+        setActiveTab('vocab');
+        return;
+      }
+      if (pathname === '/mistakes') {
+        setActiveTab('vault');
+        return;
+      }
+      if (pathname.startsWith('/chat') || pathname.startsWith('/community')) {
+        setActiveTab('community');
+        return;
+      }
+      if (pathname === '/profile') {
+        setActiveTab('profile');
+        return;
+      }
+      if (pathname === '/admin') {
+        setActiveTab('admin');
+        return;
+      }
 
       if (hash === 'login' || hash === 'signin') {
         if (authenticated) {
@@ -902,7 +937,7 @@ export default function App() {
         return;
       }
 
-      const validTabs = ['landing', 'blog', 'dashboard', 'daily-workout', 'vault', 'bluebook', 'qbank', 'community', 'arena', 'ai-tutor', 'roadmap', 'profile', 'admin'];
+      const validTabs = ['landing', 'blog', 'dashboard', 'daily-workout', 'vault', 'bluebook', 'qbank', 'community', 'arena', 'ai-tutor', 'roadmap', 'profile', 'admin', 'vocab'];
       if (validTabs.includes(hash)) {
         // Protected tabs guard
         if (['dashboard', 'vault', 'bluebook', 'qbank', 'daily-workout', 'arena', 'ai-tutor', 'profile', 'admin'].includes(hash) && !authenticated) {
@@ -914,8 +949,14 @@ export default function App() {
       }
     };
 
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('hashchange', handleRouteSync);
+    window.addEventListener('popstate', handleRouteSync);
+    window.addEventListener('asron_navigate', handleRouteSync);
+    return () => {
+      window.removeEventListener('hashchange', handleRouteSync);
+      window.removeEventListener('popstate', handleRouteSync);
+      window.removeEventListener('asron_navigate', handleRouteSync);
+    };
   }, []);
 
   // Handle successful login or signup from AuthModal

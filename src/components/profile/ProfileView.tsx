@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   User as UserIcon,
   Mail,
@@ -43,6 +44,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   onSignOut,
   onUpdateUser,
 }) => {
+  const router = useRouter();
   const effectiveInitialUser = initialUser || currentUser;
 
   // 1. User State
@@ -334,10 +336,14 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       <div className="flex items-center justify-between gap-4 pb-2 border-b border-[#E2E8F0] dark:border-[#1E293B]">
         <Link
           href="/dashboard"
+          onClick={(e) => {
+            e.preventDefault();
+            router.push('/dashboard');
+          }}
           className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] text-xs font-mono text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:border-slate-300 dark:hover:border-slate-700 transition-colors shadow-2xs cursor-pointer"
         >
-          <ArrowLeft size={14} />
-          <span>Dashboardga qaytish</span>
+          <ArrowLeft className="w-4 h-4 mr-1" />
+          <span>Uyga qaytish</span>
         </Link>
 
         {/* Apple-style Segmented Theme Controller: [ ☀️ Kunduzgi | 🌙 Tungi ] */}

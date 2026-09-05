@@ -1,8 +1,9 @@
 import React from 'react';
 
 /**
- * Universal Next.js shims for Vite environments.
- * Prevents Vite production bundling failures when Next.js primitives are referenced.
+ * Universal Next.js shims for Vite & SPA environments.
+ * Prevents static 404s on hosts like Vercel by leveraging client-side pushState
+ * and dispatching navigation events to synchronise App Router and SPA states.
  */
 
 export interface LinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
@@ -12,17 +13,63 @@ export interface LinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement>
   prefetch?: boolean;
 }
 
+function handleInternalNavigation(url: string, replace = false) {
+  if (typeof window === 'undefined') return;
+
+  const targetPath = url.split('?')[0];
+
+  // Map path to canonical SPA hash fallback
+  const pathToHash: Record<string, string> = {
+    '/dashboard': 'dashboard',
+    '/': 'dashboard',
+    '/questions': 'qbank',
+    '/mocks': 'bluebook',
+    '/vocabulary': 'vocab',
+    '/mistakes': 'vault',
+    '/chat': 'community',
+    '/community': 'community',
+    '/profile': 'profile',
+    '/admin': 'admin',
+    '/login': 'landing',
+    '/register': 'landing',
+  };
+
+  const matchedHash = pathToHash[targetPath];
+
+  if (replace) {
+    window.history.replaceState({}, '', url);
+  } else {
+    window.history.pushState({}, '', url);
+  }
+
+  if (matchedHash) {
+    window.location.hash = `#/${matchedHash}`;
+  }
+
+  // Dispatch events for activeTab listeners across the app
+  window.dispatchEvent(new CustomEvent('asron_navigate', { detail: { href: url, path: targetPath } }));
+  window.dispatchEvent(new PopStateEvent('popstate'));
+}
+
 export const Link: React.FC<LinkProps> = ({
   href,
   children,
   onClick,
+  replace,
   ...props
 }) => {
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (onClick) onClick(e);
-    if (!e.defaultPrevented && href.startsWith('#')) {
+    if (e.defaultPrevented) return;
+
+    if (href.startsWith('#')) {
       e.preventDefault();
       window.location.hash = href;
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    } else if (!href.startsWith('http') && !href.startsWith('//') && !href.startsWith('mailto:') && !href.startsWith('tel:')) {
+      // Internal navigation: prevent static 404 page reload
+      e.preventDefault();
+      handleInternalNavigation(href, replace);
     }
   };
 
@@ -37,9 +84,21 @@ export default Link;
 
 export function usePathname(): string {
   if (typeof window !== 'undefined') {
-    return window.location.pathname || '/';
+    const p = window.location.pathname;
+    if (p && p !== '/') return p;
+    // Fallback from hash
+    const hash = window.location.hash.replace('#/', '').replace('#', '').trim();
+    if (hash === 'dashboard') return '/dashboard';
+    if (hash === 'qbank') return '/questions';
+    if (hash === 'bluebook') return '/mocks';
+    if (hash === 'vocab') return '/vocabulary';
+    if (hash === 'vault') return '/mistakes';
+    if (hash === 'community' || hash.startsWith('chat')) return '/chat';
+    if (hash === 'profile') return '/profile';
+    if (hash === 'admin') return '/admin';
+    return p || '/dashboard';
   }
-  return '/';
+  return '/dashboard';
 }
 
 export function useSearchParams(): URLSearchParams {
@@ -55,6 +114,9 @@ export function useRouter() {
       if (typeof window !== 'undefined') {
         if (url.startsWith('#')) {
           window.location.hash = url;
+          window.dispatchEvent(new PopStateEvent('popstate'));
+        } else if (!url.startsWith('http') && !url.startsWith('//')) {
+          handleInternalNavigation(url, false);
         } else {
           window.location.href = url;
         }
@@ -62,12 +124,23 @@ export function useRouter() {
     },
     replace: (url: string) => {
       if (typeof window !== 'undefined') {
-        window.location.replace(url);
+        if (url.startsWith('#')) {
+          window.location.hash = url;
+          window.dispatchEvent(new PopStateEvent('popstate'));
+        } else if (!url.startsWith('http') && !url.startsWith('//')) {
+          handleInternalNavigation(url, true);
+        } else {
+          window.location.replace(url);
+        }
       }
     },
     back: () => {
       if (typeof window !== 'undefined') {
-        window.history.back();
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          handleInternalNavigation('/dashboard', true);
+        }
       }
     },
     forward: () => {

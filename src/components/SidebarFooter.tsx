@@ -69,14 +69,14 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
   };
 
   const handleProfileClick = () => {
-    navigateTo('/dashboard/profile', onOpenProfile);
+    navigateTo('/profile', onOpenProfile);
   };
 
   const handleSettingsClick = () => {
     if (onOpenSettings) {
       onOpenSettings();
     } else {
-      navigateTo('/dashboard/profile', onOpenProfile);
+      navigateTo('/profile', onOpenProfile);
     }
   };
 
@@ -84,7 +84,7 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
     if (onOpenPaywall) {
       onOpenPaywall();
     } else {
-      navigateTo('/dashboard/billing', onOpenPaywall);
+      navigateTo('/dashboard', onOpenPaywall);
     }
   };
 

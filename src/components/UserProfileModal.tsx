@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   X,
   User as UserIcon,
@@ -17,7 +18,8 @@ import {
   Check,
   ChevronRight,
   Sparkles,
-  Crown
+  Crown,
+  ArrowLeft,
 } from 'lucide-react';
 import { User, PlanTier } from '../types';
 import { BadgeCollection } from './BadgeCollection';
@@ -41,6 +43,7 @@ export const UserProfileModal: React.FC<Props> = ({
   isAdmin = false,
   onUpdatePlan,
 }) => {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
@@ -293,12 +296,26 @@ export const UserProfileModal: React.FC<Props> = ({
           <span className="text-slate-500">
             Target Exam Date: <strong className="text-slate-900 dark:text-white">{selectedUser.targetExamDate || 'October 2026'}</strong>
           </span>
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 font-bold text-slate-800 dark:text-slate-200 transition-colors cursor-pointer"
-          >
-            Close Profile
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                router.push('/dashboard');
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Uyga qaytish</span>
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl bg-[#E07A5F] hover:bg-[#c96c53] text-white font-bold transition-colors cursor-pointer shadow-2xs"
+            >
+              Yopish
+            </button>
+          </div>
         </div>
       </div>
     </div>

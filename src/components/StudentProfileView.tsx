@@ -319,12 +319,6 @@ export const StudentProfileView: React.FC<StudentProfileViewProps> = ({
                   <h1 className="text-xl sm:text-2xl font-extrabold text-[#1E1B18] tracking-tight">
                     {currentUser.fullName}
                   </h1>
-
-                  {/* Scholar Badge */}
-                  <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                    <CheckCircle2 size={12} className="text-emerald-500" />
-                    {currentUser.role === 'SUPER_ADMIN' ? 'ADMIN' : 'TALABA'}
-                  </span>
                 </div>
 
                 {/* Username & Institution */}

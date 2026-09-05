@@ -197,11 +197,8 @@ export const Header: React.FC<Props> = ({
                   </div>
                 )}
                 <div className="text-left hidden sm:block">
-                  <div className="text-[11px] font-bold text-[#0F172A] dark:text-[#F8FAFC] leading-tight flex items-center gap-1">
-                    <span>{user.fullName.split(' ')[0]}</span>
-                    <span className="text-[8px] font-mono font-bold px-1 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                      {user.role === 'SUPER_ADMIN' ? 'ADMIN' : 'TALABA'}
-                    </span>
+                  <div className="text-[11px] font-bold text-[#0F172A] dark:text-[#F8FAFC] leading-tight">
+                    <span>{user.fullName}</span>
                   </div>
                 </div>
               </div>

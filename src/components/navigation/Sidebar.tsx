@@ -75,6 +75,11 @@ interface SidebarProps {
   onToggleCollapse?: () => void;
   isAdmin?: boolean;
   className?: string;
+  user?: {
+    fullName?: string;
+    username?: string;
+    avatarUrl?: string;
+  } | null;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -83,6 +88,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onToggleCollapse,
   isAdmin = false,
   className = '',
+  user,
 }) => {
   const pathname = usePathname() || currentPath || '/dashboard';
   const [internalCollapsed, setInternalCollapsed] = useState(false);
@@ -208,25 +214,37 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* 3. Footer Strip (NO Redundant Theme Toggle, Clean Status Bar) */}
       <div className="p-3 border-t border-[#E2E8F0] dark:border-[#1E293B] bg-[#F8FAFC]/70 dark:bg-[#0A0F1D]/60 shrink-0">
         <div
-          className={`p-2 rounded-xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] flex items-center ${
+          className={`p-2 rounded-xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-[#1E293B] flex items-center ${
             isCollapsed ? 'justify-center' : 'justify-between'
           } gap-2 shadow-2xs`}
         >
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="w-7 h-7 rounded-lg bg-[#F1F5F9] dark:bg-[#1E293B] text-[#E07A5F] border border-[#E2E8F0] dark:border-[#334155] flex items-center justify-center font-mono text-xs font-bold shrink-0">
-              T
-            </div>
+          <Link
+            href="/profile"
+            className="flex items-center gap-2 min-w-0 group cursor-pointer"
+            title="Profilga o'tish"
+          >
+            {user?.avatarUrl ? (
+              <img
+                src={user.avatarUrl}
+                alt={user.fullName || 'User'}
+                className="w-7 h-7 rounded-lg object-cover border border-slate-200 dark:border-slate-800 shrink-0"
+              />
+            ) : (
+              <div className="w-7 h-7 rounded-lg bg-[#E07A5F] text-white flex items-center justify-center font-mono text-xs font-bold shrink-0 shadow-2xs">
+                {user?.fullName ? user.fullName[0].toUpperCase() : 'U'}
+              </div>
+            )}
             {!isCollapsed && (
               <div className="min-w-0 leading-tight">
-                <div className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] truncate">
-                  Talaba
+                <div className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] truncate group-hover:text-[#E07A5F] transition-colors">
+                  {user?.fullName || 'Foydalanuvchi'}
                 </div>
                 <div className="text-[10px] font-mono text-[#64748B] dark:text-[#94A3B8] truncate">
-                  Digital SAT
+                  @{user?.username || 'user'}
                 </div>
               </div>
             )}
-          </div>
+          </Link>
 
           {!isCollapsed && (
             <button

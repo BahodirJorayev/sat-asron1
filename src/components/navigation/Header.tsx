@@ -3,12 +3,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, Menu, ChevronDown } from 'lucide-react';
+import { Search, Menu, ChevronDown, User as UserIcon, LogOut } from 'lucide-react';
 import { ThemeToggle } from '../ThemeToggle';
 
 export interface HeaderProps {
   onOpenMobileDrawer?: () => void;
   onOpenSearch?: () => void;
+  onSignOut?: () => void;
   activeTab?: string;
   setActiveTab?: (tab: string) => void;
   user?: {
@@ -22,6 +23,7 @@ export interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   onOpenMobileDrawer,
   onOpenSearch,
+  onSignOut,
   activeTab,
   setActiveTab,
   user,
@@ -151,6 +153,49 @@ export const Header: React.FC<HeaderProps> = ({
               }`}
             />
           </button>
+
+          {isProfileMenuOpen && (
+            <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150 text-xs">
+              <div className="px-3.5 py-2 border-b border-slate-100 dark:border-slate-800/80">
+                <div className="font-bold text-[#0F172A] dark:text-[#F8FAFC] truncate">
+                  {user?.fullName || 'Foydalanuvchi'}
+                </div>
+                <div className="text-[11px] font-mono text-slate-400 truncate">
+                  @{user?.username || 'user'}
+                </div>
+              </div>
+
+              <div className="py-1">
+                <Link
+                  href="/profile"
+                  onClick={() => setIsProfileMenuOpen(false)}
+                  className="flex items-center gap-2 px-3.5 py-2 text-[#0F172A] dark:text-[#F8FAFC] hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                >
+                  <UserIcon size={14} className="text-[#E07A5F]" />
+                  <span>Profil & Sozlamalar</span>
+                </Link>
+              </div>
+
+              <div className="pt-1 border-t border-slate-100 dark:border-slate-800/80">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsProfileMenuOpen(false);
+                    if (onSignOut) {
+                      onSignOut();
+                    } else if (typeof window !== 'undefined') {
+                      localStorage.removeItem('sb-auth-token');
+                      window.location.href = '/';
+                    }
+                  }}
+                  className="w-full text-left flex items-center gap-2 px-3.5 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+                >
+                  <LogOut size={14} />
+                  <span>Chiqish</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>

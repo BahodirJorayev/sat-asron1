@@ -240,21 +240,6 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
               <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-mono truncate">
                 @{user.username || 'user'}
               </span>
-              {/* Tier Badge */}
-              {isPro ? (
-                <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-md bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-300/80 dark:border-amber-700/60 flex items-center gap-0.5 shrink-0">
-                  <Crown size={9} className="text-amber-600 dark:text-amber-400 fill-amber-500" />
-                  <span>PRO</span>
-                </span>
-              ) : isStandard ? (
-                <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-700/60 shrink-0">
-                  STD
-                </span>
-              ) : (
-                <span className="text-[9px] font-mono font-medium px-1.5 py-0.2 rounded-md bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700 shrink-0">
-                  FREE
-                </span>
-              )}
             </div>
           </div>
 

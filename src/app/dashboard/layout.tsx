@@ -16,6 +16,8 @@ import {
   X,
   ChevronDown,
   Search,
+  User as UserIcon,
+  LogOut,
 } from 'lucide-react';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { BottomNav } from '../../components/navigation/BottomNav';
@@ -103,8 +105,8 @@ export default function DashboardLayout({
       {/* 1. DESKTOP SIDEBAR (Strict 6 Items, No Profile/Settings Clutter)           */}
       {/* ========================================================================= */}
       <aside
-        className={`hidden md:flex flex-col justify-between shrink-0 h-screen sticky top-0 z-30 bg-white dark:bg-[#121A2F] border-r border-slate-200 dark:border-[#1E293B] shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none transition-all duration-200 select-none ${
-          isCollapsed ? 'w-20' : 'w-60'
+        className={`hidden md:flex flex-col justify-between fixed inset-y-0 left-0 z-30 h-screen bg-white dark:bg-[#121A2F] border-r border-slate-200 dark:border-[#1E293B] shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none transition-all duration-200 select-none ${
+          isCollapsed ? 'w-20' : 'w-64'
         }`}
       >
         {/* Brand Header */}
@@ -181,35 +183,43 @@ export default function DashboardLayout({
         </nav>
 
         {/* Minimal Sidebar Footer */}
-        <div className="p-3 border-t border-[#E2E8F0] dark:border-[#1E293B] bg-[#F8FAFC]/70 dark:bg-[#0A0F1D]/60 shrink-0">
+        <div className="p-3 border-t border-slate-200 dark:border-[#1E293B] bg-[#F8FAFC]/70 dark:bg-[#0A0F1D]/60 shrink-0">
           <div
-            className={`p-2 rounded-xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] flex items-center ${
+            className={`p-2 rounded-xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-[#1E293B] flex items-center ${
               isCollapsed ? 'justify-center' : 'justify-between'
             } gap-2 shadow-2xs`}
           >
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-7 h-7 rounded-lg bg-[#F1F5F9] dark:bg-[#1E293B] text-[#E07A5F] border border-[#E2E8F0] dark:border-[#334155] flex items-center justify-center font-mono text-xs font-bold shrink-0">
+            <Link
+              href="/profile"
+              className="flex items-center gap-2 min-w-0 group cursor-pointer"
+              title="Profilga o'tish"
+            >
+              <div className="w-7 h-7 rounded-lg bg-[#E07A5F] text-white flex items-center justify-center font-mono text-xs font-bold shrink-0 shadow-2xs">
                 T
               </div>
               {!isCollapsed && (
                 <div className="min-w-0 leading-tight">
-                  <div className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] truncate">
-                    Talaba
+                  <div className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] truncate group-hover:text-[#E07A5F] transition-colors">
+                    Foydalanuvchi
                   </div>
                   <div className="text-[10px] font-mono text-[#64748B] dark:text-[#94A3B8] truncate">
-                    Digital SAT 2026
+                    @talaba
                   </div>
                 </div>
               )}
-            </div>
+            </Link>
           </div>
         </div>
       </aside>
 
       {/* ========================================================================= */}
-      {/* 2. MAIN WORKSPACE VIEWPORT                                               */}
+      {/* 2. MAIN WORKSPACE VIEWPORT (Properly indented from desktop fixed sidebar) */}
       {/* ========================================================================= */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      <div
+        className={`flex-1 flex flex-col min-w-0 min-h-screen transition-all duration-200 ${
+          isCollapsed ? 'md:ml-20' : 'md:ml-64'
+        }`}
+      >
         {/* Top Navbar with Zero Breadcrumb Noise */}
         <header className="h-12 sm:h-14 px-4 md:px-6 lg:px-8 border-b border-slate-200 dark:border-[#1E293B] bg-white/95 dark:bg-[#121A2F]/95 backdrop-blur-md flex items-center justify-between sticky top-0 z-20 shrink-0 transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.03)] dark:shadow-none select-none">
           <div className="flex items-center gap-2.5">
@@ -260,7 +270,7 @@ export default function DashboardLayout({
               <button
                 type="button"
                 onClick={() => setIsProfileMenuOpen((prev) => !prev)}
-                className="flex items-center gap-1.5 sm:gap-2 p-1 rounded-xl hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] border border-transparent hover:border-[#E2E8F0] dark:hover:border-[#334155] transition-all cursor-pointer group"
+                className="flex items-center gap-1.5 sm:gap-2 p-1 rounded-xl hover:bg-[#FAF8F5] dark:hover:bg-[#1E293B] border border-transparent hover:border-slate-200 dark:hover:border-[#334155] transition-all cursor-pointer group"
                 aria-expanded={isProfileMenuOpen}
                 aria-haspopup="true"
               >
@@ -274,13 +284,54 @@ export default function DashboardLayout({
                   }`}
                 />
               </button>
+
+              {isProfileMenuOpen && (
+                <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150 text-xs">
+                  <div className="px-3.5 py-2 border-b border-slate-100 dark:border-slate-800/80">
+                    <div className="font-bold text-[#0F172A] dark:text-[#F8FAFC] truncate">
+                      Foydalanuvchi
+                    </div>
+                    <div className="text-[11px] font-mono text-slate-400 truncate">
+                      @talaba
+                    </div>
+                  </div>
+
+                  <div className="py-1">
+                    <Link
+                      href="/profile"
+                      onClick={() => setIsProfileMenuOpen(false)}
+                      className="flex items-center gap-2 px-3.5 py-2 text-[#0F172A] dark:text-[#F8FAFC] hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                    >
+                      <UserIcon size={14} className="text-[#E07A5F]" />
+                      <span>Profil & Sozlamalar</span>
+                    </Link>
+                  </div>
+
+                  <div className="pt-1 border-t border-slate-100 dark:border-slate-800/80">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsProfileMenuOpen(false);
+                        if (typeof window !== 'undefined') {
+                          localStorage.removeItem('sb-auth-token');
+                          window.location.href = '/';
+                        }
+                      }}
+                      className="w-full text-left flex items-center gap-2 px-3.5 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+                    >
+                      <LogOut size={14} />
+                      <span>Chiqish</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </header>
 
-        {/* Page Content with balanced sidebar breathing room and bottom padding for mobile nav */}
-        <main className="flex-1 w-full min-w-0 px-4 py-4 md:pl-6 lg:pl-8 md:pr-4 lg:pr-8 md:py-6 pb-24 md:pb-8">
-          <div className="max-w-6xl mx-auto w-full">
+        {/* Page Content with generous desktop padding and symmetric mobile breathing room */}
+        <main className="flex-1 w-full min-w-0 px-4 py-4 md:px-8 md:py-8 pb-24 md:pb-8">
+          <div className="max-w-7xl mx-auto w-full">
             {children}
           </div>
         </main>

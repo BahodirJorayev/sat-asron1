@@ -69,6 +69,17 @@ export const Header: React.FC<Props> = ({
   const logoIcon = siteBranding?.logoIcon || 'Σ';
   const isLandingOrBlog = activeTab === 'landing' || activeTab === 'blog';
 
+  const safeFullName =
+    (typeof user?.fullName === 'string' && user.fullName.trim()) ||
+    'Foydalanuvchi';
+  const safeUsername =
+    (typeof user?.username === 'string' && user.username.trim()) ||
+    'user';
+  const safeAvatarUrl =
+    typeof user?.avatarUrl === 'string' ? user.avatarUrl.trim() : '';
+  const monogram = (safeFullName || safeUsername || 'T')[0]?.toUpperCase() || 'T';
+  const hasAvatar = Boolean(safeAvatarUrl && !safeAvatarUrl.startsWith('data:image'));
+
   return (
     <header className="sticky top-0 z-40 w-full bg-white/95 dark:bg-[#121A2F]/95 backdrop-blur-md border-b border-[#E2E8F0] dark:border-[#1E293B] select-none font-sans transition-colors text-[#0F172A] dark:text-[#F8FAFC]">
       {/* Main Nav Header */}
@@ -99,19 +110,19 @@ export const Header: React.FC<Props> = ({
                 aria-label="Profilga o'tish"
                 className="flex md:hidden items-center gap-2 p-1 pl-1 pr-2.5 rounded-full bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 hover:border-[#E07A5F]/40 active:scale-95 transition-all cursor-pointer text-left"
               >
-                {user.avatarUrl && !user.avatarUrl.startsWith('data:image') ? (
+                {hasAvatar ? (
                   <img
-                    src={user.avatarUrl}
-                    alt={user.fullName}
+                    src={safeAvatarUrl}
+                    alt={safeFullName}
                     className="w-7 h-7 rounded-full object-cover border border-slate-200 dark:border-slate-700 shrink-0"
                   />
                 ) : (
                   <div className="w-7 h-7 rounded-full bg-[#E07A5F] text-white flex items-center justify-center font-mono text-xs font-bold shadow-2xs shrink-0">
-                    {user.fullName ? user.fullName[0].toUpperCase() : 'T'}
+                    {monogram}
                   </div>
                 )}
                 <span className="text-sm font-semibold text-slate-900 dark:text-white truncate max-w-[120px]">
-                  {user.fullName?.split(' ')[0] || user.username || 'Talaba'}
+                  {safeFullName.split(' ')[0] || safeUsername}
                 </span>
               </button>
 
@@ -229,20 +240,20 @@ export const Header: React.FC<Props> = ({
                 className="hidden md:flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] border border-slate-200 dark:border-[#1E293B] hover:border-[#E07A5F]/50 transition-all cursor-pointer shadow-2xs"
                 title="Mening Profilim sahifasini ochish"
               >
-                {user.avatarUrl && !user.avatarUrl.startsWith('data:image') ? (
+                {hasAvatar ? (
                   <img
-                    src={user.avatarUrl}
-                    alt={user.fullName}
+                    src={safeAvatarUrl}
+                    alt={safeFullName}
                     className="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-cover border border-slate-200 dark:border-[#1E293B]"
                   />
                 ) : (
                   <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#E07A5F] text-white flex items-center justify-center font-mono text-xs font-bold shadow-2xs">
-                    {user.fullName ? user.fullName[0].toUpperCase() : 'T'}
+                    {monogram}
                   </div>
                 )}
                 <div className="text-left">
                   <div className="text-[11px] font-bold text-[#0F172A] dark:text-[#F8FAFC] leading-tight">
-                    <span>{user.fullName}</span>
+                    <span>{safeFullName}</span>
                   </div>
                 </div>
               </div>

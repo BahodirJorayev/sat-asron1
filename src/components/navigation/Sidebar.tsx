@@ -109,6 +109,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
+  const safeFullName =
+    (typeof user?.fullName === 'string' && user.fullName.trim()) ||
+    'Foydalanuvchi';
+  const safeUsername =
+    (typeof user?.username === 'string' && user.username.trim()) ||
+    'user';
+  const safeAvatarUrl =
+    typeof user?.avatarUrl === 'string' ? user.avatarUrl.trim() : '';
+  const monogram = (safeFullName || safeUsername || 'U')[0]?.toUpperCase() || 'U';
+  const hasAvatar = Boolean(safeAvatarUrl && !safeAvatarUrl.startsWith('data:image'));
+
   return (
     <aside
       className={`hidden md:flex flex-col justify-between shrink-0 h-screen sticky top-0 z-30 bg-white dark:bg-[#121A2F] border-r border-[#E2E8F0] dark:border-[#1E293B] shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none transition-all duration-200 select-none text-[#0F172A] dark:text-[#F8FAFC] ${
@@ -245,24 +256,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
             className="flex items-center gap-2 min-w-0 group cursor-pointer"
             title="Profilga o'tish"
           >
-            {user?.avatarUrl ? (
+            {hasAvatar ? (
               <img
-                src={user.avatarUrl}
-                alt={user.fullName || 'User'}
+                src={safeAvatarUrl}
+                alt={safeFullName}
                 className="w-7 h-7 rounded-lg object-cover border border-slate-200 dark:border-slate-800 shrink-0"
               />
             ) : (
               <div className="w-7 h-7 rounded-lg bg-[#E07A5F] text-white flex items-center justify-center font-mono text-xs font-bold shrink-0 shadow-2xs">
-                {user?.fullName ? user.fullName[0].toUpperCase() : 'U'}
+                {monogram}
               </div>
             )}
             {!isCollapsed && (
               <div className="min-w-0 leading-tight">
                 <div className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] truncate group-hover:text-[#E07A5F] transition-colors">
-                  {user?.fullName || 'Foydalanuvchi'}
+                  {safeFullName}
                 </div>
                 <div className="text-[10px] font-mono text-[#64748B] dark:text-[#94A3B8] truncate">
-                  @{user?.username || 'user'}
+                  @{safeUsername}
                 </div>
               </div>
             )}

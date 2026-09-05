@@ -38,7 +38,30 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const router = useRouter();
   const pathname = usePathname() || '';
-  const [currentUser, setCurrentUser] = useState(propUser || null);
+  const [currentUser, setCurrentUser] = useState<{
+    fullName?: string;
+    username?: string;
+    avatarUrl?: string;
+    role?: string;
+  } | null>(() => {
+    if (propUser) return propUser;
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('aurasat_user_profile');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          return {
+            fullName: parsed.fullName || parsed.full_name || 'Talaba',
+            username: parsed.username || 'talaba',
+            avatarUrl: parsed.avatarUrl || parsed.avatar_url || '',
+          };
+        }
+      } catch {
+        // ignore
+      }
+    }
+    return null;
+  });
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
@@ -53,7 +76,14 @@ export const Header: React.FC<HeaderProps> = ({
     let isMounted = true;
     const fetchAuthUser = async () => {
       try {
-        const { data: authData } = await supabase.auth.getUser();
+        const timeoutPromise = new Promise<{ data: { user: null } }>((resolve) =>
+          setTimeout(() => resolve({ data: { user: null } }), 1500)
+        );
+        const { data: authData } = (await Promise.race([
+          supabase.auth.getUser(),
+          timeoutPromise,
+        ])) as any;
+
         if (authData?.user && isMounted) {
           const { data: profile } = await supabase
             .from('profiles')
@@ -68,8 +98,8 @@ export const Header: React.FC<HeaderProps> = ({
             avatarUrl: profile?.avatar_url || meta.avatar_url || meta.picture || '',
           });
         }
-      } catch (e) {
-        // ignore
+      } catch {
+        // Safe fallback
       }
     };
 
@@ -81,7 +111,7 @@ export const Header: React.FC<HeaderProps> = ({
 
     return () => {
       isMounted = false;
-      authSub?.subscription.unsubscribe();
+      authSub?.subscription?.unsubscribe?.();
     };
   }, [propUser]);
 
@@ -98,9 +128,18 @@ export const Header: React.FC<HeaderProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isProfileMenuOpen]);
 
-  const displayName = currentUser?.fullName?.split(' ')[0] || (currentUser?.username ? `@${currentUser.username}` : 'Talaba');
-  const monogram = (currentUser?.fullName || currentUser?.username || 'T')[0]?.toUpperCase() || 'T';
-  const hasAvatar = Boolean(currentUser?.avatarUrl && !currentUser.avatarUrl.startsWith('data:image'));
+  const safeFullName =
+    (typeof currentUser?.fullName === 'string' && currentUser.fullName.trim()) ||
+    'Talaba';
+  const safeUsername =
+    (typeof currentUser?.username === 'string' && currentUser.username.trim()) ||
+    'talaba';
+  const safeAvatarUrl =
+    typeof currentUser?.avatarUrl === 'string' ? currentUser.avatarUrl.trim() : '';
+
+  const displayName = safeFullName.split(' ')[0] || `@${safeUsername}`;
+  const monogram = (safeFullName || safeUsername || 'T')[0]?.toUpperCase() || 'T';
+  const hasAvatar = Boolean(safeAvatarUrl && !safeAvatarUrl.startsWith('data:image'));
 
   const handleOpenSearch = () => {
     if (onOpenSearch) {
@@ -156,8 +195,8 @@ export const Header: React.FC<HeaderProps> = ({
           >
             {hasAvatar ? (
               <img
-                src={currentUser?.avatarUrl}
-                alt={currentUser?.fullName || 'User'}
+                src={safeAvatarUrl}
+                alt={safeFullName}
                 className="w-7 h-7 rounded-full object-cover border border-slate-200 dark:border-slate-700 shrink-0"
               />
             ) : (
@@ -239,8 +278,8 @@ export const Header: React.FC<HeaderProps> = ({
             >
               {hasAvatar ? (
                 <img
-                  src={currentUser?.avatarUrl}
-                  alt={currentUser?.fullName || 'User'}
+                  src={safeAvatarUrl}
+                  alt={safeFullName}
                   className="w-7 h-7 rounded-lg object-cover border border-slate-200 dark:border-slate-700"
                 />
               ) : (
@@ -263,10 +302,10 @@ export const Header: React.FC<HeaderProps> = ({
               <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150 text-xs">
                 <div className="px-3.5 py-2 border-b border-slate-100 dark:border-slate-800/80">
                   <div className="font-bold text-[#0F172A] dark:text-[#F8FAFC] truncate">
-                    {currentUser?.fullName || 'Foydalanuvchi'}
+                    {safeFullName}
                   </div>
                   <div className="text-[11px] font-mono text-slate-400 truncate">
-                    @{currentUser?.username || 'user'}
+                    @{safeUsername}
                   </div>
                 </div>
 

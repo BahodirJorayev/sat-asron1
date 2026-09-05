@@ -21,6 +21,21 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   activeTab,
   setActiveTab,
 }) => {
+  const [isChatOpen, setIsChatOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    const handleChatState = (e: any) => {
+      setIsChatOpen(!!e?.detail?.isOpen);
+    };
+    window.addEventListener('asron_chat_state_change', handleChatState);
+    return () => window.removeEventListener('asron_chat_state_change', handleChatState);
+  }, []);
+
+  // Hide entirely when viewing an active chat channel
+  if (isChatOpen) {
+    return null;
+  }
+
   // Exact 5-item Apple iOS minimal navigation array (Hamjamiyat moved to top-right header)
   const navItems = [
     {

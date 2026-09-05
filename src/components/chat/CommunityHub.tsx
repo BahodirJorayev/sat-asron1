@@ -32,27 +32,34 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({
       try {
         const { data: authData } = await supabase.auth.getUser();
         if (authData?.user && isMounted) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', authData.user.id)
+            .maybeSingle();
+
           const { data: dbUser } = await supabase
             .from('users')
             .select('*')
             .eq('id', authData.user.id)
-            .single();
+            .maybeSingle();
 
-          if (dbUser && isMounted) {
+          if (isMounted) {
             setActiveUser({
-              id: dbUser.id,
-              email: dbUser.email || authData.user.email || '',
-              fullName: dbUser.full_name || 'Talaba',
-              username: dbUser.username || 'talaba',
-              phoneNumber: dbUser.phone_number || '',
-              planTier: (dbUser.plan_tier as any) || 'FREE',
-              role: (dbUser.role as any) || 'STUDENT',
-              streakDays: dbUser.streak_days || 0,
-              totalQuestionsDone: dbUser.total_questions_done || 0,
-              overallAccuracy: dbUser.overall_accuracy || 0,
-              targetScore: dbUser.target_score || 1550,
-              targetExamDate: dbUser.target_exam_date || '2026-10-03',
-              createdAt: dbUser.created_at || new Date().toISOString(),
+              id: authData.user.id,
+              email: authData.user.email || '',
+              fullName: profile?.full_name || dbUser?.full_name || authData.user.user_metadata?.full_name || 'Talaba',
+              username: profile?.username || dbUser?.username || authData.user.user_metadata?.username || 'talaba',
+              avatarUrl: profile?.avatar_url || authData.user.user_metadata?.avatar_url,
+              phoneNumber: dbUser?.phone_number || authData.user.user_metadata?.phone || '',
+              planTier: (dbUser?.plan_tier as any) || 'FREE',
+              role: (dbUser?.role as any) || 'STUDENT',
+              streakDays: dbUser?.streak_days || 0,
+              totalQuestionsDone: dbUser?.total_questions_done || 0,
+              overallAccuracy: dbUser?.overall_accuracy || 0,
+              targetScore: profile?.target_score || dbUser?.target_score || 1550,
+              targetExamDate: dbUser?.target_exam_date || '2026-10-03',
+              createdAt: profile?.created_at || dbUser?.created_at || new Date().toISOString(),
             });
           }
         }
@@ -69,7 +76,7 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({
   }, [initialUser]);
 
   return (
-    <div className="h-full w-full overflow-hidden flex flex-col bg-slate-50 dark:bg-[#0A0F1D] select-none">
+    <div className="h-[100dvh] w-full overflow-hidden flex flex-col bg-slate-50 dark:bg-[#0A0F1D] select-none">
       <CommunityChatHub
         currentUser={activeUser}
         usersList={usersList}

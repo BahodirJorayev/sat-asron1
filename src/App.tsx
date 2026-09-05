@@ -266,6 +266,101 @@ export default function App() {
     };
   }, []);
 
+  // Live Supabase public.profiles fetch and Realtime sync across PC & Mobile devices
+  useEffect(() => {
+    let isMounted = true;
+
+    const syncLiveUserProfile = async () => {
+      try {
+        const { data: authData } = await supabase.auth.getUser();
+        const activeUserId = authData?.user?.id;
+        if (!activeUserId) return;
+
+        // Fetch directly from public.profiles using auth.uid()
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', activeUserId)
+          .maybeSingle();
+
+        if (profile && isMounted) {
+          const freshUser: User = {
+            id: activeUserId,
+            email: authData.user.email || '',
+            fullName: profile.full_name || authData.user.user_metadata?.full_name || 'Talaba',
+            username: profile.username || authData.user.user_metadata?.username || 'talaba',
+            avatarUrl: profile.avatar_url || authData.user.user_metadata?.avatar_url,
+            targetScore: profile.target_score || 1550,
+            phoneNumber: authData.user.user_metadata?.phone || '',
+            planTier: 'STANDARD',
+            role: (authData.user.user_metadata?.role as any) || 'STUDENT',
+            streakDays: 0,
+            totalQuestionsDone: 0,
+            overallAccuracy: 0,
+            targetExamDate: profile.target_exam_date || '2026-10-03',
+            createdAt: profile.created_at || new Date().toISOString(),
+          };
+
+          setUsersList((prev) => {
+            const idx = prev.findIndex((u) => u.id === activeUserId);
+            if (idx >= 0) {
+              const updated = [...prev];
+              updated[idx] = { ...updated[idx], ...freshUser };
+              return updated;
+            }
+            return [freshUser, ...prev];
+          });
+          setCurrentUserIndex(0);
+        }
+      } catch (err) {
+        console.warn('Live profile sync notice:', err);
+      }
+    };
+
+    syncLiveUserProfile();
+
+    // Supabase Realtime channel for instant cross-device updates
+    const profileChannel = supabase
+      .channel('public:profiles')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles' },
+        (payload: any) => {
+          if (payload.new) {
+            const newP = payload.new;
+            setUsersList((prev) =>
+              prev.map((u) => {
+                if (u.id === newP.id) {
+                  return {
+                    ...u,
+                    fullName: newP.full_name || u.fullName,
+                    username: newP.username || u.username,
+                    avatarUrl: newP.avatar_url || u.avatarUrl,
+                    targetScore: newP.target_score || u.targetScore,
+                  };
+                }
+                return u;
+              })
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    const handleProfileUpdateEvent = (e: any) => {
+      if (e.detail) {
+        handleUpdateUser(e.detail);
+      }
+    };
+    window.addEventListener('asron_profile_updated', handleProfileUpdateEvent);
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(profileChannel);
+      window.removeEventListener('asron_profile_updated', handleProfileUpdateEvent);
+    };
+  }, []);
+
   const [receipts, setReceipts] = useState<PaymentReceipt[]>(INITIAL_RECEIPTS);
   const [notifications, setNotifications] = useState<TelegramNotification[]>(INITIAL_TELEGRAM_NOTIFICATIONS);
 

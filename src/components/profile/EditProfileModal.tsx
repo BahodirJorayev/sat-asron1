@@ -103,13 +103,15 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
             id: activeId,
             full_name: cleanFullName,
             username: cleanUsername,
+            avatar_url: currentUser.avatarUrl || null,
             target_score: targetScore,
+            updated_at: new Date().toISOString(),
           },
           { onConflict: 'id' }
         );
 
       if (profileError) {
-        console.warn('Supabase profiles update notice:', profileError.message);
+        throw new Error(profileError.message);
       }
 
       // 2. Persist extended fields to Supabase Auth metadata for instant multi-device retrieval

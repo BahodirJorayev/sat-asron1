@@ -61,6 +61,16 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     pathname = '';
   }
 
+  const [isChatOpen, setIsChatOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    const handleChatState = (e: any) => {
+      setIsChatOpen(!!e?.detail?.isOpen);
+    };
+    window.addEventListener('asron_chat_state_change', handleChatState);
+    return () => window.removeEventListener('asron_chat_state_change', handleChatState);
+  }, []);
+
   const isCurrentActive = (item: typeof NAV_ITEMS[0]) => {
     if (activeTab) {
       return activeTab === item.id;
@@ -71,6 +81,14 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     }
     return pathname.startsWith(item.href);
   };
+
+  // Hide bottom nav entirely when on /chat, /community, or when an active conversation is open on mobile
+  if (
+    isChatOpen ||
+    (pathname && (pathname.startsWith('/chat') || pathname.startsWith('/community')))
+  ) {
+    return null;
+  }
 
   return (
     <nav

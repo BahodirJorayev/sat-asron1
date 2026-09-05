@@ -154,6 +154,36 @@ export const CommunityChatHub: React.FC<Props> = ({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
 
+  // Auto-scroll messages container to bottom on new message or chat switch
+  useEffect(() => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+  }, [messages, activeChatId]);
+
+  // Sync mobile chat open state to hide/restore BottomNav
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('asron_chat_state_change', {
+          detail: { isOpen: isMobileChatViewOpen },
+        })
+      );
+    }
+  }, [isMobileChatViewOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('asron_chat_state_change', {
+            detail: { isOpen: false },
+          })
+        );
+      }
+    };
+  }, []);
+
   // FIX 1: Pinned to top-level viewport upon navigating (prevents page jump to footer)
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -784,14 +814,14 @@ export const CommunityChatHub: React.FC<Props> = ({
   };
 
   return (
-    <div className="h-full w-full flex bg-slate-50 dark:bg-[#0A0F1D] text-[#0F172A] dark:text-[#F8FAFC] font-sans overflow-hidden select-none border border-slate-200 dark:border-slate-800 rounded-none sm:rounded-2xl shadow-xs">
+    <div className="h-[100dvh] w-full flex bg-slate-50 dark:bg-[#0A0F1D] text-[#0F172A] dark:text-[#F8FAFC] font-sans overflow-hidden select-none border-0 sm:border border-slate-200 dark:border-slate-800 rounded-none sm:rounded-2xl shadow-xs">
       {/* ============================================================= */}
       {/* 1. LEFT SIDEBAR: FOLDERS & CLEAN CHATS LIST                   */}
       {/* ============================================================= */}
       <aside
         className={`${
           isMobileChatViewOpen ? 'hidden md:flex' : 'flex'
-        } w-full md:w-80 lg:w-96 bg-white dark:bg-[#121A2F] border-r border-[#E2E8F0] dark:border-[#1E293B] flex-col shrink-0 overflow-hidden`}
+        } w-full md:w-80 lg:w-96 h-[100dvh] md:h-full bg-white dark:bg-[#121A2F] border-r border-[#E2E8F0] dark:border-[#1E293B] flex-col shrink-0 overflow-hidden`}
       >
         {/* Top Hub Bar */}
         <div className="p-3.5 border-b border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-between gap-3">
@@ -1034,7 +1064,7 @@ export const CommunityChatHub: React.FC<Props> = ({
       <main
         className={`${
           isMobileChatViewOpen ? 'flex' : 'hidden md:flex'
-        } flex-1 flex flex-col bg-slate-50 dark:bg-[#0A0F1D] overflow-hidden relative min-w-0`}
+        } flex-1 flex flex-col h-[100dvh] md:h-full bg-slate-50 dark:bg-[#0A0F1D] overflow-hidden relative min-w-0`}
       >
         {activeChat ? (
           <>

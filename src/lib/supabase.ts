@@ -56,54 +56,43 @@ export function mapSupabaseUserToAppUser(sbUser: SupabaseAuthUser, customDetails
   const defaultUsername = email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_');
   const defaultName = metadata.full_name || metadata.name || defaultUsername;
 
-  // Retrieve any locally persisted custom profile fields for this user
-  let localSaved: Partial<User> = {};
-  if (typeof localStorage !== 'undefined') {
-    try {
-      const savedStr = localStorage.getItem(`aura_profile_${sbUser.id}`);
-      if (savedStr) localSaved = JSON.parse(savedStr);
-    } catch (e) {
-      // ignore
-    }
-  }
-
   const determinedRole: Role =
-    email.toLowerCase().includes('admin') || metadata.role === 'SUPER_ADMIN' || localSaved.role === 'SUPER_ADMIN'
+    email.toLowerCase().includes('admin') || metadata.role === 'SUPER_ADMIN' || customDetails?.role === 'SUPER_ADMIN'
       ? 'SUPER_ADMIN'
-      : email.toLowerCase().includes('admin') || localSaved.role === 'ADMIN'
+      : email.toLowerCase().includes('admin') || customDetails?.role === 'ADMIN'
       ? 'ADMIN'
       : 'STUDENT';
 
   return {
     id: sbUser.id,
     email: email,
-    username: localSaved.username || metadata.username || defaultUsername,
-    fullName: localSaved.fullName || defaultName,
-    phoneNumber: localSaved.phoneNumber || metadata.phone || metadata.phoneNumber || '',
+    username: customDetails?.username || metadata.username || defaultUsername,
+    fullName: customDetails?.fullName || metadata.full_name || metadata.name || defaultName,
+    phoneNumber: customDetails?.phoneNumber || metadata.phone || metadata.phoneNumber || '',
     avatarUrl:
-      localSaved.avatarUrl ||
+      customDetails?.avatarUrl ||
       metadata.avatar_url ||
       metadata.picture ||
       `https://api.dicebear.com/7.x/bottts/svg?seed=${sbUser.id}`,
-    bio: localSaved.bio || metadata.bio || 'Digital SAT Aspirant',
+    bio: customDetails?.bio || metadata.bio || 'Digital SAT Aspirant',
     role: determinedRole,
-    planTier: localSaved.planTier || (metadata.plan_tier as PlanTier) || 'STANDARD',
-    targetScore: localSaved.targetScore || metadata.target_score || 1450,
-    highestScore: localSaved.highestScore ?? metadata.highest_score ?? 0,
-    baselineScore: localSaved.baselineScore ?? metadata.baseline_score ?? 0,
-    potentialScore: localSaved.potentialScore ?? 0,
-    predictedScore: localSaved.predictedScore ?? 0,
-    weakestSubSkills: localSaved.weakestSubSkills || [],
-    targetExamDate: localSaved.targetExamDate || '2026-10-04',
-    streakDays: localSaved.streakDays ?? 0,
-    streakFreezes: localSaved.streakFreezes ?? 0,
-    xpPoints: localSaved.xpPoints ?? 0,
+    planTier: customDetails?.planTier || (metadata.plan_tier as PlanTier) || 'STANDARD',
+    targetScore: customDetails?.targetScore || metadata.target_score || 1450,
+    highestScore: customDetails?.highestScore ?? metadata.highest_score ?? 0,
+    baselineScore: customDetails?.baselineScore ?? metadata.baseline_score ?? 0,
+    potentialScore: customDetails?.potentialScore ?? 0,
+    predictedScore: customDetails?.predictedScore ?? 0,
+    weakestSubSkills: customDetails?.weakestSubSkills || [],
+    targetExamDate: customDetails?.targetExamDate || '2026-10-04',
+    streakDays: customDetails?.streakDays ?? 0,
+    streakFreezes: customDetails?.streakFreezes ?? 0,
+    xpPoints: customDetails?.xpPoints ?? 0,
     isOnline: true,
-    testsCompletedCount: localSaved.testsCompletedCount ?? 0,
-    totalQuestionsDone: localSaved.totalQuestionsDone ?? 0,
-    overallAccuracy: localSaved.overallAccuracy ?? 0,
-    scholarId: localSaved.scholarId || `ASRON-${sbUser.id.slice(0, 6).toUpperCase()}`,
-    unseenTierUpgrade: localSaved.unseenTierUpgrade ?? false,
+    testsCompletedCount: customDetails?.testsCompletedCount ?? 0,
+    totalQuestionsDone: customDetails?.totalQuestionsDone ?? 0,
+    overallAccuracy: customDetails?.overallAccuracy ?? 0,
+    scholarId: customDetails?.scholarId || `ASRON-${sbUser.id.slice(0, 6).toUpperCase()}`,
+    unseenTierUpgrade: customDetails?.unseenTierUpgrade ?? false,
     createdAt: sbUser.created_at || new Date().toISOString(),
     ...customDetails,
   };
@@ -309,7 +298,6 @@ export async function signUpWithEmail(
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('aurasat_user_profile', JSON.stringify(createdUser));
       localStorage.setItem('aura_sat_auth_user', JSON.stringify(createdUser));
-      localStorage.setItem(`aura_profile_${createdUser.id}`, JSON.stringify(createdUser));
       saveUserToRegisteredIndex(createdUser);
     }
     setAuthCookie(createdUser);
@@ -325,7 +313,6 @@ export async function saveUserProfile(user: User): Promise<User> {
   if (typeof localStorage !== 'undefined') {
     localStorage.setItem('aurasat_user_profile', JSON.stringify(user));
     localStorage.setItem('aura_sat_auth_user', JSON.stringify(user));
-    localStorage.setItem(`aura_profile_${user.id}`, JSON.stringify(user));
     saveUserToRegisteredIndex(user);
   }
   setAuthCookie(user);

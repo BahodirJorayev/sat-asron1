@@ -85,8 +85,8 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
 
   // Debounced search querying Supabase profiles and community_channels
   useEffect(() => {
-    const trimmed = query.trim().replace(/^@/, '');
-    if (!trimmed) {
+    const term = query.replace('@', '').trim();
+    if (!term) {
       setUserResults([]);
       setChannelResults([]);
       setLoading(false);
@@ -101,116 +101,47 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
 
     debounceTimerRef.current = setTimeout(async () => {
       try {
-        const usersPromise = supabase
+        // 1. Search Users from live public.profiles
+        const { data: users } = await supabase
           .from('profiles')
           .select('id, full_name, username, avatar_url')
-          .or(`full_name.ilike.%${trimmed}%,username.ilike.%${trimmed}%`)
-          .limit(15);
+          .or(`full_name.ilike.%${term}%,username.ilike.%${term}%`)
+          .limit(10);
 
-        const channelsPromise = supabase
+        // 2. Search Public Channels & Groups from live public.community_channels
+        const { data: channels } = await supabase
           .from('community_channels')
-          .select('id, name, username, description, avatar_url, type, is_public')
+          .select('id, name, username, avatar_url, type, is_public')
           .eq('is_public', true)
-          .or(`name.ilike.%${trimmed}%,username.ilike.%${trimmed}%,description.ilike.%${trimmed}%`)
-          .limit(15);
-
-        const [usersRes, channelsRes] = await Promise.allSettled([usersPromise, channelsPromise]);
+          .or(`name.ilike.%${term}%,username.ilike.%${term}%`)
+          .limit(10);
 
         const mappedUsers: ProfileSearchResult[] = [];
-        const foundUserIds = new Set<string>();
-
-        if (usersRes.status === 'fulfilled' && !usersRes.value.error && Array.isArray(usersRes.value.data)) {
-          usersRes.value.data.forEach((p: any) => {
-            if (!foundUserIds.has(p.id)) {
-              foundUserIds.add(p.id);
-              mappedUsers.push({
-                id: p.id,
-                fullName: p.full_name || p.username || 'Talaba',
-                username: p.username || 'user',
-                avatarUrl: p.avatar_url,
-                role: 'STUDENT',
-              });
-            }
+        if (users && Array.isArray(users)) {
+          users.forEach((p: any) => {
+            mappedUsers.push({
+              id: p.id,
+              fullName: p.full_name || p.username || 'Talaba',
+              username: p.username || 'user',
+              avatarUrl: p.avatar_url,
+              role: 'STUDENT',
+            });
           });
-        }
-
-        // Merge local registered users index so offline/fresh users are instantly discoverable
-        if (typeof localStorage !== 'undefined') {
-          try {
-            const raw = localStorage.getItem('aurasat_registered_users');
-            if (raw) {
-              const parsed = JSON.parse(raw);
-              if (Array.isArray(parsed)) {
-                parsed.forEach((u: any) => {
-                  const matchName = u.fullName?.toLowerCase().includes(trimmed.toLowerCase());
-                  const matchUser = u.username?.toLowerCase().includes(trimmed.toLowerCase());
-                  if ((matchName || matchUser) && !foundUserIds.has(u.id)) {
-                    foundUserIds.add(u.id);
-                    mappedUsers.push({
-                      id: u.id,
-                      fullName: u.fullName || u.username || 'Talaba',
-                      username: u.username || 'user',
-                      avatarUrl: u.avatarUrl,
-                      role: u.role || 'STUDENT',
-                    });
-                  }
-                });
-              }
-            }
-          } catch {
-            // ignore local storage error
-          }
         }
 
         const mappedChannels: ChannelSearchResult[] = [];
-        const foundChannelIds = new Set<string>();
-
-        if (channelsRes.status === 'fulfilled' && !channelsRes.value.error && Array.isArray(channelsRes.value.data)) {
-          channelsRes.value.data.forEach((c: any) => {
-            if (!foundChannelIds.has(c.id)) {
-              foundChannelIds.add(c.id);
-              mappedChannels.push({
-                id: c.id,
-                name: c.name || 'Kanal',
-                username: c.username,
-                description: c.description,
-                type: c.type || 'PUBLIC_CHANNEL',
-                avatarUrl: c.avatar_url,
-                isPublic: true,
-              });
-            }
+        if (channels && Array.isArray(channels)) {
+          channels.forEach((c: any) => {
+            mappedChannels.push({
+              id: c.id,
+              name: c.name || 'Kanal',
+              username: c.username,
+              description: c.description || '',
+              type: c.type || 'PUBLIC_CHANNEL',
+              avatarUrl: c.avatar_url,
+              isPublic: true,
+            });
           });
-        }
-
-        // Merge local / official channels cache
-        if (typeof localStorage !== 'undefined') {
-          try {
-            const rawChats = localStorage.getItem('aura_community_chats_list');
-            if (rawChats) {
-              const chats = JSON.parse(rawChats);
-              if (Array.isArray(chats)) {
-                chats.forEach((ch: any) => {
-                  const matchName = ch.name?.toLowerCase().includes(trimmed.toLowerCase());
-                  const matchUser = ch.username?.toLowerCase().includes(trimmed.toLowerCase());
-                  const matchDesc = ch.description?.toLowerCase().includes(trimmed.toLowerCase());
-                  if ((matchName || matchUser || matchDesc) && !foundChannelIds.has(ch.id)) {
-                    foundChannelIds.add(ch.id);
-                    mappedChannels.push({
-                      id: ch.id,
-                      name: ch.name || 'Kanal',
-                      username: ch.username,
-                      description: ch.description,
-                      type: ch.type || 'PUBLIC_CHANNEL',
-                      avatarUrl: ch.avatarUrl || ch.avatar_url,
-                      isPublic: ch.isPublic !== false,
-                    });
-                  }
-                });
-              }
-            }
-          } catch {
-            // ignore local chats error
-          }
         }
 
         setUserResults(mappedUsers);

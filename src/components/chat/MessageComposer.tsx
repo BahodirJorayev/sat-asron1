@@ -80,7 +80,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
   }
 
   return (
-    <footer className="flex-shrink-0 bg-white dark:bg-[#0A0F1D] border-t border-slate-200 dark:border-slate-800 p-2 transition-colors z-10">
+    <footer className="flex-shrink-0 p-2.5 bg-white dark:bg-[#0A0F1D] border-t border-slate-200 dark:border-slate-800 z-10 transition-colors">
       {/* 1. Reply Banner */}
       {replyingTo && (
         <div className="mb-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between text-xs animate-in fade-in duration-150">

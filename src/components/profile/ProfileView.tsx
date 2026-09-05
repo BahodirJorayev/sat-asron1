@@ -21,6 +21,7 @@ import {
   Edit3,
   Sun,
   Moon,
+  Trash2,
 } from 'lucide-react';
 import { User } from '../../types';
 import { supabase, saveUserProfile } from '../../lib/supabase';
@@ -85,6 +86,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
   const [mockTestsCompleted, setMockTestsCompleted] = useState<number>(0);
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+
+  // Account Deletion State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState<string>('');
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // Apple-grade Theme state
   const { resolvedTheme, setTheme } = useTheme();
@@ -325,6 +332,54 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       }
     } catch (err) {
       console.error('Logout error:', err);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    setDeleteError(null);
+
+    try {
+      const { data: authData } = await supabase.auth.getUser();
+      const activeUserId = authData?.user?.id || user.id;
+
+      if (activeUserId) {
+        // 1. Attempt RPC delete_user_account first
+        try {
+          await supabase.rpc('delete_user_account');
+        } catch (rpcErr) {
+          console.warn('RPC delete_user_account notice:', rpcErr);
+        }
+
+        // 2. Direct tables wipe fallback
+        try {
+          await supabase.from('user_progress').delete().eq('user_id', activeUserId);
+          await supabase.from('profiles').delete().eq('id', activeUserId);
+          await supabase.from('users').delete().eq('id', activeUserId);
+        } catch (tableErr) {
+          console.warn('Direct tables wipe notice:', tableErr);
+        }
+
+        // 3. Clear local storage & cookies
+        if (typeof localStorage !== 'undefined') {
+          localStorage.clear();
+        }
+        if (typeof sessionStorage !== 'undefined') {
+          sessionStorage.clear();
+        }
+
+        // 4. Sign out
+        await supabase.auth.signOut();
+
+        // 5. Navigate to login
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login?deleted=true';
+        }
+      }
+    } catch (err: any) {
+      console.error('Account deletion error:', err);
+      setDeleteError(err.message || "Hisobni o'chirishda xatolik yuz berdi.");
+      setIsDeleting(false);
     }
   };
 
@@ -726,10 +781,35 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           <button
             type="button"
             onClick={handleLogout}
-            className="px-4 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/20 text-xs font-mono font-bold flex items-center gap-2 transition-colors cursor-pointer"
+            className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-mono font-bold flex items-center gap-2 transition-colors cursor-pointer"
           >
             <LogOut size={14} />
             <span>Chiqish</span>
+          </button>
+        </div>
+
+        {/* Danger Zone: Permanent Account Deletion */}
+        <div className="pt-4 border-t border-rose-200/60 dark:border-rose-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div className="text-xs font-bold text-rose-600 dark:text-rose-400">
+              Hisobni butunlay o'chirish
+            </div>
+            <div className="text-[11px] text-[#64748B] dark:text-[#94A3B8]">
+              Profilingiz, natijalaringiz va xatolar omborini bulutli bazadan qaytarib bo'lmas tarzda o'chirish
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setDeleteConfirmText('');
+              setDeleteError(null);
+              setIsDeleteModalOpen(true);
+            }}
+            className="px-4 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/20 text-xs font-mono font-bold flex items-center gap-2 transition-colors cursor-pointer shrink-0"
+          >
+            <Trash2 size={14} />
+            <span>Hisobni o'chirish</span>
           </button>
         </div>
       </section>
@@ -756,6 +836,71 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           onUpdateUser?.(updated);
         }}
       />
+
+      {/* Delete Account Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-md p-6 rounded-2xl bg-white dark:bg-[#121A2F] border border-rose-200 dark:border-rose-900/50 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-rose-600 dark:text-rose-400">
+              <div className="p-2 rounded-xl bg-rose-500/10">
+                <AlertCircle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                  Hisobni butunlay o'chirish
+                </h3>
+                <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">
+                  Bu amalni ortga qaytarib bo'lmaydi.
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-[#64748B] dark:text-[#94A3B8] leading-relaxed">
+              Barcha test natijalaringiz, xatolar omboringiz va shaxsiy ma'lumotlaringiz Supabase bulut bazasidan butunlay o'chiriladi.
+            </p>
+
+            <div className="space-y-1.5 pt-1">
+              <label className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                Tasdiqlash uchun <span className="font-bold text-rose-600">O'CHIRISH</span> so'zini yozing:
+              </label>
+              <input
+                type="text"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="O'CHIRISH"
+                className="w-full px-3 py-2 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-slate-200 dark:border-slate-800 text-xs font-mono text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:border-rose-500"
+              />
+            </div>
+
+            {deleteError && (
+              <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-xs text-rose-600 dark:text-rose-400">
+                {deleteError}
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-[#0F172A] dark:text-[#F8FAFC] text-xs font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+              >
+                Bekor qilish
+              </button>
+
+              <button
+                type="button"
+                disabled={isDeleting || deleteConfirmText.trim().toUpperCase() !== "O'CHIRISH"}
+                onClick={handleDeleteAccount}
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-mono font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+              >
+                <Trash2 size={13} />
+                <span>{isDeleting ? "O'chirilmoqda..." : "Ha, hisobni o'chirish"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -747,4 +747,14 @@ export interface MasterCurriculumDay {
   mockTestId?: string;
 }
 
-
+export interface PlatformAnnouncement {
+  id: string;
+  title: string;
+  content: string;
+  category?: 'general' | 'update' | 'mock' | 'discount' | 'urgent';
+  target_route: 'landing' | 'dashboard' | 'popup';
+  action_link?: string;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}

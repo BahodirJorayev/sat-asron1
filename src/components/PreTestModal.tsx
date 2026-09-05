@@ -1,20 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Maximize2,
-  Clock,
-  Calculator,
-  BookOpen,
-  CheckCircle2,
-  AlertTriangle,
-  Sparkles,
-  ShieldCheck,
-  Zap,
-  Lock,
   ArrowRight,
   X,
   Layers,
-  HelpCircle
+  Clock,
+  CheckCircle2,
+  Lock
 } from 'lucide-react';
 import { MockTest, User } from '../types';
 
@@ -33,225 +25,128 @@ export const PreTestModal: React.FC<PreTestModalProps> = ({
   onClose,
   onLaunchTest,
 }) => {
-  const [fullscreenConsent, setFullscreenConsent] = useState(true);
-  const [understoodMST, setUnderstoodMST] = useState(true);
-  const [understoodTiming, setUnderstoodTiming] = useState(true);
+  const startButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Auto-focus primary start button and handle Escape / Enter keys
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => {
+        startButtonRef.current?.focus();
+      }, 50);
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          onClose();
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen, onClose]);
 
   if (!isOpen || !test) return null;
 
   const handleLaunch = () => {
-    if (fullscreenConsent && document.documentElement.requestFullscreen) {
+    if (document.documentElement.requestFullscreen) {
       document.documentElement.requestFullscreen().catch(() => {
         // Fullscreen request may be blocked by iframe or browser permissions
       });
     }
-
-    onLaunchTest(test, fullscreenConsent);
+    onLaunchTest(test, true);
   };
 
+  const isSectional = test.category === 'SECTIONAL_PRACTICE';
+  const categoryBadge =
+    test.category === 'OFFICIAL_MOCK'
+      ? 'Rasmiy · To\'liq Mock'
+      : test.category === 'PAST_EXAM'
+      ? 'Haqiqiy SAT Imtihoni'
+      : 'Sprint Mashqi';
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.96, y: 12 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.96, y: 12 }}
-        transition={{ duration: 0.2 }}
-        className="w-full max-w-2xl bg-white rounded-3xl border border-[#E5E0D8] shadow-2xl overflow-hidden font-sans text-[#1E1B18] my-8"
-      >
-        {/* Header Bar */}
-        <div className="px-6 py-5 bg-[#FAF8F5] border-b border-[#E5E0D8] flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#1E1B18] text-white flex items-center justify-center font-bold text-sm shadow-xs">
-              MST
-            </div>
-            <div>
+    <AnimatePresence>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 8 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 8 }}
+          transition={{ duration: 0.15 }}
+          className="w-full max-w-md bg-white dark:bg-[#121A2F] rounded-3xl border border-[#E5E0D8] dark:border-[#1E293B] shadow-2xl overflow-hidden font-sans text-[#1E1B18] dark:text-[#F8FAFC]"
+        >
+          {/* 1. Header: Test Title & Category Badge */}
+          <div className="px-6 py-5 border-b border-[#F0ECE6] dark:border-[#1E293B] flex items-start justify-between gap-3">
+            <div className="space-y-1.5 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-white dark:bg-[#121A2F] border border-[#E5E0D8] dark:border-[#1E293B] text-[#E07A5F]">
-                  Official Bluebook Simulation
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#FAF5F0] dark:bg-[#0A0F1D] text-[#E07A5F] border border-[#FCD9CE] dark:border-[#1E293B]">
+                  {categoryBadge}
                 </span>
-                {test.isPrivate ? (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#FFF4F0] dark:bg-[#1E293B] text-[#E07A5F] border border-[#FCD9CE] dark:border-[#334155]">
-                    MAXSUS KURS
-                  </span>
-                ) : (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#EBF8F5] dark:bg-[#0A0F1D] text-[#2A9D8F] border border-[#BCE8DE] dark:border-[#1E293B]">
-                    OMMAVIY
+                {test.isPrivate && (
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center gap-1">
+                    <Lock size={10} /> Maxsus
                   </span>
                 )}
               </div>
-              <h2 className="text-base sm:text-lg font-extrabold text-[#1E1B18] mt-0.5">
+              <h2 className="text-lg font-bold text-[#1E1B18] dark:text-[#F8FAFC] leading-snug">
                 {test.title}
               </h2>
             </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 rounded-xl text-[#78716C] dark:text-[#64748B] hover:text-[#1E1B18] dark:hover:text-[#F8FAFC] hover:bg-[#F0ECE6] dark:hover:bg-[#1E293B] transition-colors cursor-pointer shrink-0"
+            >
+              <X size={18} />
+            </button>
           </div>
 
-          <button
-            onClick={onClose}
-            className="p-2 rounded-xl text-[#78716C] hover:text-[#1E1B18] hover:bg-white border border-transparent hover:border-[#E5E0D8] transition-all cursor-pointer"
-          >
-            <X size={18} />
-          </button>
-        </div>
+          {/* 2. Structure Preview (Distraction-Free Minimalist Breakdown) */}
+          <div className="p-6 space-y-3">
+            <div className="text-[11px] font-mono uppercase tracking-wider text-[#78716C] dark:text-[#64748B]">
+              Imtihon Tarkibi
+            </div>
 
-        {/* Content Body */}
-        <div className="p-6 sm:p-8 space-y-6 max-h-[72vh] overflow-y-auto">
+            <div className="divide-y divide-[#F0ECE6] dark:divide-[#1E293B] rounded-2xl border border-[#F0ECE6] dark:border-[#1E293B] bg-[#FAF8F5] dark:bg-[#0A0F1D] overflow-hidden text-xs">
+              <div className="p-3.5 flex items-center justify-between">
+                <span className="font-semibold text-[#1E1B18] dark:text-[#F8FAFC]">
+                  Reading &amp; Writing
+                </span>
+                <span className="font-mono text-[#78716C] dark:text-[#94A3B8]">
+                  54 savol (64 daq)
+                </span>
+              </div>
 
-          {/* Section 1: Bluebook 2-Stage MST Architecture */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#78716C] flex items-center gap-2">
-              <Layers size={14} className="text-[#E07A5F]" />
-              2-Stage Multistage Adaptive Engine (MST)
-            </h3>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#EBE5DF] space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#1E1B18]">Stage 1: Baseline Module</span>
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white text-[#78716C] border border-[#E5E0D8]">
-                    Standard Mix
+              {!isSectional && (
+                <div className="p-3.5 flex items-center justify-between">
+                  <span className="font-semibold text-[#1E1B18] dark:text-[#F8FAFC]">
+                    Math (Desmos)
+                  </span>
+                  <span className="font-mono text-[#78716C] dark:text-[#94A3B8]">
+                    44 savol (70 daq)
                   </span>
                 </div>
-                <p className="text-[11px] text-[#78716C] leading-relaxed">
-                  All students receive an identical distribution of Easy, Medium, and Hard items. Your raw score here determines your routing.
-                </p>
-              </div>
+              )}
+            </div>
 
-              <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#EBE5DF] space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#1E1B18]">Stage 2: Adaptive Routing</span>
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#EBF8F5] text-[#2A9D8F] border border-[#BCE8DE]">
-                    Easy or Hard
-                  </span>
-                </div>
-                <p className="text-[11px] text-[#78716C] leading-relaxed">
-                  High performers route to the <strong>Hard Module</strong> (scoring up to 800). Routing to Easy caps the section score at ~600.
-                </p>
-              </div>
+            <div className="text-[11px] font-mono text-[#78716C] dark:text-[#64748B] text-center pt-1">
+              Jami: {isSectional ? '54 savol · 64 daqiqa' : '98 savol · 134 daqiqa'}
             </div>
           </div>
 
-          {/* Section 2: Structure & Timing */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#78716C] flex items-center gap-2">
-              <Clock size={14} className="text-[#3D405B]" />
-              Exact Test Structure &amp; Timing (2h 14m Total)
-            </h3>
-
-            <div className="rounded-2xl border border-[#E5E0D8] overflow-hidden divide-y divide-[#E5E0D8] text-xs">
-              <div className="p-3.5 bg-[#FAF8F5] flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <span className="w-2 h-2 rounded-full bg-[#E07A5F]" />
-                  <span className="font-bold text-[#1E1B18]">Section 1: Reading &amp; Writing</span>
-                </div>
-                <div className="text-[#78716C] font-medium text-right">
-                  <strong>2 Modules &bull; 54 Qs &bull; 64 mins</strong> (32 min/mod)
-                </div>
-              </div>
-
-              <div className="p-2.5 bg-[#FFFDF9] text-center text-[11px] text-[#854D0E] font-medium border-y border-[#FEF08A]">
-                ☕ 10-Minute Official Intermission / Break
-              </div>
-
-              <div className="p-3.5 bg-[#FAF8F5] flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <span className="w-2 h-2 rounded-full bg-[#2A9D8F]" />
-                  <span className="font-bold text-[#1E1B18]">Section 2: Math</span>
-                </div>
-                <div className="text-[#78716C] font-medium text-right">
-                  <strong>2 Modules &bull; 44 Qs &bull; 70 mins</strong> (35 min/mod)
-                </div>
-              </div>
-            </div>
+          {/* 3. Single Primary CTA: Testni Boshlash -> */}
+          <div className="p-6 pt-0">
+            <button
+              ref={startButtonRef}
+              type="button"
+              onClick={handleLaunch}
+              className="w-full py-3.5 px-6 rounded-2xl bg-[#E07A5F] hover:bg-[#c96c53] active:scale-[0.99] text-[#0A0F1D] dark:text-[#0A0F1D] text-sm font-mono font-bold tracking-tight shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>Testni Boshlash</span>
+              <ArrowRight size={16} strokeWidth={2.5} />
+            </button>
           </div>
-
-          {/* Section 3: Permitted Bluebook Tools */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#78716C] flex items-center gap-2">
-              <Calculator size={14} className="text-[#2A9D8F]" />
-              Built-in Testing Tools
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
-              <div className="p-3 rounded-xl bg-white border border-[#E5E0D8] flex items-center gap-2.5">
-                <div className="p-1.5 rounded-lg bg-[#FAF8F5] text-[#1E1B18]">
-                  <Calculator size={14} />
-                </div>
-                <div>
-                  <div className="font-bold text-[#1E1B18]">Desmos Calculator</div>
-                  <div className="text-[10px] text-[#78716C]">Available all Math Qs</div>
-                </div>
-              </div>
-
-              <div className="p-3 rounded-xl bg-white border border-[#E5E0D8] flex items-center gap-2.5">
-                <div className="p-1.5 rounded-lg bg-[#FAF8F5] text-[#1E1B18]">
-                  <BookOpen size={14} />
-                </div>
-                <div>
-                  <div className="font-bold text-[#1E1B18]">Reference Sheet</div>
-                  <div className="text-[10px] text-[#78716C]">Geometry &amp; Trig formulas</div>
-                </div>
-              </div>
-
-              <div className="p-3 rounded-xl bg-white border border-[#E5E0D8] flex items-center gap-2.5">
-                <div className="p-1.5 rounded-lg bg-[#FAF8F5] text-[#1E1B18]">
-                  <ShieldCheck size={14} />
-                </div>
-                <div>
-                  <div className="font-bold text-[#1E1B18]">Flag &amp; Strikethrough</div>
-                  <div className="text-[10px] text-[#78716C]">Eliminate choices (A-D)</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Verification Checkboxes */}
-          <div className="space-y-2.5 pt-2 border-t border-[#F0EBE4]">
-            <label className="flex items-start gap-2.5 text-xs text-[#3D405B] cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={fullscreenConsent}
-                onChange={(e) => setFullscreenConsent(e.target.checked)}
-                className="mt-0.5 rounded border-[#E5E0D8] text-[#1E1B18] focus:ring-0 cursor-pointer"
-              />
-              <span>
-                <strong>Launch in Fullscreen:</strong> Replicate true distraction-free testing environment without browser tabs.
-              </span>
-            </label>
-
-            <label className="flex items-start gap-2.5 text-xs text-[#3D405B] cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={understoodMST}
-                onChange={(e) => setUnderstoodMST(e.target.checked)}
-                className="mt-0.5 rounded border-[#E5E0D8] text-[#1E1B18] focus:ring-0 cursor-pointer"
-              />
-              <span>
-                I understand that once a module timer expires, answers cannot be modified in prior sections.
-              </span>
-            </label>
-          </div>
-        </div>
-
-        {/* Footer Actions */}
-        <div className="px-6 py-4 bg-[#FAF8F5] border-t border-[#E5E0D8] flex flex-col sm:flex-row items-center justify-between gap-3">
-          <button
-            onClick={onClose}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-[#E5E0D8] hover:bg-white text-xs font-bold text-[#78716C] hover:text-[#1E1B18] transition-all cursor-pointer"
-          >
-            Cancel
-          </button>
-
-          <button
-            onClick={handleLaunch}
-            disabled={!understoodMST}
-            className="w-full sm:w-auto px-7 py-3 rounded-2xl bg-[#1E1B18] hover:bg-[#3D405B] disabled:opacity-50 text-white text-xs font-extrabold shadow-md transition-all hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <Maximize2 size={14} />
-            <span>Launch Fullscreen Bluebook Engine</span>
-            <ArrowRight size={14} />
-          </button>
-        </div>
-      </motion.div>
-    </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>
   );
 };

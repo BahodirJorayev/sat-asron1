@@ -662,196 +662,66 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
             return (
               <div
                 key={test.id}
-                className="p-6 sm:p-7 rounded-3xl bg-white/90 dark:bg-[#121A2F]/90 backdrop-blur-md border border-[#E5E0D8] dark:border-[#1E293B] shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between space-y-6 relative overflow-hidden group"
+                className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E5E0D8] dark:border-[#1E293B] shadow-xs hover:border-[#E07A5F]/50 dark:hover:border-[#E07A5F]/50 transition-all duration-150 flex flex-col justify-between space-y-4 group"
               >
-                {/* Top Accent Line on hover */}
-                <div className="absolute top-0 left-0 right-0 h-1 bg-transparent group-hover:bg-[#E07A5F] transition-all" />
-
-                {/* 1. Card Header */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#FAF5F0] dark:bg-[#1E293B] text-[#E07A5F] border border-[#FCD9CE] dark:border-[#334155]">
-                        {categoryLabel}
-                      </span>
-                      <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md border ${
-                        test.tags?.some((t) => t.toLowerCase().includes('hard') || t.toLowerCase().includes('rigor'))
-                          ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
-                          : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
-                      }`}>
-                        {test.tags?.some((t) => t.toLowerCase().includes('hard') || t.toLowerCase().includes('rigor')) ? 'Qiyin' : "O'rta"}
-                      </span>
-                    </div>
-
-                    {/* Access Tier Badge */}
-                    {isPrivate ? (
-                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#FFF4F0] dark:bg-[#1E293B] text-[#E07A5F] border border-[#FCD9CE] dark:border-[#334155] flex items-center gap-1 shrink-0">
-                        <Lock size={10} /> {isUnlocked ? 'Ochiq (Kurs)' : 'Maxsus Kod'}
-                      </span>
-                    ) : (
-                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#EBF8F5] dark:bg-[#0A0F1D] text-[#2A9D8F] border border-[#BCE8DE] dark:border-[#1E293B] shrink-0">
-                        Ommaviy
+                {/* 1 & 2. Category Badge & Title */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#FAF5F0] dark:bg-[#0A0F1D] text-[#E07A5F] border border-[#FCD9CE] dark:border-[#1E293B]">
+                      {categoryLabel}
+                    </span>
+                    {isCompleted && attempt?.totalScore && (
+                      <span className="text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
+                        {attempt.totalScore} / 1600
                       </span>
                     )}
                   </div>
-
-                  {/* Title & Stats Row (Zero wordy explanations) */}
-                  <div>
-                    <h3 className="text-base sm:text-lg font-bold text-[#1E1B18] dark:text-[#F8FAFC] group-hover:text-[#E07A5F] transition-colors leading-snug">
-                      {test.title}
-                    </h3>
-                    <div className="flex items-center gap-2 mt-2 text-[11px] font-mono text-[#78716C] dark:text-[#94A3B8]">
-                      <span>{test.category === 'SECTIONAL_PRACTICE' ? '54/44 Savol' : '98 Savol'}</span>
-                      <span>·</span>
-                      <span>{test.totalTimeMinutes} min</span>
-                      <span>·</span>
-                      <span className="text-[#2A9D8F] font-semibold">MST Modul</span>
-                    </div>
-                  </div>
+                  <h3 className="text-base font-bold text-[#1E1B18] dark:text-[#F8FAFC] group-hover:text-[#E07A5F] transition-colors leading-snug">
+                    {test.title}
+                  </h3>
                 </div>
 
-                {/* 2. Progress / Completion State Block */}
-                <div className="p-4 rounded-2xl bg-[#FAF8F5] dark:bg-[#0A0F1D] border border-[#EBE5DF] dark:border-[#1E293B] space-y-3">
-                  {isCompleted && attempt ? (
-                    /* COMPLETED STATE */
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-[#2A9D8F] flex items-center gap-1.5">
-                          <CheckCircle2 size={14} /> Tugallangan Test Natijasi
-                        </span>
-                        <span className="text-[11px] text-[#78716C] dark:text-[#94A3B8]">
-                          {attempt.completedAt ? new Date(attempt.completedAt).toLocaleDateString() : 'Yaqinda'}
-                        </span>
-                      </div>
-
-                      <div className="flex items-baseline justify-between pt-1">
-                        <div>
-                          <span className="text-2xl sm:text-3xl font-extrabold font-mono text-[#1E1B18] dark:text-[#F8FAFC]">
-                            {attempt.totalScore || 1440}
-                          </span>
-                          <span className="text-xs text-[#78716C] dark:text-[#94A3B8] font-mono ml-1">/ 1600</span>
-                        </div>
-
-                        <div className="flex items-center gap-3 text-xs font-mono font-bold">
-                          <span className="text-[#3D405B] dark:text-[#94A3B8]">RW: <strong>{attempt.rwScore || 710}</strong></span>
-                          <span className="text-[#78716C]">&bull;</span>
-                          <span className="text-[#E07A5F]">Math: <strong>{attempt.mathScore || 730}</strong></span>
-                        </div>
-                      </div>
-
-                      {/* Diagnostic Summary pill */}
-                      <div className="pt-2 border-t border-[#EBE5DF] dark:border-[#1E293B] flex items-center justify-between text-xs">
-                        <button
-                          onClick={() => setReviewAttemptTest({ test, attempt })}
-                          className="text-[#3D405B] dark:text-[#94A3B8] hover:text-[#1E1B18] dark:hover:text-[#F8FAFC] font-bold underline cursor-pointer flex items-center gap-1"
-                        >
-                          <Eye size={12} />
-                          <span>Savollarni Ko'rish</span>
-                        </button>
-
-                        <button
-                          onClick={() => setAiDiagnosticModalData({ test, attempt })}
-                          className="text-[#E07A5F] hover:text-[#c96a51] font-bold cursor-pointer flex items-center gap-1"
-                        >
-                          <Sparkles size={12} />
-                          <span>AI Diagnostika Hisoboti</span>
-                        </button>
-                      </div>
-                    </div>
-                  ) : isInProgress && attempt ? (
-                    /* IN PROGRESS STATE */
-                    <div className="space-y-2.5">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-[#E07A5F] flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-[#E07A5F] animate-ping" />
-                          To'xtatilgan (Jarayonda)
-                        </span>
-                        <span className="text-[11px] font-mono text-[#78716C] dark:text-[#94A3B8]">
-                          {attempt.answeredQuestionsCount || 41} / {attempt.totalQuestionsCount || 98} Savol
-                        </span>
-                      </div>
-
-                      {/* Progress Bar */}
-                      <div className="w-full h-2 rounded-full bg-[#EBE5DF] dark:bg-[#1E293B] overflow-hidden">
-                        <div
-                          className="h-full bg-[#E07A5F] rounded-full transition-all"
-                          style={{ width: `${Math.round(((attempt.answeredQuestionsCount || 41) / (attempt.totalQuestionsCount || 98)) * 100)}%` }}
-                        />
-                      </div>
-
-                      <div className="text-[11px] text-[#78716C] dark:text-[#94A3B8] flex items-center justify-between">
-                        <span>Joriy: <strong>{attempt.currentModule || 'Reading & Writing Mod 2'}</strong></span>
-                        <span>{Math.round(((attempt.answeredQuestionsCount || 41) / (attempt.totalQuestionsCount || 98)) * 100)}% bajarildi</span>
-                      </div>
-                    </div>
-                  ) : (
-                    /* NOT STARTED STATE */
-                    <div className="space-y-2 text-xs">
-                      <div className="flex items-center justify-between text-[#78716C] dark:text-[#94A3B8]">
-                        <span>Bo'limlar tarkibi:</span>
-                        <span className="font-mono font-bold text-[#1E1B18] dark:text-[#F8FAFC]">Jami 4 ta modul</span>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2 text-[11px]">
-                        <div className="p-2 rounded-xl bg-white dark:bg-[#121A2F] border border-[#E5E0D8] dark:border-[#1E293B]">
-                          <div className="font-bold text-[#3D405B] dark:text-[#94A3B8]">Reading &amp; Writing</div>
-                          <div className="text-[#78716C] dark:text-[#64748B]">2 Modul &bull; 54 Savol</div>
-                        </div>
-                        <div className="p-2 rounded-xl bg-white dark:bg-[#121A2F] border border-[#E5E0D8] dark:border-[#1E293B]">
-                          <div className="font-bold text-[#3D405B] dark:text-[#94A3B8]">Math (Desmos)</div>
-                          <div className="text-[#78716C] dark:text-[#64748B]">2 Modul &bull; 44 Savol</div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* 3. Card Footer & Primary Action */}
-                <div className="pt-2 flex items-center justify-between gap-3">
-                  <div className="text-[11px] text-[#78716C] dark:text-[#94A3B8]">
-                    <span>O'rtacha: <strong>{test.averageScore || 1320}</strong></span>
-                    <span className="mx-1.5">&bull;</span>
-                    <span>{test.attemptsCount || 1200} marta</span>
+                {/* 3 & 4. Quick Metrics & Primary Action */}
+                <div className="pt-3 border-t border-[#F0ECE6] dark:border-[#1E293B] flex items-center justify-between gap-3">
+                  {/* Element 3: Quick Metrics */}
+                  <div className="text-xs font-mono text-[#78716C] dark:text-[#94A3B8]">
+                    {test.category === 'SECTIONAL_PRACTICE'
+                      ? `${test.totalQuestionsCount || 54} Savol · ${test.totalTimeMinutes || 64} Daqiqa`
+                      : '98 Savol · 134 Daqiqa'}
                   </div>
 
-                  {isCompleted ? (
+                  {/* Element 4: Action Button */}
+                  {isPrivate && !isUnlocked ? (
+                    <button
+                      onClick={() => setAccessCodeModalTest(test)}
+                      className="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer bg-[#FAF5F0] dark:bg-[#1E293B] text-[#E07A5F] border border-[#FCD9CE] dark:border-[#334155] hover:bg-[#FCD9CE]/30"
+                    >
+                      <Lock size={12} />
+                      <span>Qulflangan · Premium</span>
+                    </button>
+                  ) : isCompleted ? (
                     <button
                       onClick={() => handleRetakeTest(test)}
-                      className="px-5 py-2.5 rounded-2xl bg-[#FAF8F5] dark:bg-[#0A0F1D] hover:bg-[#EBE5DF] dark:hover:bg-[#1E293B] text-[#1E1B18] dark:text-[#F8FAFC] text-xs font-bold border border-[#E5E0D8] dark:border-[#1E293B] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                      className="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer bg-[#FAF8F5] dark:bg-[#0A0F1D] hover:bg-[#EBE5DF] dark:hover:bg-[#1E293B] text-[#1E1B18] dark:text-[#F8FAFC] border border-[#E5E0D8] dark:border-[#1E293B]"
                     >
-                      <RotateCcw size={13} />
-                      <span>Qayta Topshirish</span>
+                      <RotateCcw size={12} />
+                      <span>Qayta topshirish</span>
                     </button>
                   ) : isInProgress ? (
                     <button
                       onClick={() => handleResumeTest(test)}
-                      className="px-6 py-2.5 rounded-2xl bg-[#E07A5F] hover:bg-[#c96a51] text-white text-xs font-extrabold shadow-md transition-all hover:scale-[1.02] flex items-center gap-1.5 cursor-pointer"
+                      className="px-4 py-2 rounded-xl text-xs font-extrabold text-white bg-[#E07A5F] hover:bg-[#c96c53] shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
                     >
-                      <Play size={13} className="fill-white" />
-                      <span>Davom Ettirish</span>
+                      <Play size={12} className="fill-white" />
+                      <span>Davom ettirish</span>
                     </button>
                   ) : (
                     <button
-                      onClick={() => {
-                        if (isPrivate && !isUnlocked) {
-                          setAccessCodeModalTest(test);
-                        } else {
-                          setSelectedTestForModal(test);
-                        }
-                      }}
-                      className="px-6 py-2.5 rounded-2xl text-xs font-extrabold shadow-md transition-all hover:scale-[1.02] flex items-center gap-1.5 cursor-pointer bg-[#1E1B18] dark:bg-[#E07A5F] dark:hover:bg-[#c96a51] hover:bg-[#3D405B] text-white"
+                      onClick={() => setSelectedTestForModal(test)}
+                      className="px-4 py-2 rounded-xl text-xs font-extrabold text-white bg-[#1E1B18] dark:bg-[#E07A5F] hover:bg-[#3D405B] dark:hover:bg-[#c96c53] shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
                     >
-                      {isPrivate && !isUnlocked ? (
-                        <>
-                          <Lock size={13} />
-                          <span>Kodni Kiritish</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>Testni Boshlash</span>
-                          <ArrowRight size={13} />
-                        </>
-                      )}
+                      <span>Boshlash</span>
+                      <ArrowRight size={12} />
                     </button>
                   )}
                 </div>

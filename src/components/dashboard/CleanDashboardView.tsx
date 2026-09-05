@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   FileText,
   Database,
@@ -13,6 +13,8 @@ import { User, MistakeVaultItem, MockTest, Question } from '../../types';
 import { VocabTrainerModal } from '../VocabTrainerModal';
 import { MultiplayerArenaModal } from '../MultiplayerArenaModal';
 import { ExamCountdownWidget } from './ExamCountdownWidget';
+import { supabase } from '../../lib/supabase';
+
 
 interface Props {
   user: User;
@@ -53,11 +55,47 @@ export const CleanDashboardView: React.FC<Props> = ({
   const [isVocabModalOpen, setIsVocabModalOpen] = useState(false);
   const [isArenaModalOpen, setIsArenaModalOpen] = useState(false);
 
-  // Dynamic Dashboard Content from Supabase platform_content
+  const [supabaseAnnouncements, setSupabaseAnnouncements] = useState<any[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    supabase
+      .from('announcements')
+      .select('*')
+      .eq('is_active', true)
+      .in('target_route', ['dashboard', 'all'])
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (!error && data && isMounted) {
+          setSupabaseAnnouncements(
+            data.map((d: any) => ({
+              id: d.id,
+              title: d.title,
+              text: d.content,
+              date: d.created_at ? new Date(d.created_at).toLocaleDateString('uz-UZ') : 'Bugun',
+              link: d.action_link,
+              is_active: true,
+            }))
+          );
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Dynamic Dashboard Content from Supabase platform_content & announcements table
   const dAnn = platformContent?.dashboard_announcements;
-  const activeAnnouncements = Array.isArray(dAnn?.content)
-    ? dAnn.content.filter((a: any) => a.is_active !== false)
-    : [];
+  const activeAnnouncements = useMemo(() => {
+    const fromMap = Array.isArray(dAnn?.content)
+      ? dAnn.content.filter((a: any) => a.is_active !== false)
+      : [];
+    const seenIds = new Set(fromMap.map((a: any) => a.id));
+    const extra = supabaseAnnouncements.filter((a: any) => !seenIds.has(a.id));
+    return [...extra, ...fromMap];
+  }, [dAnn?.content, supabaseAnnouncements]);
 
   const dRes = platformContent?.recommended_resources;
   const activeResources = Array.isArray(dRes?.content)

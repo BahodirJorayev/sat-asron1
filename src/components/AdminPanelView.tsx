@@ -12,7 +12,8 @@ import {
   Sparkles,
   Calculator,
   MessageSquare,
-  Globe
+  Globe,
+  Megaphone
 } from 'lucide-react';
 import { 
   User, 
@@ -34,7 +35,10 @@ import { AdminMockManager } from './AdminMockManager';
 import { AdminDesmosCMS } from './AdminDesmosCMS';
 import { AdminChatManager } from './AdminChatManager';
 import { AdminPlatformCMS } from './AdminPlatformCMS';
+import { AdminNewsCMS } from './AdminNewsCMS';
+import { AdminErrorBoundary } from './AdminErrorBoundary';
 import AdminVocabularyPage from '../app/admin/vocabulary/page';
+
 import { INITIAL_SAT_DESMOS_HACKS } from '../data/desmosHacksData';
 import { SiteBrandingConfig, AdminCredentials, BlogArticle, UserTestimonial } from '../data/blogAndBrandingData';
 
@@ -147,6 +151,11 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
       id: 'cms',
       label: 'Platforma CMS & Reklama',
       icon: <Globe className="w-4 h-4 text-[#E07A5F]" />,
+    },
+    {
+      id: 'news',
+      label: "Yangiliklar & E'lonlar",
+      icon: <Megaphone className="w-4 h-4 text-[#E07A5F]" />,
     },
     {
       id: 'questions',
@@ -306,157 +315,176 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
 
           {/* Platforma CMS & Reklama */}
           {activeAdminTab === 'cms' && (
-            <AdminPlatformCMS onRefreshGlobal={onRefreshGlobal} />
+            <AdminErrorBoundary fallbackTitle="Platforma CMS xatoligi">
+              <AdminPlatformCMS onRefreshGlobal={onRefreshGlobal} />
+            </AdminErrorBoundary>
+          )}
+
+          {/* Yangiliklar & E'lonlar (CMS) */}
+          {activeAdminTab === 'news' && (
+            <AdminErrorBoundary fallbackTitle="Yangiliklar va E'lonlar CMS xatoligi">
+              <AdminNewsCMS onRefreshGlobal={onRefreshGlobal} />
+            </AdminErrorBoundary>
           )}
 
           {/* 2. Savollar banki (Unified with Question Fixer and PDF Ingestion) */}
           {activeAdminTab === 'questions' && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 border-b border-[#E2E8F0] dark:border-[#1E293B] pb-3">
-                <button
-                  onClick={() => setQuestionsSubTab('list')}
-                  className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                    questionsSubTab === 'list'
-                      ? 'bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] shadow-xs'
-                      : 'text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
-                  }`}
-                >
-                  <Terminal className="w-3.5 h-3.5" />
-                  <span>Savollar Ro'yxati ({questions.length})</span>
-                </button>
+            <AdminErrorBoundary fallbackTitle="Savollar Banki yuklanishida xatolik">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 border-b border-[#E2E8F0] dark:border-[#1E293B] pb-3">
+                  <button
+                    onClick={() => setQuestionsSubTab('list')}
+                    className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                      questionsSubTab === 'list'
+                        ? 'bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] shadow-xs'
+                        : 'text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
+                    }`}
+                  >
+                    <Terminal className="w-3.5 h-3.5" />
+                    <span>Savollar Ro'yxati ({questions.length})</span>
+                  </button>
 
-                <button
-                  onClick={() => setQuestionsSubTab('ingestion')}
-                  className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                    questionsSubTab === 'ingestion'
-                      ? 'bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] shadow-xs'
-                      : 'text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
-                  }`}
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-purple-500" />
-                  <span>PDF Orqali Yuklash (AI Ingestion)</span>
-                </button>
+                  <button
+                    onClick={() => setQuestionsSubTab('ingestion')}
+                    className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                      questionsSubTab === 'ingestion'
+                        ? 'bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] shadow-xs'
+                        : 'text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
+                    }`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+                    <span>PDF Orqali Yuklash (AI Ingestion)</span>
+                  </button>
+                </div>
+
+                {questionsSubTab === 'list' ? (
+                  <AdminQuestionFixer
+                    questions={questions}
+                    onUpdateQuestion={(q) => onUpdateQuestion && onUpdateQuestion(q)}
+                    onAddQuestion={(q) => onAddQuestion && onAddQuestion(q)}
+                  />
+                ) : (
+                  <AdminPDFIngestion
+                    onImportQuestions={(newQs, title) => {
+                      if (onIngestQuestions) {
+                        onIngestQuestions(newQs, title);
+                      } else if (onAddQuestion) {
+                        newQs.forEach((q) => onAddQuestion(q));
+                      }
+                    }}
+                  />
+                )}
               </div>
-
-              {questionsSubTab === 'list' ? (
-                <AdminQuestionFixer
-                  questions={questions}
-                  onUpdateQuestion={(q) => onUpdateQuestion && onUpdateQuestion(q)}
-                  onAddQuestion={(q) => onAddQuestion && onAddQuestion(q)}
-                />
-              ) : (
-                <AdminPDFIngestion
-                  onImportQuestions={(newQs, title) => {
-                    if (onIngestQuestions) {
-                      onIngestQuestions(newQs, title);
-                    } else if (onAddQuestion) {
-                      newQs.forEach((q) => onAddQuestion(q));
-                    }
-                  }}
-                />
-              )}
-            </div>
+            </AdminErrorBoundary>
           )}
 
           {/* 3. Mock testlar & Kategoriyalar */}
           {activeAdminTab === 'mocks' && (
-            <AdminMockManager
-              mockTests={mockTests}
-              questions={questions}
-              mockCategories={mockCategories}
-              onAddMockTest={onAddMockTest || (() => {})}
-              onUpdateMockTest={onUpdateMockTest || (() => {})}
-              onDeleteMockTest={onDeleteMockTest || (() => {})}
-              onPreviewMockTest={onPreviewMockTest || (() => {})}
-              onAddMockCategory={onAddMockCategory}
-              onUpdateMockCategory={onUpdateMockCategory}
-              onDeleteMockCategory={onDeleteMockCategory}
-            />
+            <AdminErrorBoundary fallbackTitle="Mock Testlar boshqaruvida xatolik">
+              <AdminMockManager
+                mockTests={mockTests}
+                questions={questions}
+                mockCategories={mockCategories}
+                onAddMockTest={onAddMockTest || (() => {})}
+                onUpdateMockTest={onUpdateMockTest || (() => {})}
+                onDeleteMockTest={onDeleteMockTest || (() => {})}
+                onPreviewMockTest={onPreviewMockTest || (() => {})}
+                onAddMockCategory={onAddMockCategory}
+                onUpdateMockCategory={onUpdateMockCategory}
+                onDeleteMockCategory={onDeleteMockCategory}
+              />
+            </AdminErrorBoundary>
           )}
 
           {/* 4. Foydalanuvchilar */}
           {activeAdminTab === 'users' && (
-            <AdminUsersManager
-              users={usersList}
-              onUpdateUser={(updated) => onUpdateUser && onUpdateUser(updated)}
-              onDeleteUser={(id) => onDeleteUser && onDeleteUser(id)}
-              adminTelegram={globalSettings.contactTelegram || '@rcmnx'}
-            />
+            <AdminErrorBoundary fallbackTitle="Foydalanuvchilar boshqaruvida xatolik">
+              <AdminUsersManager
+                users={usersList}
+                onUpdateUser={(updated) => onUpdateUser && onUpdateUser(updated)}
+                onDeleteUser={(id) => onDeleteUser && onDeleteUser(id)}
+                adminTelegram={globalSettings.contactTelegram || '@rcmnx'}
+              />
+            </AdminErrorBoundary>
           )}
 
           {/* 5. SAT Lug'at CMS */}
           {activeAdminTab === 'vocabulary' && (
-            <div className="bg-white dark:bg-[#0E1526] rounded-xl p-4 border border-[#E2E8F0] dark:border-[#1E293B]">
-              <AdminVocabularyPage />
-            </div>
+            <AdminErrorBoundary fallbackTitle="Lug'at CMS yuklanishida xatolik">
+              <div className="bg-white dark:bg-[#0E1526] rounded-xl p-4 border border-[#E2E8F0] dark:border-[#1E293B]">
+                <AdminVocabularyPage />
+              </div>
+            </AdminErrorBoundary>
           )}
 
           {/* 6. Sozlamalar & Xavfsizlik (Unified with Settings, Desmos, and Chat Moderation) */}
           {activeAdminTab === 'settings' && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 border-b border-[#E2E8F0] dark:border-[#1E293B] pb-3">
-                <button
-                  onClick={() => setSettingsSubTab('governance')}
-                  className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                    settingsSubTab === 'governance'
-                      ? 'bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] shadow-xs'
-                      : 'text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
-                  }`}
-                >
-                  <Settings className="w-3.5 h-3.5" />
-                  <span>Platforma & Xavfsizlik Sozlamalari</span>
-                </button>
+            <AdminErrorBoundary fallbackTitle="Sozlamalar va Xavfsizlik modulida xatolik">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 border-b border-[#E2E8F0] dark:border-[#1E293B] pb-3">
+                  <button
+                    onClick={() => setSettingsSubTab('governance')}
+                    className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                      settingsSubTab === 'governance'
+                        ? 'bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] shadow-xs'
+                        : 'text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
+                    }`}
+                  >
+                    <Settings className="w-3.5 h-3.5" />
+                    <span>Platforma & Xavfsizlik Sozlamalari</span>
+                  </button>
 
-                <button
-                  onClick={() => setSettingsSubTab('desmos')}
-                  className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                    settingsSubTab === 'desmos'
-                      ? 'bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] shadow-xs'
-                      : 'text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
-                  }`}
-                >
-                  <Calculator className="w-3.5 h-3.5 text-[#E07A5F]" />
-                  <span>Desmos & SAT Xaklari ({desmosHacks.length})</span>
-                </button>
+                  <button
+                    onClick={() => setSettingsSubTab('desmos')}
+                    className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                      settingsSubTab === 'desmos'
+                        ? 'bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] shadow-xs'
+                        : 'text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
+                    }`}
+                  >
+                    <Calculator className="w-3.5 h-3.5 text-[#E07A5F]" />
+                    <span>Desmos & SAT Xaklari ({desmosHacks.length})</span>
+                  </button>
 
-                <button
-                  onClick={() => setSettingsSubTab('chat')}
-                  className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                    settingsSubTab === 'chat'
-                      ? 'bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] shadow-xs'
-                      : 'text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
-                  }`}
-                >
-                  <MessageSquare className="w-3.5 h-3.5 text-sky-500" />
-                  <span>Chat Moderatsiyasi</span>
-                </button>
+                  <button
+                    onClick={() => setSettingsSubTab('chat')}
+                    className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                      settingsSubTab === 'chat'
+                        ? 'bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] shadow-xs'
+                        : 'text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
+                    }`}
+                  >
+                    <MessageSquare className="w-3.5 h-3.5 text-sky-500" />
+                    <span>Chat Moderatsiyasi</span>
+                  </button>
+                </div>
+
+                {settingsSubTab === 'governance' && (
+                  <AdminGlobalSettings
+                    globalSettings={globalSettings}
+                    onSaveSettings={(settings) => onSaveGlobalSettings && onSaveGlobalSettings(settings)}
+                    adminCredentials={adminCredentials}
+                    onUpdateAdminCredentials={onUpdateAdminCredentials}
+                  />
+                )}
+
+                {settingsSubTab === 'desmos' && (
+                  <AdminDesmosCMS
+                    hacks={desmosHacks}
+                    globalSettings={globalSettings}
+                    onSaveHacks={(updatedHacks) => onSaveDesmosHacks && onSaveDesmosHacks(updatedHacks)}
+                    onSaveSettings={(settings) => onSaveGlobalSettings && onSaveGlobalSettings(settings)}
+                  />
+                )}
+
+                {settingsSubTab === 'chat' && (
+                  <AdminChatManager
+                    currentUser={currentUser}
+                    usersList={usersList}
+                  />
+                )}
               </div>
-
-              {settingsSubTab === 'governance' && (
-                <AdminGlobalSettings
-                  globalSettings={globalSettings}
-                  onSaveSettings={(settings) => onSaveGlobalSettings && onSaveGlobalSettings(settings)}
-                  adminCredentials={adminCredentials}
-                  onUpdateAdminCredentials={onUpdateAdminCredentials}
-                />
-              )}
-
-              {settingsSubTab === 'desmos' && (
-                <AdminDesmosCMS
-                  hacks={desmosHacks}
-                  globalSettings={globalSettings}
-                  onSaveHacks={(updatedHacks) => onSaveDesmosHacks && onSaveDesmosHacks(updatedHacks)}
-                  onSaveSettings={(settings) => onSaveGlobalSettings && onSaveGlobalSettings(settings)}
-                />
-              )}
-
-              {settingsSubTab === 'chat' && (
-                <AdminChatManager
-                  currentUser={currentUser}
-                  usersList={usersList}
-                />
-              )}
-            </div>
+            </AdminErrorBoundary>
           )}
         </div>
       </main>

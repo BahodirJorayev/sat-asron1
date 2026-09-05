@@ -53,6 +53,7 @@ import { AsronLogo } from './AsronLogo';
 interface Props {
   user: User;
   siteBranding: SiteBrandingConfig;
+  platformContent?: Record<string, any>;
   blogArticles: BlogArticle[];
   testimonials?: UserTestimonial[];
   onOpenAuthModal: (mode?: 'signin' | 'signup') => void;
@@ -159,6 +160,7 @@ const INTERACTIVE_QUESTIONS: InteractiveQuestion[] = [
 export const OnePrepLandingView: React.FC<Props> = ({
   user,
   siteBranding,
+  platformContent,
   blogArticles,
   testimonials: externalTestimonials,
   onOpenAuthModal,
@@ -169,6 +171,26 @@ export const OnePrepLandingView: React.FC<Props> = ({
   onOpenAdminLogin,
 }) => {
   const branding = siteBranding || INITIAL_SITE_CONFIG;
+
+  // Dynamic Supabase Platform Content Integration
+  const dynamicHero = platformContent?.landing_hero;
+  const heroTitle = dynamicHero?.title || branding.heroHeadline;
+  const heroSubtitle = dynamicHero?.subtitle || branding.heroSubtext;
+  const heroBadge =
+    dynamicHero?.content?.badgeText || `${branding.brandName} • Digital SAT Intelligence Platform (2026 Edition)`;
+  const heroCtaText = dynamicHero?.content?.ctaText || 'Sign Up for Free';
+
+  const dynamicStats = platformContent?.stats_bar;
+  const isStatsActive = dynamicStats?.is_active ?? true;
+  const statsList =
+    Array.isArray(dynamicStats?.content) && dynamicStats.content.length > 0
+      ? dynamicStats.content
+      : [
+          { id: '1', value: '45,000+', label: 'Faol SAT Talabalari' },
+          { id: '2', value: '+210 ball', label: "O'rtacha Ball O'sishi" },
+          { id: '3', value: '100%', label: 'Bluebook 2-Stage MST Format' },
+          { id: '4', value: '10 Daqiqa', label: 'Kunlik Samarali Trenirovka' },
+        ];
   // Score growth slider state
   const [currentScore, setCurrentScore] = useState<number>(1280);
   const projectedScore = Math.min(1600, currentScore + 230);
@@ -307,15 +329,15 @@ export const OnePrepLandingView: React.FC<Props> = ({
         {/* Decorative Brand Badge */}
         <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white dark:bg-[#0B1B3D] border border-[#E5E0D8] dark:border-[#1E293B] text-[#0B1B3D] dark:text-[#FAF8F5] text-xs font-bold shadow-2xs mb-6">
           <AsronLogo size={20} variant="mark-only" />
-          <span>{branding.brandName} • Digital SAT Intelligence Platform (2026 Edition)</span>
+          <span>{heroBadge}</span>
         </div>
 
         <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-[#0B1B3D] dark:text-[#EAEBED] tracking-tight max-w-4xl mx-auto leading-[1.15]">
-          {branding.heroHeadline}
+          {heroTitle}
         </h1>
 
         <p className="text-sm sm:text-base text-[#57534E] dark:text-[#94A3B8] max-w-2xl mx-auto mt-4 leading-relaxed">
-          {branding.heroSubtext}
+          {heroSubtitle}
         </p>
 
         {/* Primary Action Buttons - Clean & Authoritative */}
@@ -325,7 +347,7 @@ export const OnePrepLandingView: React.FC<Props> = ({
             className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-[#0B1B3D] hover:bg-[#122756] text-white font-bold text-sm shadow-lg shadow-black/10 flex items-center justify-center gap-2.5 transition-all hover:scale-105 active:scale-95 cursor-pointer border border-[#0B1B3D]/30"
           >
             <Sparkles className="w-4 h-4 text-[#FAF8F5]" />
-            <span>Sign Up for Free</span>
+            <span>{heroCtaText}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
 
@@ -338,25 +360,33 @@ export const OnePrepLandingView: React.FC<Props> = ({
           </button>
         </div>
 
-        {/* Real-time stats numbers */}
-        <div className="mt-12 pt-8 border-t border-[#E5E0D8] dark:border-[#1E293B] grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-          <div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-[#0B1B3D] dark:text-[#EAEBED] font-mono">45,000+</div>
-            <div className="text-xs text-[#78716C] dark:text-[#94A3B8] mt-0.5">Faol SAT Talabalari</div>
+        {/* Dynamic Real-time stats numbers */}
+        {isStatsActive && (
+          <div className="mt-12 pt-8 border-t border-[#E5E0D8] dark:border-[#1E293B] grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            {statsList.map((stat: any, idx: number) => {
+              const isHighlight = idx === 1;
+              const isAccent = idx === 3;
+              return (
+                <div key={stat.id || idx}>
+                  <div
+                    className={`text-2xl sm:text-3xl font-extrabold font-mono ${
+                      isHighlight
+                        ? 'text-[#E07A5F]'
+                        : isAccent
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : 'text-[#0B1B3D] dark:text-[#EAEBED]'
+                    }`}
+                  >
+                    {stat.value}
+                  </div>
+                  <div className="text-xs text-[#78716C] dark:text-[#94A3B8] mt-0.5">
+                    {stat.label}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-          <div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-[#E07A5F] font-mono">+210 ball</div>
-            <div className="text-xs text-[#78716C] dark:text-[#94A3B8] mt-0.5">O'rtacha Ball O'sishi</div>
-          </div>
-          <div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-[#0B1B3D] dark:text-[#EAEBED] font-mono">100%</div>
-            <div className="text-xs text-[#78716C] dark:text-[#94A3B8] mt-0.5">Bluebook 2-Stage MST Format</div>
-          </div>
-          <div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">10 Daqiqa</div>
-            <div className="text-xs text-[#78716C] dark:text-[#94A3B8] mt-0.5">Kunlik Samarali Trenirovka</div>
-          </div>
-        </div>
+        )}
       </section>
 
       {/* SECTION 2: INTERACTIVE MINI SAT CHALLENGE & LIVE DIAGNOSTIC SIMULATOR (UPGRADED) */}

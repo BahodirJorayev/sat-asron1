@@ -44,7 +44,9 @@ import {
   Info,
   Edit2,
   Forward,
-  CornerDownRight
+  CornerDownRight,
+  Loader2,
+  Globe
 } from 'lucide-react';
 import {
   Chat,
@@ -63,6 +65,15 @@ import { ChannelInfoDrawer } from './ChannelInfoDrawer';
 import { ForwardMessageModal } from './ForwardMessageModal';
 import { LiveStreamStudio } from './LiveStreamStudio';
 import { InviteLinkModal } from '../InviteLinkModal';
+import { EntityAvatar } from './EntityAvatar';
+import {
+  searchGlobalCommunity,
+  joinChannelByToken,
+  fetchChannelByUsername,
+  SearchUserResult,
+  SearchChannelResult,
+  GlobalCommunitySearchResults
+} from '../../lib/communityApi';
 import {
   getInitialChats,
   getChatMessages,
@@ -98,6 +109,11 @@ export const CommunityChatHub: React.FC<Props> = ({
     'ALL' | 'DIRECT' | 'GROUPS' | 'CHANNELS' | 'SAVED'
   >('ALL');
   const [globalSearchQuery, setGlobalSearchQuery] = useState<string>('');
+  const [searchResults, setSearchResults] = useState<GlobalCommunitySearchResults | null>(null);
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [previewChannel, setPreviewChannel] = useState<SearchChannelResult | null>(null);
+  const [isJoiningChannel, setIsJoiningChannel] = useState<boolean>(false);
+  const searchDebounceRef = useRef<any>(null);
 
   // 2. Active Chat & Messages
   const activeChat = useMemo(() => {
@@ -194,6 +210,211 @@ export const CommunityChatHub: React.FC<Props> = ({
       messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
   }, [messages.length]);
+
+  // 300ms Debounced Global Search (Supabase Profiles + Users + Public Channels + Local Fallbacks)
+  useEffect(() => {
+    if (!globalSearchQuery.trim()) {
+      setSearchResults(null);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+    }
+
+    searchDebounceRef.current = setTimeout(async () => {
+      try {
+        const results = await searchGlobalCommunity(globalSearchQuery, usersList, chats);
+        setSearchResults(results);
+      } catch (err) {
+        console.warn('Global search notice:', err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+      }
+    };
+  }, [globalSearchQuery, usersList, chats]);
+
+  // Handle Telegram-style URL params (?c=@username, ?join=token, /chat/join/:token)
+  useEffect(() => {
+    const handleUrlDeepLink = async () => {
+      if (typeof window === 'undefined') return;
+
+      const urlParams = new URLSearchParams(window.location.search);
+      let channelUsername = urlParams.get('c');
+      let joinToken = urlParams.get('join');
+
+      // Check pathname: /chat/join/[token] or /join/[token]
+      const path = window.location.pathname;
+      if (path.includes('/chat/join/')) {
+        const parts = path.split('/chat/join/');
+        if (parts[1]) joinToken = parts[1].split('/')[0].split('?')[0];
+      } else if (path.includes('/join/')) {
+        const parts = path.split('/join/');
+        if (parts[1]) joinToken = parts[1].split('/')[0].split('?')[0];
+      }
+
+      // Check hash query params: #/community?c=@username or #/community?join=token
+      if (window.location.hash.includes('?')) {
+        const hashQuery = window.location.hash.split('?')[1];
+        const hashParams = new URLSearchParams(hashQuery);
+        if (!channelUsername) channelUsername = hashParams.get('c');
+        if (!joinToken) joinToken = hashParams.get('join');
+      }
+
+      if (joinToken) {
+        const res = await joinChannelByToken(joinToken, currentUser, chats);
+        if (res.success && res.channel) {
+          setChats((prev) => {
+            if (prev.some((c) => c.id === res.channel!.id)) {
+              return prev.map((c) => (c.id === res.channel!.id ? res.channel! : c));
+            }
+            return [res.channel!, ...prev];
+          });
+          persistChatsList([res.channel, ...chats]);
+          setActiveChatId(res.channel.id);
+          setIsMobileChatViewOpen(true);
+        }
+      } else if (channelUsername) {
+        const cleanUser = channelUsername.replace(/^@/, '').toLowerCase();
+        const localMatch = chats.find(
+          (c) => c.username?.toLowerCase() === cleanUser || c.slug?.toLowerCase() === cleanUser
+        );
+        if (localMatch) {
+          setActiveChatId(localMatch.id);
+          setIsMobileChatViewOpen(true);
+        } else {
+          const remote = await fetchChannelByUsername(cleanUser);
+          if (remote) {
+            setChats((prev) => [remote, ...prev]);
+            persistChatsList([remote, ...chats]);
+            setActiveChatId(remote.id);
+            setIsMobileChatViewOpen(true);
+          }
+        }
+      }
+    };
+
+    handleUrlDeepLink();
+  }, [currentUser.id]);
+
+  // Listen for asron_open_chat event (e.g. from InviteCard join button)
+  useEffect(() => {
+    const handleOpenChatEvent = (e: any) => {
+      const detail = e.detail;
+      if (!detail) return;
+      if (detail.chat) {
+        setChats((prev) => {
+          if (prev.some((c) => c.id === detail.chat.id)) {
+            return prev.map((c) => (c.id === detail.chat.id ? detail.chat : c));
+          }
+          return [detail.chat, ...prev];
+        });
+        persistChatsList([detail.chat, ...chats]);
+      }
+      if (detail.chatId) {
+        setActiveChatId(detail.chatId);
+        setIsMobileChatViewOpen(true);
+      }
+    };
+
+    window.addEventListener('asron_open_chat', handleOpenChatEvent);
+    return () => {
+      window.removeEventListener('asron_open_chat', handleOpenChatEvent);
+    };
+  }, [chats]);
+
+  // Select User from Search Results (Open or create Direct Message)
+  const handleSelectUserFromSearch = (userItem: SearchUserResult) => {
+    const existingDm = chats.find(
+      (c) =>
+        c.type === 'DIRECT' &&
+        (c.members?.includes(userItem.id) ||
+          c.id === `dm_${currentUser.id}_${userItem.id}` ||
+          c.id === `dm_${userItem.id}_${currentUser.id}` ||
+          c.userId === userItem.id)
+    );
+
+    if (existingDm) {
+      setActiveChatId(existingDm.id);
+    } else {
+      const newDmChat: Chat = {
+        id: `dm_${currentUser.id}_${userItem.id}`,
+        name: userItem.fullName,
+        title: userItem.fullName,
+        type: 'DIRECT',
+        username: userItem.username,
+        members: [currentUser.id, userItem.id],
+        isPublic: false,
+        avatarUrl: userItem.avatarUrl,
+        createdAt: new Date().toISOString(),
+      };
+      const updatedChats = [newDmChat, ...chats];
+      setChats(updatedChats);
+      persistChatsList(updatedChats);
+      setActiveChatId(newDmChat.id);
+    }
+
+    setGlobalSearchQuery('');
+    setSearchResults(null);
+    setIsMobileChatViewOpen(true);
+  };
+
+  // Select Channel from Search Results (Open if member, or preview to join)
+  const handleSelectChannelFromSearch = (channelItem: SearchChannelResult) => {
+    const existing = chats.find(
+      (c) =>
+        c.id === channelItem.id ||
+        (channelItem.username && c.username?.toLowerCase() === channelItem.username.toLowerCase())
+    );
+
+    if (existing) {
+      setActiveChatId(existing.id);
+      setGlobalSearchQuery('');
+      setSearchResults(null);
+      setIsMobileChatViewOpen(true);
+    } else {
+      setPreviewChannel(channelItem);
+    }
+  };
+
+  // Join Channel from Preview Modal
+  const handleJoinPreviewChannel = async () => {
+    if (!previewChannel) return;
+    setIsJoiningChannel(true);
+    try {
+      const res = await joinChannelByToken(
+        previewChannel.inviteToken || previewChannel.username || previewChannel.id,
+        currentUser,
+        chats
+      );
+      if (res.success && res.channel) {
+        setChats((prev) => {
+          if (prev.some((c) => c.id === res.channel!.id)) {
+            return prev.map((c) => (c.id === res.channel!.id ? res.channel! : c));
+          }
+          return [res.channel!, ...prev];
+        });
+        persistChatsList([res.channel, ...chats]);
+        setActiveChatId(res.channel.id);
+        setPreviewChannel(null);
+        setGlobalSearchQuery('');
+        setSearchResults(null);
+        setIsMobileChatViewOpen(true);
+      }
+    } catch (err) {
+      console.error('Join channel error:', err);
+    } finally {
+      setIsJoiningChannel(false);
+    }
+  };
 
   // Filtered Chats by Folder & Search
   const filteredChats = useMemo(() => {
@@ -436,6 +657,9 @@ export const CommunityChatHub: React.FC<Props> = ({
   // Create new custom entity (Channel, Group public/private, Direct)
   const handleCreateNewEntity = (data: {
     name: string;
+    username?: string;
+    inviteToken?: string;
+    isPublic?: boolean;
     description: string;
     type: ChatType;
     avatarUrl?: string;
@@ -445,16 +669,15 @@ export const CommunityChatHub: React.FC<Props> = ({
       id: `chat-${Date.now()}`,
       name: data.name,
       title: data.name,
-      slug: data.name.toLowerCase().replace(/\s+/g, '-'),
+      slug: data.username || data.name.toLowerCase().replace(/\s+/g, '-'),
+      username: data.username,
+      inviteToken: data.inviteToken,
+      isPublic: data.isPublic !== false,
       description: data.description,
       type: data.type,
       isVerified: false,
       isOfficial: false,
-      avatarUrl:
-        data.avatarUrl ||
-        (data.type === 'DIRECT'
-          ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'
-          : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150'),
+      avatarUrl: data.avatarUrl || undefined,
       members: data.targetUserId
         ? [currentUser.id, data.targetUserId]
         : [currentUser.id],
@@ -495,9 +718,21 @@ export const CommunityChatHub: React.FC<Props> = ({
               type="text"
               value={globalSearchQuery}
               onChange={(e) => setGlobalSearchQuery(e.target.value)}
-              placeholder="Qidiruv..."
-              className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] text-xs text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-hidden focus:border-[#E07A5F]"
+              placeholder="Qidiruv (@username, kanal yoki ism)..."
+              className="w-full pl-9 pr-8 py-1.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] text-xs text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-hidden focus:border-[#E07A5F]"
             />
+            {globalSearchQuery && (
+              <button
+                type="button"
+                onClick={() => {
+                  setGlobalSearchQuery('');
+                  setSearchResults(null);
+                }}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
           <button
@@ -510,93 +745,204 @@ export const CommunityChatHub: React.FC<Props> = ({
           </button>
         </div>
 
-        {/* Folder Tabs Strip */}
-        <div className="px-3 py-2 border-b border-[#E2E8F0] dark:border-[#1E293B] flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs font-mono">
-          {[
-            { id: 'ALL', label: 'Barchasi' },
-            { id: 'CHANNELS', label: 'Kanallar' },
-            { id: 'GROUPS', label: 'Guruhlar' },
-            { id: 'DIRECT', label: 'Shaxsiy' },
-            { id: 'SAVED', label: 'Saqlanganlar' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTabFolder(tab.id as any)}
-              className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors cursor-pointer text-xs ${
-                activeTabFolder === tab.id
-                  ? 'bg-[#E07A5F] text-white font-bold shadow-xs'
-                  : 'text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]/60'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        {/* Search Results Dropdown Overlay or Feed */}
+        {globalSearchQuery.trim() ? (
+          <div className="flex-1 overflow-y-auto p-3 space-y-4 font-sans">
+            {isSearching ? (
+              <div className="py-8 flex flex-col items-center justify-center text-center text-[#64748B] dark:text-[#94A3B8] gap-2">
+                <Loader2 className="w-5 h-5 animate-spin text-[#E07A5F]" />
+                <span className="text-xs font-mono">Qidirilmoqda...</span>
+              </div>
+            ) : searchResults && (searchResults.users.length > 0 || searchResults.channels.length > 0) ? (
+              <>
+                {/* 1. USERS PARTITION */}
+                {searchResults.users.length > 0 && (
+                  <div className="space-y-1.5">
+                    <div className="px-2 py-1 text-[11px] font-mono font-bold text-[#64748B] dark:text-[#94A3B8] flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5 text-[#E07A5F]" />
+                        <span>Odamlar (Foydalanuvchilar)</span>
+                      </span>
+                      <span className="text-[10px] opacity-75">{searchResults.users.length}</span>
+                    </div>
 
-        {/* Chats Feed */}
-        <div className="flex-1 overflow-y-auto divide-y divide-[#E2E8F0] dark:divide-[#1E293B]/40">
-          {filteredChats.map((chat) => {
-            const isSelected = chat.id === activeChat?.id;
-            const isSaved = chat.type === 'SAVED_MESSAGES';
-
-            return (
-              <div
-                key={chat.id}
-                onClick={() => {
-                  setActiveChatId(chat.id);
-                  setIsMobileChatViewOpen(true);
-                }}
-                className={`p-3.5 flex items-center gap-3 cursor-pointer transition-colors ${
-                  isSelected
-                    ? 'bg-[#F1F5F9] dark:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC]'
-                    : 'hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]/40 text-[#64748B] dark:text-[#94A3B8]'
-                }`}
-              >
-                {/* Chat Avatar with Live Ring */}
-                <div className="relative shrink-0">
-                  <img
-                    src={
-                      chat.avatarUrl ||
-                      'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150'
-                    }
-                    alt={chat.name}
-                    className="w-11 h-11 rounded-2xl object-cover border border-[#E2E8F0] dark:border-[#1E293B]"
-                  />
-                  {chat.isLiveActive && (
-                    <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-rose-500 border-2 border-white dark:border-[#121A2F]"></span>
-                    </span>
-                  )}
-                </div>
-
-                {/* Content Details */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-bold truncate text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-1.5">
-                      <span>{chat.name}</span>
-                      {chat.isVerified && (
-                        <CheckCircle2 className="w-3.5 h-3.5 text-[#E07A5F] shrink-0" />
-                      )}
-                    </h4>
-                    <span className="text-[10px] font-mono text-[#94A3B8]">
-                      {chat.lastMessage?.createdAt
-                        ? new Date(chat.lastMessage.createdAt).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })
-                        : ''}
-                    </span>
+                    <div className="space-y-0.5">
+                      {searchResults.users.map((u) => (
+                        <div
+                          key={u.id}
+                          onClick={() => handleSelectUserFromSearch(u)}
+                          className="p-2.5 rounded-xl flex items-center gap-3 hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] cursor-pointer transition-colors"
+                        >
+                          <EntityAvatar
+                            name={u.fullName}
+                            avatarUrl={u.avatarUrl}
+                            size="md"
+                            shape="circle"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs font-bold truncate text-[#0F172A] dark:text-[#F8FAFC]">
+                              {u.fullName}
+                            </div>
+                            <div className="text-[11px] font-mono text-[#E07A5F] truncate">
+                              @{u.username}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
+                )}
 
-                  <p className="text-xs text-[#64748B] dark:text-[#94A3B8] truncate mt-0.5">
-                    {chat.lastMessage?.content || chat.description || 'Muloqot boshlanmadi'}
-                  </p>
+                {/* 2. CHANNELS & GROUPS PARTITION */}
+                {searchResults.channels.length > 0 && (
+                  <div className="space-y-1.5 pt-2 border-t border-[#E2E8F0] dark:border-[#1E293B]">
+                    <div className="px-2 py-1 text-[11px] font-mono font-bold text-[#64748B] dark:text-[#94A3B8] flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <Globe className="w-3.5 h-3.5 text-sky-500" />
+                        <span>Ommaviy Guruhlar & Kanallar</span>
+                      </span>
+                      <span className="text-[10px] opacity-75">{searchResults.channels.length}</span>
+                    </div>
+
+                    <div className="space-y-0.5">
+                      {searchResults.channels.map((ch) => (
+                        <div
+                          key={ch.id}
+                          onClick={() => handleSelectChannelFromSearch(ch)}
+                          className="p-2.5 rounded-xl flex items-center gap-3 hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] cursor-pointer transition-colors"
+                        >
+                          <EntityAvatar
+                            name={ch.name}
+                            avatarUrl={ch.avatarUrl}
+                            size="md"
+                            shape="rounded"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs font-bold truncate text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-1">
+                              <span>{ch.name}</span>
+                              {ch.isVerified && (
+                                <CheckCircle2 className="w-3 h-3 text-[#E07A5F] shrink-0" />
+                              )}
+                            </div>
+                            <div className="text-[11px] font-mono text-[#64748B] dark:text-[#94A3B8] flex items-center gap-2">
+                              {ch.username && (
+                                <span className="text-[#E07A5F]">@{ch.username}</span>
+                              )}
+                              {ch.membersCount && (
+                                <span>{ch.membersCount} a'zo</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="py-12 text-center space-y-1 text-[#64748B] dark:text-[#94A3B8]">
+                <div className="text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                  Natija topilmadi
+                </div>
+                <div className="text-[11px] font-mono">
+                  Foydalanuvchi yoki ommaviy kanal nomini tekshiring
                 </div>
               </div>
-            );
-          })}
-        </div>
+            )}
+          </div>
+        ) : (
+          <>
+            {/* Folder Tabs Strip */}
+            <div className="px-3 py-2 border-b border-[#E2E8F0] dark:border-[#1E293B] flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs font-mono">
+              {[
+                { id: 'ALL', label: 'Barchasi' },
+                { id: 'CHANNELS', label: 'Kanallar' },
+                { id: 'GROUPS', label: 'Guruhlar' },
+                { id: 'DIRECT', label: 'Shaxsiy' },
+                { id: 'SAVED', label: 'Saqlanganlar' },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTabFolder(tab.id as any)}
+                  className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors cursor-pointer text-xs ${
+                    activeTabFolder === tab.id
+                      ? 'bg-[#E07A5F] text-white font-bold shadow-xs'
+                      : 'text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]/60'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Chats Feed */}
+            <div className="flex-1 overflow-y-auto divide-y divide-[#E2E8F0] dark:divide-[#1E293B]/40">
+              {filteredChats.map((chat) => {
+                const isSelected = chat.id === activeChat?.id;
+
+                return (
+                  <div
+                    key={chat.id}
+                    onClick={() => {
+                      setActiveChatId(chat.id);
+                      setIsMobileChatViewOpen(true);
+                    }}
+                    className={`p-3.5 flex items-center gap-3 cursor-pointer transition-colors ${
+                      isSelected
+                        ? 'bg-[#F1F5F9] dark:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC]'
+                        : 'hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]/40 text-[#64748B] dark:text-[#94A3B8]'
+                    }`}
+                  >
+                    {/* Chat Avatar with Live Ring */}
+                    <div className="relative shrink-0">
+                      <EntityAvatar
+                        name={chat.name}
+                        avatarUrl={chat.avatarUrl}
+                        size="md"
+                        shape={chat.type === 'DIRECT' ? 'circle' : 'rounded'}
+                      />
+                      {chat.isLiveActive && (
+                        <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-rose-500 border-2 border-white dark:border-[#121A2F]"></span>
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Content Details */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold truncate text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-1.5">
+                          <span>{chat.name}</span>
+                          {chat.username && (
+                            <span className="text-[10px] font-mono text-[#E07A5F] font-normal">
+                              @{chat.username}
+                            </span>
+                          )}
+                          {chat.isVerified && (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-[#E07A5F] shrink-0" />
+                          )}
+                        </h4>
+                        <span className="text-[10px] font-mono text-[#94A3B8]">
+                          {chat.lastMessage?.createdAt
+                            ? new Date(chat.lastMessage.createdAt).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })
+                            : ''}
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-[#64748B] dark:text-[#94A3B8] truncate mt-0.5">
+                        {chat.lastMessage?.content || chat.description || 'Muloqot boshlanmadi'}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
       </aside>
 
       {/* ============================================================= */}
@@ -620,13 +966,11 @@ export const CommunityChatHub: React.FC<Props> = ({
                 </button>
 
                 <div className="relative shrink-0">
-                  <img
-                    src={
-                      activeChat.avatarUrl ||
-                      'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150'
-                    }
-                    alt={activeChat.name}
-                    className="w-10 h-10 rounded-2xl object-cover border border-[#E2E8F0] dark:border-[#1E293B]"
+                  <EntityAvatar
+                    name={activeChat.name}
+                    avatarUrl={activeChat.avatarUrl}
+                    size="md"
+                    shape={activeChat.type === 'DIRECT' ? 'circle' : 'rounded'}
                   />
                   {activeChat.isLiveActive && (
                     <span className="absolute -top-1 -right-1 flex h-3 w-3">
@@ -639,8 +983,18 @@ export const CommunityChatHub: React.FC<Props> = ({
                 <div className="min-w-0">
                   <h3 className="text-xs sm:text-sm font-bold truncate text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-1.5">
                     <span>{activeChat.name}</span>
+                    {activeChat.username && (
+                      <span className="text-[11px] font-mono text-[#E07A5F] font-normal">
+                        @{activeChat.username}
+                      </span>
+                    )}
                     {activeChat.isVerified && (
                       <CheckCircle2 className="w-3.5 h-3.5 text-[#E07A5F] shrink-0" />
+                    )}
+                    {activeChat.isPublic === false && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-mono text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                        <Lock className="w-3 h-3" /> Maxfiy
+                      </span>
                     )}
                   </h3>
                   <div className="text-[11px] font-mono text-[#64748B] dark:text-[#94A3B8] flex items-center gap-2">
@@ -723,20 +1077,22 @@ export const CommunityChatHub: React.FC<Props> = ({
                     }`}
                   >
                     {!isMe && (
-                      <img
-                        src={
-                          msg.senderAvatar ||
-                          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80'
-                        }
-                        alt={msg.senderName}
-                        className="w-8 h-8 rounded-full object-cover border border-[#E2E8F0] dark:border-[#1E293B] shrink-0 mt-0.5 cursor-pointer"
+                      <div
                         onClick={() => {
                           if (onSelectUserProfile) {
                             const found = usersList.find((u) => u.id === msg.senderId);
                             if (found) onSelectUserProfile(found);
                           }
                         }}
-                      />
+                        className="cursor-pointer shrink-0 mt-0.5"
+                      >
+                        <EntityAvatar
+                          name={msg.senderName}
+                          avatarUrl={msg.senderAvatar}
+                          size="sm"
+                          shape="circle"
+                        />
+                      </div>
                     )}
 
                     <div className="relative group/msg max-w-full">
@@ -841,6 +1197,17 @@ export const CommunityChatHub: React.FC<Props> = ({
                           <RichTextRenderer
                             content={msg.caption || msg.content}
                             className="leading-relaxed"
+                            currentUser={currentUser}
+                            onJoinSuccess={(joinedChat) => {
+                              setChats((prev) => {
+                                if (prev.some((c) => c.id === joinedChat.id)) {
+                                  return prev.map((c) => (c.id === joinedChat.id ? joinedChat : c));
+                                }
+                                return [joinedChat, ...prev];
+                              });
+                              persistChatsList([joinedChat, ...chats]);
+                              setActiveChatId(joinedChat.id);
+                            }}
                           />
                         )}
 
@@ -1116,6 +1483,76 @@ export const CommunityChatHub: React.FC<Props> = ({
             persistChatMessage({ ...savedMsg, chatId: destChatId });
           }}
         />
+      )}
+
+      {/* Channel Preview & Join Modal */}
+      {previewChannel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs font-sans select-none">
+          <div className="w-full max-w-sm bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] rounded-2xl p-5 text-[#0F172A] dark:text-[#F8FAFC] shadow-2xl space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono font-bold text-[#64748B] dark:text-[#94A3B8]">
+                Kanalga a'zo bo'lish
+              </span>
+              <button
+                type="button"
+                onClick={() => setPreviewChannel(null)}
+                className="p-1 text-[#64748B] hover:text-[#0F172A] dark:hover:text-white cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="flex flex-col items-center text-center space-y-2 py-2">
+              <EntityAvatar
+                name={previewChannel.name}
+                avatarUrl={previewChannel.avatarUrl}
+                size="xl"
+                shape="rounded"
+              />
+              <div className="text-sm font-bold flex items-center gap-1.5 justify-center">
+                <span>{previewChannel.name}</span>
+                {previewChannel.isVerified && (
+                  <CheckCircle2 className="w-4 h-4 text-[#E07A5F]" />
+                )}
+              </div>
+              {previewChannel.username && (
+                <div className="text-xs font-mono text-[#E07A5F]">
+                  @{previewChannel.username}
+                </div>
+              )}
+              {previewChannel.description && (
+                <p className="text-xs text-[#64748B] dark:text-[#94A3B8] line-clamp-3">
+                  {previewChannel.description}
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setPreviewChannel(null)}
+                className="flex-1 py-2 rounded-xl bg-[#F1F5F9] dark:bg-[#1E293B] text-xs font-mono font-bold text-[#64748B] dark:text-[#94A3B8] hover:bg-[#E2E8F0] dark:hover:bg-[#2A3756] cursor-pointer"
+              >
+                Bekor qilish
+              </button>
+              <button
+                type="button"
+                onClick={handleJoinPreviewChannel}
+                disabled={isJoiningChannel}
+                className="flex-1 py-2 rounded-xl bg-[#E07A5F] hover:bg-[#c96c53] text-xs font-mono font-bold text-white transition-colors cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                {isJoiningChannel ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Qo'shilmoqda...</span>
+                  </>
+                ) : (
+                  <span>Qo'shilish</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

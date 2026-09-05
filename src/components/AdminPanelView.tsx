@@ -11,7 +11,8 @@ import {
   FileText,
   Sparkles,
   Calculator,
-  MessageSquare
+  MessageSquare,
+  Globe
 } from 'lucide-react';
 import { 
   User, 
@@ -32,12 +33,14 @@ import { AdminGlobalSettings } from './AdminGlobalSettings';
 import { AdminMockManager } from './AdminMockManager';
 import { AdminDesmosCMS } from './AdminDesmosCMS';
 import { AdminChatManager } from './AdminChatManager';
+import { AdminPlatformCMS } from './AdminPlatformCMS';
 import AdminVocabularyPage from '../app/admin/vocabulary/page';
 import { INITIAL_SAT_DESMOS_HACKS } from '../data/desmosHacksData';
 import { SiteBrandingConfig, AdminCredentials, BlogArticle, UserTestimonial } from '../data/blogAndBrandingData';
 
 interface AdminPanelViewProps {
   currentUser: User;
+  onRefreshGlobal?: () => void;
   usersList: User[];
   receipts: PaymentReceipt[];
   questions?: Question[];
@@ -123,8 +126,9 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
   onUpdateMockCategory,
   onDeleteMockCategory,
   onNavigateToStudentView,
+  onRefreshGlobal,
 }) => {
-  // Main Navigation: Exactly 5 specified items in Uzbek
+  // Main Navigation: Core Admin Sections
   const [activeAdminTab, setActiveAdminTab] = useState<string>('dashboard');
 
   // Sub-tab state for Question Bank
@@ -138,6 +142,11 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
       id: 'dashboard',
       label: 'Boshqaruv paneli',
       icon: <LayoutDashboard className="w-4 h-4" />,
+    },
+    {
+      id: 'cms',
+      label: 'Platforma CMS & Reklama',
+      icon: <Globe className="w-4 h-4 text-[#E07A5F]" />,
     },
     {
       id: 'questions',
@@ -293,6 +302,11 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
               onNavigateTab={(tab) => setActiveAdminTab(tab)}
               onApproveReceipt={(rId) => onApproveReceipt(rId, 'PRO')}
             />
+          )}
+
+          {/* Platforma CMS & Reklama */}
+          {activeAdminTab === 'cms' && (
+            <AdminPlatformCMS onRefreshGlobal={onRefreshGlobal} />
           )}
 
           {/* 2. Savollar banki (Unified with Question Fixer and PDF Ingestion) */}

@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Chat, User } from '../../types';
 import { uploadChatMedia } from '../../lib/chatRealtimeService';
+import { EntityAvatar } from './EntityAvatar';
 
 interface ChannelInfoDrawerProps {
   isOpen: boolean;
@@ -85,8 +86,10 @@ export const ChannelInfoDrawer: React.FC<ChannelInfoDrawerProps> = ({
     setIsEditing(false);
   };
 
-  const inviteCode = chat.inviteCode || chat.slug || chat.id.substring(0, 8);
-  const fullInviteUrl = `https://asronsat.uz/join/${inviteCode}`;
+  const isPublicEntity = chat.isPublic !== false && chat.type !== 'PRIVATE_GROUP' && chat.type !== 'PRIVATE_CHANNEL';
+  const fullInviteUrl = isPublicEntity && chat.username
+    ? `https://sat-asron1.vercel.app/chat?c=@${chat.username}`
+    : `https://sat-asron1.vercel.app/chat/join/${chat.inviteToken || chat.inviteCode || chat.slug || chat.id}`;
 
   const handleCopyLink = () => {
     if (navigator.clipboard) {
@@ -107,7 +110,7 @@ export const ChannelInfoDrawer: React.FC<ChannelInfoDrawerProps> = ({
       username: mId,
       email: `${mId}@asronsat.uz`,
       role: (mId === 'usr-admin-01' || chat.channelAdmins?.includes(mId) ? 'ADMIN' : 'STUDENT') as any,
-      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80',
+      avatarUrl: undefined,
       streakDays: 0,
       xp: 0,
       createdAt: new Date().toISOString(),
@@ -141,16 +144,18 @@ export const ChannelInfoDrawer: React.FC<ChannelInfoDrawerProps> = ({
         {/* Avatar & Title Section */}
         <div className="flex flex-col items-center text-center space-y-3">
           <div className="relative group">
-            <img
-              src={avatarUrl || chat.avatarUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150'}
-              alt={chat.name}
-              className="w-24 h-24 rounded-3xl object-cover border-2 border-[#E2E8F0] dark:border-[#1E293B] shadow-md"
+            <EntityAvatar
+              name={name || chat.name}
+              avatarUrl={avatarUrl || chat.avatarUrl}
+              size="2xl"
+              shape={chat.type === 'DIRECT' ? 'circle' : 'rounded'}
+              className="w-24 h-24 shadow-md"
             />
             {isOwnerOrAdmin && (
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="absolute inset-0 rounded-3xl bg-black/50 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-opacity cursor-pointer text-[10px] font-mono gap-1"
+                className="absolute inset-0 rounded-2xl bg-black/50 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-opacity cursor-pointer text-[10px] font-mono gap-1"
                 title="Rasm yuklash va o'zgartirish"
               >
                 <Camera size={20} />
@@ -178,6 +183,12 @@ export const ChannelInfoDrawer: React.FC<ChannelInfoDrawerProps> = ({
               <h3 className="text-base font-bold text-[#0F172A] dark:text-[#F8FAFC]">
                 {chat.name}
               </h3>
+            )}
+
+            {chat.username && (
+              <div className="text-xs font-mono font-bold text-[#E07A5F]">
+                @{chat.username}
+              </div>
             )}
 
             <div className="flex items-center justify-center gap-1.5 text-xs font-mono text-[#64748B] dark:text-[#94A3B8]">
@@ -294,17 +305,12 @@ export const ChannelInfoDrawer: React.FC<ChannelInfoDrawerProps> = ({
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className="relative shrink-0">
-                      <img
-                        src={member.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80'}
-                        alt={member.fullName}
-                        className="w-8 h-8 rounded-full object-cover border border-[#E2E8F0] dark:border-[#1E293B]"
-                      />
-                      {/* Presence Indicator */}
-                      <span
-                        className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full ring-2 ring-white dark:ring-[#0A0F1D] ${
-                          isOnline ? 'bg-emerald-500' : 'bg-slate-400'
-                        }`}
-                        title={isOnline ? 'Onlayn' : 'Oflayn'}
+                      <EntityAvatar
+                        name={member.fullName}
+                        avatarUrl={member.avatarUrl}
+                        size="sm"
+                        shape="circle"
+                        isOnline={isOnline}
                       />
                     </div>
 

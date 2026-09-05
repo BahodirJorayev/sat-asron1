@@ -409,37 +409,38 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
       {/* 1. HEADER & EXECUTIVE SUMMARY BANNER (OnePrep Luxury Minimalism) */}
       <div className="p-6 sm:p-8 rounded-3xl bg-white/90 dark:bg-[#121A2F]/90 backdrop-blur-md border border-[#E5E0D8] dark:border-[#1E293B] shadow-xs relative overflow-hidden space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-2xl">
-            <div className="flex items-center gap-2">
+          <div className="space-y-3 max-w-2xl">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#FAF5F0] dark:bg-[#1E293B] text-[#E07A5F] border border-[#FCD9CE] dark:border-[#334155]">
                 Sinov Markazi
               </span>
-              <span className="text-xs text-[#78716C] dark:text-[#94A3B8]">&bull; 100% Bluebook Standarti</span>
+              <span className="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                Rasmiy Format · Moslashuvchan
+              </span>
+              <span className="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-[#1E293B] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800">
+                134 Daqiqa
+              </span>
+              <span className="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-[#1E293B] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800">
+                2 Modul MST
+              </span>
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1E1B18] dark:text-[#F8FAFC] tracking-tight">
               To'liq Formatdagi Mock Testlar
             </h1>
-
-            <p className="text-xs sm:text-sm text-[#78716C] dark:text-[#94A3B8] leading-relaxed">
-              Rasmiy 2-bosqichli adaptiv (MST) Digital SAT sinov testlari. College Board Bluebook muhiti, to'liq Desmos kalkulyatori va psixometrik ball hisoblash tizimi.
-            </p>
           </div>
 
           {/* 100% Free Access Status Banner */}
-          <div className="flex items-center gap-3 p-4 rounded-2xl bg-[#EBF8F5] dark:bg-[#0A0F1D] border border-[#BCE8DE] dark:border-[#1E293B] shrink-0 self-start lg:self-auto">
-            <div className="p-2.5 rounded-xl bg-[#2A9D8F] text-white">
-              <Sparkles size={20} />
+          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-[#EBF8F5] dark:bg-[#0A0F1D] border border-[#BCE8DE] dark:border-[#1E293B] shrink-0 self-start lg:self-auto">
+            <div className="p-2 rounded-xl bg-[#2A9D8F] text-white">
+              <Sparkles size={18} />
             </div>
             <div>
               <div className="text-[10px] uppercase font-bold text-[#2A9D8F] tracking-wider">
                 100% Bepul Kirish
               </div>
-              <div className="text-sm font-extrabold text-[#1E1B18] dark:text-[#F8FAFC]">
+              <div className="text-xs font-bold text-[#1E1B18] dark:text-[#F8FAFC]">
                 Barcha Ommaviy Mocklar Ochiq
-              </div>
-              <div className="text-[11px] text-[#78716C] dark:text-[#94A3B8]">
-                Maxsus kurs testlari ustoz kodi bilan
               </div>
             </div>
           </div>
@@ -673,18 +674,19 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
                       <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#FAF5F0] dark:bg-[#1E293B] text-[#E07A5F] border border-[#FCD9CE] dark:border-[#334155]">
                         {categoryLabel}
                       </span>
-                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-[#FAF8F5] dark:bg-[#0A0F1D] text-[#3D405B] dark:text-[#94A3B8] border border-[#EBE5DF] dark:border-[#1E293B] flex items-center gap-1">
-                        <Clock size={11} /> {test.totalTimeMinutes}m
-                      </span>
-                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-[#FAF8F5] dark:bg-[#0A0F1D] text-[#78716C] dark:text-[#94A3B8] border border-[#EBE5DF] dark:border-[#1E293B]">
-                        {test.category === 'SECTIONAL_PRACTICE' ? '54/44 Savol' : '98 Savol'}
+                      <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md border ${
+                        test.tags?.some((t) => t.toLowerCase().includes('hard') || t.toLowerCase().includes('rigor'))
+                          ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
+                          : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                      }`}>
+                        {test.tags?.some((t) => t.toLowerCase().includes('hard') || t.toLowerCase().includes('rigor')) ? 'Qiyin' : "O'rta"}
                       </span>
                     </div>
 
                     {/* Access Tier Badge */}
                     {isPrivate ? (
                       <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#FFF4F0] dark:bg-[#1E293B] text-[#E07A5F] border border-[#FCD9CE] dark:border-[#334155] flex items-center gap-1 shrink-0">
-                        <Lock size={10} /> {isUnlocked ? 'Ochiq (Kurs)' : 'Maxsus Kurs'}
+                        <Lock size={10} /> {isUnlocked ? 'Ochiq (Kurs)' : 'Maxsus Kod'}
                       </span>
                     ) : (
                       <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#EBF8F5] dark:bg-[#0A0F1D] text-[#2A9D8F] border border-[#BCE8DE] dark:border-[#1E293B] shrink-0">
@@ -693,14 +695,18 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
                     )}
                   </div>
 
-                  {/* Title & Description */}
+                  {/* Title & Stats Row (Zero wordy explanations) */}
                   <div>
                     <h3 className="text-base sm:text-lg font-bold text-[#1E1B18] dark:text-[#F8FAFC] group-hover:text-[#E07A5F] transition-colors leading-snug">
                       {test.title}
                     </h3>
-                    <p className="text-xs text-[#78716C] dark:text-[#94A3B8] mt-1 leading-relaxed line-clamp-2">
-                      {test.description}
-                    </p>
+                    <div className="flex items-center gap-2 mt-2 text-[11px] font-mono text-[#78716C] dark:text-[#94A3B8]">
+                      <span>{test.category === 'SECTIONAL_PRACTICE' ? '54/44 Savol' : '98 Savol'}</span>
+                      <span>·</span>
+                      <span>{test.totalTimeMinutes} min</span>
+                      <span>·</span>
+                      <span className="text-[#2A9D8F] font-semibold">MST Modul</span>
+                    </div>
                   </div>
                 </div>
 

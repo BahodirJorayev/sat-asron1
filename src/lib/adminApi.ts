@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { GlobalPlatformSettings, User, PlanTier, Question, MockCategory } from '../types';
+import { GlobalPlatformSettings, User, PlanTier, Question, MockCategory, MockTest } from '../types';
 
 export const DEFAULT_GLOBAL_SETTINGS: GlobalPlatformSettings = {
   id: 'global_config',
@@ -354,4 +354,391 @@ export async function deleteMockCategoryRemote(categoryId: string): Promise<void
     console.warn('Supabase delete mock_category notice:', err);
   }
 }
+
+/**
+ * ==============================================================================
+ * DYNAMIC PLATFORM CONTENT (Supabase public.platform_content)
+ * ==============================================================================
+ */
+
+export interface PlatformContentItem {
+  id?: string;
+  key: string;
+  title?: string;
+  subtitle?: string;
+  content?: any;
+  is_active: boolean;
+  updated_at?: string;
+}
+
+export const DEFAULT_PLATFORM_CONTENT: Record<string, PlatformContentItem> = {
+  landing_hero: {
+    key: 'landing_hero',
+    title: 'Score 1500+ on the Digital SAT with Adaptive Mastery',
+    subtitle: 'SAT imtihoniga professional, tizimli va xolis tayyorgarlik platformasi.',
+    content: {
+      ctaText: "Ro'yxatdan o'tish (Bepul)",
+      ctaLink: '/auth',
+      badgeText: 'ASRON SAT • 2026 Yangi Format',
+    },
+    is_active: true,
+  },
+  announcement_banner: {
+    key: 'announcement_banner',
+    title: 'Yangi Digital SAT 2026 Mock Testlari yuklandi!',
+    subtitle: 'Sinovdan o‘tish mutlaqo bepul.',
+    content: {
+      linkText: "Mock Testlarga o'tish",
+      linkUrl: 'mocks',
+      type: 'info',
+    },
+    is_active: true,
+  },
+  stats_bar: {
+    key: 'stats_bar',
+    title: "Platforma Ko'rsatkichlari",
+    subtitle: 'Haqiqiy natijalar va statistika',
+    content: [
+      { id: 'stat-1', label: 'Faol SAT Talabalari', value: '45,000+' },
+      { id: 'stat-2', label: "O'rtacha Ball O'sishi", value: '+210 ball' },
+      { id: 'stat-3', label: 'Bluebook 2-Stage MST Format', value: '100%' },
+      { id: 'stat-4', label: 'Kunlik Samarali Trenirovka', value: '10 Daqiqa' },
+    ],
+    is_active: true,
+  },
+  dashboard_announcements: {
+    key: 'dashboard_announcements',
+    title: "Boshqaruv Paneli E'lonlari",
+    subtitle: "O'quvchilar uchun muhim xabarlar",
+    content: [
+      {
+        id: 'ann-1',
+        title: "Shanba kuni soat 20:00 da bepul Katta Mock Test bo'lib o'tadi",
+        text: 'Haqiqiy College Board 2026 formatida adaptiv sinov. Barcha qatnashchilar uchun reyting va tahlil taqdim etiladi.',
+        date: '2026-09-06',
+        link: 'mocks',
+        is_active: true,
+      },
+    ],
+    is_active: true,
+  },
+  recommended_resources: {
+    key: 'recommended_resources',
+    title: 'Tavsiya Etiladigan Resurslar',
+    subtitle: 'SAT imtihoniga tayyorgarlik materiallari',
+    content: [
+      {
+        id: 'rec-1',
+        title: 'Erica Meltzer SAT Vocabulary PDF',
+        description: "Eng ko'p uchraydigan 250 ta akademik so'zlar to'plami.",
+        link: 'vocab',
+        tag: "LUG'AT",
+        is_active: true,
+      },
+      {
+        id: 'rec-2',
+        title: 'Desmos 20-Soniyali Formula Xaklari',
+        description: "Kvadrat tenglamalar va koordinatalar geometriyasi bo'yicha maxsus yechimlar.",
+        link: 'arena',
+        tag: 'DESMOS',
+        is_active: true,
+      },
+    ],
+    is_active: true,
+  },
+};
+
+/**
+ * Fetch all platform content rows or a specific item by key from Supabase
+ */
+export async function fetchPlatformContent(targetKey?: string): Promise<PlatformContentItem[]> {
+  let cachedMap: Record<string, PlatformContentItem> = { ...DEFAULT_PLATFORM_CONTENT };
+
+  if (typeof localStorage !== 'undefined') {
+    try {
+      const saved = localStorage.getItem('asron_platform_content');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') {
+          cachedMap = { ...cachedMap, ...parsed };
+        }
+      }
+    } catch {}
+  }
+
+  try {
+    let query = supabase.from('platform_content').select('*');
+    if (targetKey) {
+      query = query.eq('key', targetKey);
+    }
+    const { data, error } = await query;
+
+    if (!error && data && data.length > 0) {
+      data.forEach((row: any) => {
+        cachedMap[row.key] = {
+          id: row.id,
+          key: row.key,
+          title: row.title || '',
+          subtitle: row.subtitle || '',
+          content: row.content || {},
+          is_active: row.is_active ?? true,
+          updated_at: row.updated_at,
+        };
+      });
+
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('asron_platform_content', JSON.stringify(cachedMap));
+      }
+    }
+  } catch (err) {
+    console.warn('Supabase fetch platform_content notice:', err);
+  }
+
+  if (targetKey) {
+    return cachedMap[targetKey] ? [cachedMap[targetKey]] : [];
+  }
+  return Object.values(cachedMap);
+}
+
+/**
+ * Fetch platform content as a dictionary indexed by key
+ */
+export async function fetchPlatformContentMap(): Promise<Record<string, PlatformContentItem>> {
+  const list = await fetchPlatformContent();
+  const map: Record<string, PlatformContentItem> = { ...DEFAULT_PLATFORM_CONTENT };
+  list.forEach((item) => {
+    map[item.key] = item;
+  });
+  return map;
+}
+
+/**
+ * Persist or mutate a dynamic platform content item in Supabase
+ */
+export async function savePlatformContent(
+  item: Partial<PlatformContentItem> & { key: string }
+): Promise<PlatformContentItem> {
+  const currentMap = await fetchPlatformContentMap();
+  const existing = currentMap[item.key] || DEFAULT_PLATFORM_CONTENT[item.key] || {
+    key: item.key,
+    title: '',
+    subtitle: '',
+    content: {},
+    is_active: true,
+  };
+
+  const payload: PlatformContentItem = {
+    ...existing,
+    ...item,
+    updated_at: new Date().toISOString(),
+  };
+
+  // 1. Immediately update local cache & broadcast event
+  currentMap[item.key] = payload;
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem('asron_platform_content', JSON.stringify(currentMap));
+    window.dispatchEvent(
+      new CustomEvent('asron_platform_content_updated', {
+        detail: { key: item.key, item: payload, map: currentMap },
+      })
+    );
+  }
+
+  // 2. Persist to Supabase PostgreSQL table
+  try {
+    const { data, error } = await supabase
+      .from('platform_content')
+      .upsert(
+        {
+          key: payload.key,
+          title: payload.title,
+          subtitle: payload.subtitle,
+          content: payload.content,
+          is_active: payload.is_active,
+          updated_at: payload.updated_at,
+        },
+        { onConflict: 'key' }
+      )
+      .select()
+      .single();
+
+    if (!error && data) {
+      payload.id = data.id;
+    }
+  } catch (err) {
+    console.warn('Supabase savePlatformContent notice:', err);
+  }
+
+  return payload;
+}
+
+/**
+ * Delete a dynamic platform content item by key
+ */
+export async function deletePlatformContent(key: string): Promise<void> {
+  // Update local cache
+  if (typeof localStorage !== 'undefined') {
+    try {
+      const saved = localStorage.getItem('asron_platform_content');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        delete parsed[key];
+        localStorage.setItem('asron_platform_content', JSON.stringify(parsed));
+      }
+    } catch {}
+    window.dispatchEvent(
+      new CustomEvent('asron_platform_content_updated', {
+        detail: { key, deleted: true },
+      })
+    );
+  }
+
+  try {
+    await supabase.from('platform_content').delete().eq('key', key);
+  } catch (err) {
+    console.warn('Supabase deletePlatformContent notice:', err);
+  }
+}
+
+/**
+ * Realtime subscription to public.platform_content table
+ */
+export function subscribeToPlatformContent(
+  onChange: (map: Record<string, PlatformContentItem>) => void
+): () => void {
+  const channel = supabase
+    .channel('public:platform_content:changes')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'platform_content' },
+      async () => {
+        const freshMap = await fetchPlatformContentMap();
+        onChange(freshMap);
+      }
+    )
+    .subscribe();
+
+  const handleCustomEvent = (e: any) => {
+    if (e.detail?.map) {
+      onChange(e.detail.map);
+    }
+  };
+  if (typeof window !== 'undefined') {
+    window.addEventListener('asron_platform_content_updated', handleCustomEvent);
+  }
+
+  return () => {
+    supabase.removeChannel(channel);
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('asron_platform_content_updated', handleCustomEvent);
+    }
+  };
+}
+
+/**
+ * ==============================================================================
+ * MOCK TESTS SUPABASE PERSISTENCE
+ * ==============================================================================
+ */
+
+/**
+ * Fetch all mock tests from Supabase
+ */
+export async function fetchMockTestsRemote(): Promise<MockTest[]> {
+  try {
+    const { data, error } = await supabase
+      .from('mock_tests')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (!error && data && data.length > 0) {
+      return data.map((d: any) => ({
+        id: d.id,
+        title: d.title,
+        description: d.description || '',
+        category: d.category || 'OFFICIAL_MOCK',
+        isPublished: d.is_published ?? true,
+        isPrivate: d.is_private ?? false,
+        accessCode: d.access_code || undefined,
+        totalTimeMinutes: d.total_time_minutes ?? 134,
+        timeLimitSecs: d.time_limit_secs ?? 8040,
+        attemptsCount: d.attempts_count ?? 0,
+        averageScore: d.average_score ?? 0,
+        highestScore: d.highest_score ?? 0,
+        tags: d.tags || [],
+        createdAt: d.created_at,
+        updatedAt: d.updated_at,
+        questions: [],
+      }));
+    }
+  } catch (err) {
+    console.warn('Supabase fetch mock_tests notice:', err);
+  }
+  return [];
+}
+
+/**
+ * Upsert Mock Test to Supabase
+ */
+export async function saveMockTestRemote(test: MockTest): Promise<void> {
+  try {
+    await supabase.from('mock_tests').upsert(
+      {
+        id: test.id,
+        title: test.title,
+        description: test.description || '',
+        category: test.category || 'OFFICIAL_MOCK',
+        is_published: test.isPublished ?? true,
+        is_private: test.isPrivate ?? false,
+        access_code: test.accessCode || null,
+        total_time_minutes: test.totalTimeMinutes || 134,
+        time_limit_secs: test.timeLimitSecs || 8040,
+        attempts_count: test.attemptsCount || 0,
+        average_score: test.averageScore || 0,
+        highest_score: test.highestScore || 0,
+        tags: test.tags || [],
+        created_at: test.createdAt || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'id' }
+    );
+  } catch (err) {
+    console.warn('Supabase upsert mock_test notice:', err);
+  }
+}
+
+/**
+ * Delete Mock Test from Supabase
+ */
+export async function deleteMockTestRemote(testId: string): Promise<void> {
+  try {
+    await supabase.from('mock_tests').delete().eq('id', testId);
+  } catch (err) {
+    console.warn('Supabase delete mock_test notice:', err);
+  }
+}
+
+/**
+ * Realtime subscription to public.mock_tests table
+ */
+export function subscribeToMockTests(onChange: (tests: MockTest[]) => void): () => void {
+  const channel = supabase
+    .channel('public:mock_tests:changes')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'mock_tests' },
+      async () => {
+        const tests = await fetchMockTestsRemote();
+        if (tests.length > 0) {
+          onChange(tests);
+        }
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}
+
 

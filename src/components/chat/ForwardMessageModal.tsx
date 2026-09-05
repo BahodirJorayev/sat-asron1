@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, Search, Share2, Radio, Users, MessageSquare, Check } from 'lucide-react';
 import { Chat, Message } from '../../types';
+import { EntityAvatar } from './EntityAvatar';
 
 interface ForwardMessageModalProps {
   isOpen: boolean;
@@ -82,10 +83,11 @@ export const ForwardMessageModal: React.FC<ForwardMessageModalProps> = ({
               className="p-2.5 rounded-lg flex items-center justify-between hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <img
-                  src={c.avatarUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=80'}
-                  alt={c.name}
-                  className="w-8 h-8 rounded-xl object-cover border border-[#E2E8F0] dark:border-[#1E293B]"
+                <EntityAvatar
+                  name={c.name}
+                  avatarUrl={c.avatarUrl}
+                  size="sm"
+                  shape={c.type === 'DIRECT' ? 'circle' : 'rounded'}
                 />
                 <div className="min-w-0">
                   <div className="text-xs font-bold truncate">{c.name}</div>

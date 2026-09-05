@@ -276,16 +276,21 @@ export const QuestionBankView: React.FC<Props> = ({
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 text-xs font-bold text-[#E07A5F] uppercase tracking-widest mb-1.5">
-              <Layers className="w-4 h-4" />
-              <span>Official Search Question Bank (SQB)</span>
+            <div className="flex flex-wrap items-center gap-2 mb-1.5">
+              <span className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-[#E07A5F] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#FAF5F0] dark:bg-[#1E293B] border border-[#FCD9CE] dark:border-[#334155]">
+                <Layers className="w-3.5 h-3.5" />
+                Rasmiy Savollar Banki (SQB)
+              </span>
+              <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                3,000+ Savol · Aniq Filtrlar
+              </span>
+              <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-[#1E293B] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800">
+                Desmos Faol
+              </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1E1B18] tracking-tight">
-              Educator Question Bank (SQB)
+              Savollar Banki
             </h1>
-            <p className="text-[#64748B] text-xs sm:text-sm mt-1 max-w-2xl leading-relaxed">
-              Master 3,000+ official Digital SAT questions with targeted skill filters and instant solutions.
-            </p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -295,7 +300,7 @@ export const QuestionBankView: React.FC<Props> = ({
               className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#1E1B18] hover:bg-[#3D405B] disabled:opacity-40 text-white text-xs font-extrabold shadow-sm transition-all hover:scale-[1.02] cursor-pointer disabled:cursor-not-allowed"
             >
               <Play size={14} className="fill-white" />
-              <span>Practice Filtered Set ({filteredQuestions.length})</span>
+              <span>To'plamni Boshlash ({filteredQuestions.length})</span>
             </button>
           </div>
         </div>

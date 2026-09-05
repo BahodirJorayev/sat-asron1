@@ -43,8 +43,10 @@ export const InviteLinkModal: React.FC<Props> = ({
     chat.createdById === currentUser.id ||
     chat.channelAdmins?.includes(currentUser.id);
 
-  const inviteCode = chat.inviteCode || chat.slug || 'sat-asron';
-  const fullInviteUrl = `https://asronsat.uz/join/${inviteCode}`;
+  const inviteCode = chat.inviteToken || chat.inviteCode || chat.slug || 'sat-asron';
+  const fullInviteUrl = chat.isPublic && chat.username
+    ? `https://sat-asron1.vercel.app/chat?c=@${chat.username}`
+    : `https://sat-asron1.vercel.app/chat/join/${inviteCode}`;
 
   const handleCopy = () => {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -56,9 +58,17 @@ export const InviteLinkModal: React.FC<Props> = ({
 
   const handleRegenerateCode = () => {
     setIsRegenerating(true);
-    const newCode = `asron-${Math.random().toString(36).substring(2, 8)}`;
+    // Generate secure 32-character hex token
+    const newBytes = new Uint8Array(16);
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      crypto.getRandomValues(newBytes);
+    }
+    const hex = Array.from(newBytes)
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('') || `inv_${Date.now().toString(36)}`;
+
     setTimeout(() => {
-      onUpdateChat({ inviteCode: newCode });
+      onUpdateChat({ inviteToken: hex, inviteCode: hex });
       setIsRegenerating(false);
     }, 400);
   };
@@ -72,7 +82,7 @@ export const InviteLinkModal: React.FC<Props> = ({
     } else if (chat.type === 'PUBLIC_GROUP' || chat.type === 'PRIVATE_GROUP') {
       nextType = nextIsPublic ? 'PUBLIC_GROUP' : 'PRIVATE_GROUP';
     }
-    onUpdateChat({ type: nextType });
+    onUpdateChat({ type: nextType, isPublic: nextIsPublic });
   };
 
   return (

@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import { KaTeXRenderer } from '../KaTeXRenderer';
+import { InviteCard } from './InviteCard';
+import { User, Chat } from '../../types';
 
 interface RichTextRendererProps {
   content?: string;
   className?: string;
+  currentUser?: User;
+  onJoinSuccess?: (joinedChat: Chat) => void;
 }
 
 /**
@@ -34,6 +38,8 @@ const InteractiveSpoiler: React.FC<{ text: string }> = ({ text }) => {
 export const RichTextRenderer: React.FC<RichTextRendererProps> = ({
   content = '',
   className = '',
+  currentUser,
+  onJoinSuccess,
 }) => {
   if (!content) return null;
 
@@ -47,7 +53,7 @@ export const RichTextRenderer: React.FC<RichTextRendererProps> = ({
     if (match.index > lastIndex) {
       parts.push(
         <span key={`text-${lastIndex}`}>
-          {renderInlineFormatting(content.substring(lastIndex, match.index))}
+          {renderInlineFormatting(content.substring(lastIndex, match.index), currentUser, onJoinSuccess)}
         </span>
       );
     }
@@ -68,7 +74,7 @@ export const RichTextRenderer: React.FC<RichTextRendererProps> = ({
   if (lastIndex < content.length) {
     parts.push(
       <span key={`text-${lastIndex}`}>
-        {renderInlineFormatting(content.substring(lastIndex))}
+        {renderInlineFormatting(content.substring(lastIndex), currentUser, onJoinSuccess)}
       </span>
     );
   }
@@ -81,17 +87,21 @@ export const RichTextRenderer: React.FC<RichTextRendererProps> = ({
 };
 
 /**
- * Format inline elements: Spoilers, LaTeX Math, Bold, Italic, Code, URLs
+ * Format inline elements: Spoilers, LaTeX Math, Bold, Italic, Code, URLs & Clickable Invite Cards
  */
-function renderInlineFormatting(text: string): React.ReactNode[] {
+function renderInlineFormatting(
+  text: string,
+  currentUser?: User,
+  onJoinSuccess?: (joinedChat: Chat) => void
+): React.ReactNode[] {
   // Regex parsing tokens in order:
   // 1. Spoiler: ||spoiler||
   // 2. Math inline: $math$
   // 3. Bold: **bold**
   // 4. Italic: *italic*
   // 5. Monospace: `code`
-  // 6. URL: https?://[^\s]+
-  const tokenRegex = /(\|\|[\s\S]+?\|\||\$(?!\$)[\s\S]+?\$|\*\*[^*]+?\*\*|\*[^*]+?\*|`[^`]+?`|https?:\/\/[^\s]+)/g;
+  // 6. URL: https?://[^\s]+ or /chat/join/[^\s]+
+  const tokenRegex = /(\|\|[\s\S]+?\|\||\$(?!\$)[\s\S]+?\$|\*\*[^*]+?\*\*|\*[^*]+?\*|`[^`]+?`|https?:\/\/[^\s]+|\/(?:chat|community)\/join\/[a-zA-Z0-9_-]+)/g;
 
   const result: React.ReactNode[] = [];
   let lastIdx = 0;
@@ -138,19 +148,46 @@ function renderInlineFormatting(text: string): React.ReactNode[] {
           {codeText}
         </code>
       );
-    } else if (rawToken.startsWith('http')) {
-      result.push(
-        <a
-          key={`link-${m.index}`}
-          href={rawToken}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sky-500 hover:text-sky-400 underline underline-offset-2 break-all"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {rawToken}
-        </a>
-      );
+    } else if (rawToken.startsWith('http') || rawToken.startsWith('/chat/join/') || rawToken.startsWith('/community/join/')) {
+      const isInviteLink =
+        rawToken.includes('/chat/join/') ||
+        rawToken.includes('/join/') ||
+        rawToken.includes('?join=') ||
+        rawToken.includes('?c=@');
+
+      if (isInviteLink) {
+        result.push(
+          <span key={`inv-container-${m.index}`} className="block my-1.5">
+            <a
+              href={rawToken}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sky-500 hover:text-sky-400 underline underline-offset-2 break-all text-xs"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {rawToken}
+            </a>
+            <InviteCard
+              url={rawToken}
+              currentUser={currentUser}
+              onJoinSuccess={onJoinSuccess}
+            />
+          </span>
+        );
+      } else {
+        result.push(
+          <a
+            key={`link-${m.index}`}
+            href={rawToken}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sky-500 hover:text-sky-400 underline underline-offset-2 break-all"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {rawToken}
+          </a>
+        );
+      }
     }
 
     lastIdx = m.index + rawToken.length;

@@ -395,6 +395,9 @@ export interface Chat {
   type: ChatType;
   description?: string;
   avatarUrl?: string;
+  username?: string;
+  inviteToken?: string;
+  isPublic?: boolean;
   isVerified?: boolean;
   isOfficial?: boolean;
   inviteCode?: string;

@@ -349,17 +349,23 @@ export const MistakeVaultView: React.FC<Props> = ({
     <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 text-[#1E1B18] font-sans">
       {/* 1. METRICS & EXECUTIVE DASHBOARD HEADER */}
       <div className="p-6 sm:p-8 rounded-3xl bg-white/90 backdrop-blur-md border border-[#E5E0D8] shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <div className="space-y-1.5 max-w-2xl">
-          <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#E07A5F] uppercase tracking-wider">
-            <BrainCircuit className="w-4 h-4 text-[#E07A5F]" />
-            <span>Digital SAT Spaced-Repetition Leitner System (SRS)</span>
+        <div className="space-y-2.5 max-w-2xl">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-[#E07A5F] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#FAF5F0] dark:bg-[#1E293B] border border-[#FCD9CE] dark:border-[#334155]">
+              <BrainCircuit className="w-3.5 h-3.5 text-[#E07A5F]" />
+              Leitner SRS Tizimi
+            </span>
+            <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              3 Bosqichli Takrorlash
+            </span>
+            <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-[#1E293B] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800">
+              AI Xatolar Tahlili
+            </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1E1B18] tracking-tight">
-            Mistake Vault & Error Mastery Engine
+
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1E1B18] dark:text-[#F8FAFC] tracking-tight">
+            Xatolar Banki &amp; Tahlil Markazi
           </h1>
-          <p className="text-xs sm:text-sm text-[#78716C] leading-relaxed">
-            Eliminate recurring error patterns through Leitner 3-stage intervals, deep Gemini AI trap diagnosis, and novel clone questions. Answer <strong className="text-[#2A9D8F] font-bold">3 times consecutively</strong> to permanently Master a skill.
-          </p>
         </div>
 
         {/* Executive Metrics Bar */}

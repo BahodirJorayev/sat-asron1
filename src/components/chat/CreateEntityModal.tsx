@@ -12,10 +12,13 @@ import {
   Check,
   Sparkles,
   ShieldCheck,
-  UserCheck
+  UserCheck,
+  AtSign
 } from 'lucide-react';
 import { User, ChatType } from '../../types';
 import { uploadChatMedia } from '../../lib/chatRealtimeService';
+import { generateSecureInviteToken } from '../../lib/communityApi';
+import { EntityAvatar } from './EntityAvatar';
 
 interface CreateEntityModalProps {
   isOpen: boolean;
@@ -28,6 +31,9 @@ interface CreateEntityModalProps {
     type: ChatType;
     avatarUrl?: string;
     targetUserId?: string;
+    username?: string;
+    inviteToken?: string;
+    isPublic?: boolean;
   }) => void;
 }
 
@@ -39,13 +45,15 @@ export const CreateEntityModal: React.FC<CreateEntityModalProps> = ({
   onCreateChat,
 }) => {
   const [activeTab, setActiveTab] = useState<'CHANNEL' | 'GROUP' | 'DIRECT'>('CHANNEL');
-  const [groupPrivacy, setGroupPrivacy] = useState<'PUBLIC' | 'PRIVATE'>('PUBLIC');
+  const [entityPrivacy, setEntityPrivacy] = useState<'PUBLIC' | 'PRIVATE'>('PUBLIC');
   const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [description, setDescription] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [usernameError, setUsernameError] = useState<string | null>(null);
 
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -68,6 +76,16 @@ export const CreateEntityModal: React.FC<CreateEntityModalProps> = ({
     }
   };
 
+  const handleUsernameChange = (val: string) => {
+    const cleaned = val.toLowerCase().replace(/[^a-z0-9_]/g, '');
+    setUsername(cleaned);
+    if (cleaned.length > 0 && cleaned.length < 3) {
+      setUsernameError("Kamida 3 ta belgi (harf, raqam yoki pastki chiziq)");
+    } else {
+      setUsernameError(null);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -78,30 +96,43 @@ export const CreateEntityModal: React.FC<CreateEntityModalProps> = ({
         name: targetUser?.fullName || 'Shaxsiy Yozishma',
         description: `@${targetUser?.username || 'user'} bilan shaxsiy muloqot`,
         type: 'DIRECT',
-        avatarUrl: targetUser?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+        avatarUrl: targetUser?.avatarUrl,
         targetUserId: selectedUserId,
+        isPublic: false,
       });
       return;
     }
 
     if (!name.trim()) return;
 
+    const isPublic = entityPrivacy === 'PUBLIC';
+
+    // Validate username for public entities
+    if (isPublic) {
+      const cleanUsername = username.trim().toLowerCase().replace(/^@/, '');
+      if (!cleanUsername || cleanUsername.length < 3) {
+        setUsernameError("Ommaviy kanal/guruh uchun kamida 3 belgili @username kiriting");
+        return;
+      }
+    }
+
     let finalType: ChatType = 'PUBLIC_CHANNEL';
     if (activeTab === 'CHANNEL') {
-      finalType = 'PUBLIC_CHANNEL';
+      finalType = isPublic ? 'PUBLIC_CHANNEL' : 'PRIVATE_CHANNEL';
     } else if (activeTab === 'GROUP') {
-      finalType = groupPrivacy === 'PUBLIC' ? 'PUBLIC_GROUP' : 'PRIVATE_GROUP';
+      finalType = isPublic ? 'PUBLIC_GROUP' : 'PRIVATE_GROUP';
     }
+
+    const inviteToken = !isPublic ? generateSecureInviteToken() : undefined;
 
     onCreateChat({
       name: name.trim(),
       description: description.trim(),
       type: finalType,
-      avatarUrl:
-        avatarUrl ||
-        (activeTab === 'CHANNEL'
-          ? 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150'
-          : 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=150'),
+      avatarUrl: avatarUrl.trim() || undefined,
+      username: isPublic ? username.trim().toLowerCase().replace(/^@/, '') : undefined,
+      inviteToken,
+      isPublic,
     });
   };
 
@@ -110,7 +141,7 @@ export const CreateEntityModal: React.FC<CreateEntityModalProps> = ({
       u.id !== currentUser.id &&
       (u.fullName.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
         u.username.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
-        u.email.toLowerCase().includes(userSearchQuery.toLowerCase()))
+        u.email?.toLowerCase().includes(userSearchQuery.toLowerCase()))
   );
 
   return (
@@ -130,7 +161,7 @@ export const CreateEntityModal: React.FC<CreateEntityModalProps> = ({
             <div>
               <h3 className="text-sm font-bold">Yangi Muloqot Yaratish</h3>
               <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8]">
-                Kanal, guruh yoki shaxsiy yozishma ochish
+                Telegram standartidagi kanal, guruh yoki shaxsiy yozishma
               </p>
             </div>
           </div>
@@ -187,60 +218,62 @@ export const CreateEntityModal: React.FC<CreateEntityModalProps> = ({
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {activeTab === 'GROUP' && (
+          {/* Privacy Selector for Channel & Group */}
+          {(activeTab === 'CHANNEL' || activeTab === 'GROUP') && (
             <div className="space-y-1.5">
               <label className="text-[11px] font-mono text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider block">
-                Guruh Turi
+                {activeTab === 'CHANNEL' ? 'Kanal Turi' : 'Guruh Turi'}
               </label>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  onClick={() => setGroupPrivacy('PUBLIC')}
+                  onClick={() => setEntityPrivacy('PUBLIC')}
                   className={`p-3 rounded-xl border flex items-center gap-2.5 text-xs font-mono transition-all cursor-pointer ${
-                    groupPrivacy === 'PUBLIC'
+                    entityPrivacy === 'PUBLIC'
                       ? 'border-[#E07A5F] bg-[#E07A5F]/10 text-[#E07A5F] font-bold'
                       : 'border-[#E2E8F0] dark:border-[#1E293B] text-[#64748B] dark:text-[#94A3B8]'
                   }`}
                 >
                   <Globe size={16} />
                   <div className="text-left">
-                    <div className="text-xs">Ommaviy Guruh</div>
-                    <div className="text-[10px] text-slate-400 font-normal">Qidiruvda chiqadi, hamma kiradi</div>
+                    <div className="text-xs">Ommaviy</div>
+                    <div className="text-[10px] text-slate-400 font-normal">Qidiruvda chiqadi (@username)</div>
                   </div>
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => setGroupPrivacy('PRIVATE')}
+                  onClick={() => setEntityPrivacy('PRIVATE')}
                   className={`p-3 rounded-xl border flex items-center gap-2.5 text-xs font-mono transition-all cursor-pointer ${
-                    groupPrivacy === 'PRIVATE'
+                    entityPrivacy === 'PRIVATE'
                       ? 'border-[#E07A5F] bg-[#E07A5F]/10 text-[#E07A5F] font-bold'
                       : 'border-[#E2E8F0] dark:border-[#1E293B] text-[#64748B] dark:text-[#94A3B8]'
                   }`}
                 >
                   <Lock size={16} />
                   <div className="text-left">
-                    <div className="text-xs">Yopiq Guruh</div>
-                    <div className="text-[10px] text-slate-400 font-normal">Faqat havola yoki ruxsat bilan</div>
+                    <div className="text-xs">Yopiq (Xususiy)</div>
+                    <div className="text-[10px] text-slate-400 font-normal">Faqat taklif havolasi bilan</div>
                   </div>
                 </button>
               </div>
             </div>
           )}
 
-          {/* For Channels & Groups: Name, Description, Avatar */}
+          {/* For Channels & Groups: Name, Username, Description, Avatar */}
           {(activeTab === 'CHANNEL' || activeTab === 'GROUP') && (
             <div className="space-y-3">
-              {/* Avatar Upload */}
+              {/* Avatar Upload with Crisp 2-Letter Monogram Fallback */}
               <div className="flex items-center gap-3">
-                <div className="relative w-14 h-14 rounded-2xl overflow-hidden bg-[#F1F5F9] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-center shrink-0">
-                  {avatarUrl ? (
-                    <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    <UploadCloud size={20} className="text-[#64748B]" />
-                  )}
+                <div className="relative shrink-0">
+                  <EntityAvatar
+                    name={name || 'AS'}
+                    avatarUrl={avatarUrl || null}
+                    size="lg"
+                    shape="rounded"
+                  />
                   {isUploadingAvatar && (
-                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-black/60 rounded-2xl flex items-center justify-center">
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     </div>
                   )}
@@ -252,10 +285,10 @@ export const CreateEntityModal: React.FC<CreateEntityModalProps> = ({
                     onClick={() => avatarInputRef.current?.click()}
                     className="px-3 py-1.5 rounded-lg bg-[#F1F5F9] dark:bg-[#1E293B] hover:bg-[#E2E8F0] dark:hover:bg-[#2A3756] border border-[#E2E8F0] dark:border-[#1E293B] text-xs font-mono text-[#0F172A] dark:text-[#F8FAFC] transition-colors cursor-pointer"
                   >
-                    Rasm / Avatar yuklash
+                    Haqiqiy Logo Yuklash (Ixtiyoriy)
                   </button>
                   <p className="text-[10px] font-mono text-[#64748B] dark:text-[#94A3B8]">
-                    PNG, JPG yoki WEBP tavsiya etiladi (Supabase Storage)
+                    Yuklanmasa, minimalist 2-harfli monogramma o'rnatiladi
                   </p>
                   <input
                     ref={avatarInputRef}
@@ -267,6 +300,7 @@ export const CreateEntityModal: React.FC<CreateEntityModalProps> = ({
                 </div>
               </div>
 
+              {/* Name */}
               <div className="space-y-1">
                 <label className="text-xs font-mono text-[#64748B] dark:text-[#94A3B8]">
                   {activeTab === 'CHANNEL' ? 'Kanal Nomi' : 'Guruh Nomi'}
@@ -285,6 +319,37 @@ export const CreateEntityModal: React.FC<CreateEntityModalProps> = ({
                 />
               </div>
 
+              {/* Mandatory @username for Public Entities */}
+              {entityPrivacy === 'PUBLIC' && (
+                <div className="space-y-1">
+                  <label className="text-xs font-mono text-[#64748B] dark:text-[#94A3B8] flex items-center justify-between">
+                    <span>Ommaviy Havola (@username)</span>
+                    <span className="text-[10px] font-bold text-[#E07A5F]">Majburiy</span>
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-mono text-[#94A3B8]">@</span>
+                    <input
+                      type="text"
+                      required
+                      value={username}
+                      onChange={(e) => handleUsernameChange(e.target.value)}
+                      placeholder="sat_math_club"
+                      className={`w-full pl-8 pr-3.5 py-2 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border text-xs font-mono text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-hidden ${
+                        usernameError ? 'border-rose-500 focus:border-rose-500' : 'border-[#E2E8F0] dark:border-[#1E293B] focus:border-[#E07A5F]'
+                      }`}
+                    />
+                  </div>
+                  {usernameError ? (
+                    <p className="text-[10px] font-mono text-rose-500">{usernameError}</p>
+                  ) : (
+                    <p className="text-[10px] font-mono text-[#64748B] dark:text-[#94A3B8]">
+                      Kichik harflar (a-z), raqamlar va pastki chiziq (_). Havola: /chat?c=@{username || 'nomi'}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Description */}
               <div className="space-y-1">
                 <label className="text-xs font-mono text-[#64748B] dark:text-[#94A3B8]">Tavsif</label>
                 <textarea
@@ -335,13 +400,11 @@ export const CreateEntityModal: React.FC<CreateEntityModalProps> = ({
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <img
-                            src={
-                              u.avatarUrl ||
-                              'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80'
-                            }
-                            alt={u.fullName}
-                            className="w-7 h-7 rounded-full object-cover border border-[#E2E8F0] dark:border-[#1E293B]"
+                          <EntityAvatar
+                            name={u.fullName || u.username}
+                            avatarUrl={u.avatarUrl || null}
+                            size="sm"
+                            shape="circle"
                           />
                           <div className="min-w-0">
                             <div className="text-xs truncate">{u.fullName}</div>
@@ -371,7 +434,11 @@ export const CreateEntityModal: React.FC<CreateEntityModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={activeTab === 'DIRECT' ? !selectedUserId : !name.trim()}
+              disabled={
+                activeTab === 'DIRECT'
+                  ? !selectedUserId
+                  : !name.trim() || (entityPrivacy === 'PUBLIC' && username.trim().length < 3)
+              }
               className="px-5 py-2 rounded-xl bg-[#E07A5F] hover:bg-[#c96c53] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-mono font-bold transition-all shadow-xs cursor-pointer"
             >
               {activeTab === 'CHANNEL'

@@ -76,6 +76,15 @@ import {
   fetchMockCategories,
   saveMockCategoryRemote,
   deleteMockCategoryRemote,
+  PlatformContentItem,
+  DEFAULT_PLATFORM_CONTENT,
+  fetchPlatformContentMap,
+  savePlatformContent,
+  subscribeToPlatformContent,
+  fetchMockTestsRemote,
+  saveMockTestRemote,
+  deleteMockTestRemote,
+  subscribeToMockTests,
 } from './lib/adminApi';
 
 export default function App() {
@@ -133,11 +142,27 @@ export default function App() {
     return hasSavedProfile;
   };
 
-  // Derive initial tab from URL hash or persistent session to prevent redirect loops
+  // Derive initial tab from URL hash, pathname or persistent session to prevent redirect loops
   const [activeTab, setActiveTab] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.replace('#/', '').replace('#', '').trim();
+      const pathname = window.location.pathname;
+      const search = window.location.search;
       const hasSavedUser = !!localStorage.getItem('aurasat_user_profile');
+
+      // Direct URL / Deep link handling for Community & Chat
+      if (
+        pathname.startsWith('/chat') ||
+        pathname.startsWith('/community') ||
+        search.includes('c=') ||
+        search.includes('join=') ||
+        hash === 'chat' ||
+        hash.startsWith('chat?') ||
+        hash === 'community' ||
+        hash.startsWith('community?')
+      ) {
+        return 'community';
+      }
 
       if (['dashboard', 'daily-workout', 'vault', 'bluebook', 'qbank', 'community', 'arena', 'roadmap', 'profile', 'admin', 'blog', 'vocab'].includes(hash)) {
         return hash;
@@ -190,6 +215,53 @@ export default function App() {
       }
     };
     loadCategories();
+  }, []);
+
+  // Dynamic Platform Content CMS State (persisted to Supabase public.platform_content)
+  const [platformContentMap, setPlatformContentMap] = useState<Record<string, PlatformContentItem>>(() => {
+    try {
+      const saved = localStorage.getItem('asron_platform_content');
+      if (saved) return { ...DEFAULT_PLATFORM_CONTENT, ...JSON.parse(saved) };
+    } catch {}
+    return DEFAULT_PLATFORM_CONTENT;
+  });
+
+  // Supabase Realtime synchronization for Platform Content & Mock Tests
+  useEffect(() => {
+    fetchPlatformContentMap().then((map) => {
+      if (map && Object.keys(map).length > 0) {
+        setPlatformContentMap(map);
+      }
+    });
+
+    const unsubPlatform = subscribeToPlatformContent((newMap) => {
+      setPlatformContentMap(newMap);
+    });
+
+    fetchMockTestsRemote().then((remoteTests) => {
+      if (remoteTests && remoteTests.length > 0) {
+        setMockTests((prev) => {
+          const remoteIds = new Set(remoteTests.map((t) => t.id));
+          const localOnly = prev.filter((t) => !remoteIds.has(t.id));
+          return [...remoteTests, ...localOnly];
+        });
+      }
+    });
+
+    const unsubMocks = subscribeToMockTests((remoteTests) => {
+      if (remoteTests && remoteTests.length > 0) {
+        setMockTests((prev) => {
+          const remoteIds = new Set(remoteTests.map((t) => t.id));
+          const localOnly = prev.filter((t) => !remoteIds.has(t.id));
+          return [...remoteTests, ...localOnly];
+        });
+      }
+    });
+
+    return () => {
+      unsubPlatform();
+      unsubMocks();
+    };
   }, []);
 
   const [receipts, setReceipts] = useState<PaymentReceipt[]>(INITIAL_RECEIPTS);
@@ -487,29 +559,44 @@ export default function App() {
     setReceipts((prev) => prev.filter((r) => r.id !== receiptId));
   };
 
-  // Mock Tests CRUD Handlers
-  const handleAddMockTest = (newTest: MockTest) => {
+  // Mock Tests CRUD Handlers (with Supabase PostgreSQL Persistence)
+  const handleAddMockTest = async (newTest: MockTest) => {
     setMockTests((prev) => {
       const next = [newTest, ...prev];
       localStorage.setItem('aurasat_mock_tests', JSON.stringify(next));
       return next;
     });
+    try {
+      await saveMockTestRemote(newTest);
+    } catch (e) {
+      console.error('Failed to save mock test to Supabase:', e);
+    }
   };
 
-  const handleUpdateMockTest = (updatedTest: MockTest) => {
+  const handleUpdateMockTest = async (updatedTest: MockTest) => {
     setMockTests((prev) => {
       const next = prev.map((t) => (t.id === updatedTest.id ? updatedTest : t));
       localStorage.setItem('aurasat_mock_tests', JSON.stringify(next));
       return next;
     });
+    try {
+      await saveMockTestRemote(updatedTest);
+    } catch (e) {
+      console.error('Failed to update mock test in Supabase:', e);
+    }
   };
 
-  const handleDeleteMockTest = (testId: string) => {
+  const handleDeleteMockTest = async (testId: string) => {
     setMockTests((prev) => {
       const next = prev.filter((t) => t.id !== testId);
       localStorage.setItem('aurasat_mock_tests', JSON.stringify(next));
       return next;
     });
+    try {
+      await deleteMockTestRemote(testId);
+    } catch (e) {
+      console.error('Failed to delete mock test from Supabase:', e);
+    }
   };
 
   // Mock Categories CMS CRUD Handlers
@@ -709,6 +796,11 @@ export default function App() {
           setAuthModalMode('signup');
           setIsAuthModalOpen(true);
         }
+        return;
+      }
+
+      if (hash === 'chat' || hash.startsWith('chat?') || hash === 'community' || hash.startsWith('community?')) {
+        setActiveTab('community');
         return;
       }
 
@@ -1075,6 +1167,34 @@ export default function App() {
           </div>
         )}
 
+        {/* Dynamic Top Announcement Banner (Supabase platform_content.announcement_banner) */}
+        {platformContentMap.announcement_banner?.is_active && (
+          <div className="w-full bg-gradient-to-r from-[#0F172A] via-[#1E293B] to-[#0F172A] text-white border-b border-white/10 px-4 py-2 text-xs flex items-center justify-between z-40 shadow-xs animate-in fade-in duration-200">
+            <div className="flex items-center gap-2.5 truncate max-w-4xl mx-auto">
+              <span className="w-2 h-2 rounded-full bg-[#E07A5F] animate-pulse shrink-0" />
+              <span className="font-bold truncate">
+                {platformContentMap.announcement_banner.title || 'Yangi Digital SAT 2026 Mock Testlari yuklandi!'}
+              </span>
+              {platformContentMap.announcement_banner.subtitle && (
+                <span className="text-slate-300 hidden md:inline truncate">
+                  — {platformContentMap.announcement_banner.subtitle}
+                </span>
+              )}
+            </div>
+            {platformContentMap.announcement_banner.content?.linkText && (
+              <button
+                onClick={() => {
+                  const target = platformContentMap.announcement_banner.content?.linkUrl || 'mocks';
+                  setActiveTab(target);
+                }}
+                className="px-3 py-1 rounded-lg bg-[#E07A5F] hover:bg-[#c96c53] text-[#0A0F1D] text-[11px] font-mono font-bold shrink-0 transition-colors cursor-pointer"
+              >
+                {platformContentMap.announcement_banner.content.linkText} →
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Top Header with Promo Announcement & Quick Actions */}
         <Header
           user={currentUser}
@@ -1104,6 +1224,7 @@ export default function App() {
             <OnePrepLandingView
               user={currentUser}
               siteBranding={siteBranding}
+              platformContent={platformContentMap}
               blogArticles={blogArticles}
               testimonials={testimonials}
               onOpenAuthModal={(mode) => handleOpenAuth(mode || 'signup')}
@@ -1172,6 +1293,7 @@ export default function App() {
               user={currentUser}
               mistakes={mistakes}
               mockTests={mockTests}
+              platformContent={platformContentMap}
               onOpenDailyWorkout={() => setIsDailyWorkoutOpen(true)}
               onOpenDiagnostic={() => setIsDiagnosticOpen(true)}
               onOpenMistakeVault={() => setActiveTab('vault')}
@@ -1278,6 +1400,7 @@ export default function App() {
           {activeTab === 'admin' && (
             <AdminPanelView
               currentUser={currentUser}
+              onRefreshGlobal={() => fetchPlatformContentMap().then(setPlatformContentMap)}
               usersList={usersList}
               receipts={receipts}
               questions={questions}

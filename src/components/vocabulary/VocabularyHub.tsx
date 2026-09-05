@@ -173,7 +173,7 @@ export const VocabularyHub: React.FC<VocabularyHubProps> = ({
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 font-sans text-[#0F172A] dark:text-[#F8FAFC]">
       {/* 1. EXECUTIVE HEADER BANNER */}
       <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <div className="space-y-2 max-w-2xl">
+        <div className="space-y-2.5 max-w-2xl">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#FAF5F0] dark:bg-[#1E293B] text-[#E07A5F] border border-[#FCD9CE] dark:border-[#334155]">
               Leksika Markazi
@@ -187,9 +187,22 @@ export const VocabularyHub: React.FC<VocabularyHubProps> = ({
             SAT Lug'at &amp; So'z Boyligi
           </h1>
 
-          <p className="text-xs sm:text-sm text-[#64748B] dark:text-[#94A3B8] leading-relaxed">
-            Nufuzli SAT kitoblari va rasmiy College Board testlarida eng ko'p uchraydigan akademik so'zlar. 3D interaktiv fleshkartalar, o'zbekcha ta'riflar va kontekst savollari orqali xotirani mustahkamlang.
-          </p>
+          {/* Compact Book Badges (Zero Onboarding Clutter) */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+            {[
+              'Erica Meltzer SAT Vocabulary',
+              'College Board Essential Words',
+              "Barron's SAT 1100",
+              "Maxsus Kurs So'zlari",
+            ].map((badge) => (
+              <span
+                key={badge}
+                className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-md bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#64748B] dark:text-[#94A3B8] border border-[#E2E8F0] dark:border-[#1E293B]"
+              >
+                {badge}
+              </span>
+            ))}
+          </div>
         </div>
 
         {/* 4 Clean 0-State Metrics */}
@@ -269,40 +282,35 @@ export const VocabularyHub: React.FC<VocabularyHubProps> = ({
           })}
         </div>
 
-        {/* Active Book Detail Card with Download PDF Button */}
+        {/* Active Book Detail Bar with Download PDF Button (Clean 0-State Ergonomics) */}
         {activeBook && (
-          <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm sm:text-base font-bold text-[#0F172A] dark:text-[#F8FAFC]">
-                  {activeBook.title}
-                </h2>
-                {activeBook.author && (
-                  <span className="text-xs font-mono text-[#64748B] dark:text-[#94A3B8]">
-                    • {activeBook.author}
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-[#64748B] dark:text-[#94A3B8] max-w-2xl">
-                {activeBook.description}
-              </p>
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-2.5">
+              <span className="text-sm sm:text-base font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                {activeBook.title}
+              </span>
+              {activeBook.author && (
+                <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#64748B] dark:text-[#94A3B8] border border-[#E2E8F0] dark:border-[#1E293B]">
+                  {activeBook.author}
+                </span>
+              )}
             </div>
 
             {/* Clean Download PDF Button */}
             <button
               onClick={handleDownloadPDF}
-              className="px-4 py-2.5 rounded-xl border border-[#E2E8F0] dark:border-[#1E293B] bg-[#F8FAFC] dark:bg-[#0A0F1D] hover:bg-[#FAF5F0] dark:hover:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] text-xs font-mono font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 shadow-xs group"
+              className="px-4 py-2 rounded-xl border border-[#E2E8F0] dark:border-[#1E293B] bg-[#F8FAFC] dark:bg-[#0A0F1D] hover:bg-[#FAF5F0] dark:hover:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] text-xs font-mono font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 shadow-xs group"
             >
-              <Download size={14} className="text-[#E07A5F] group-hover:translate-y-0.5 transition-transform" />
-              <span>Kitobni PDF Yuklab Olish</span>
+              <Download size={13} className="text-[#E07A5F] group-hover:translate-y-0.5 transition-transform" />
+              <span>PDF Yuklab Olish</span>
             </button>
           </div>
         )}
       </div>
 
-      {/* 3. MODE SELECTOR TOOLBAR */}
+      {/* 3. MODE SELECTOR TOOLBAR (Linear Data Toggle) */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-[#E2E8F0] dark:border-[#1E293B] pb-3">
-        {/* Modes: Flashcards | Words in Context | Catalog List */}
+        {/* Modes: Lug'at Kartochkalari (SRS Flashcards) | Kontekstda Qo'llash (Quiz) | So'zlar Ro'yxati (Table) */}
         <div className="flex items-center gap-1 p-1 rounded-xl bg-[#F8FAFC] dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] text-xs w-full sm:w-auto">
           <button
             onClick={() => setActiveMode('flashcards')}
@@ -313,7 +321,7 @@ export const VocabularyHub: React.FC<VocabularyHubProps> = ({
             }`}
           >
             <Layers size={13} />
-            <span>Fleshkartalar</span>
+            <span>Lug'at Kartochkalari (SRS Flashcards)</span>
           </button>
 
           <button
@@ -325,7 +333,7 @@ export const VocabularyHub: React.FC<VocabularyHubProps> = ({
             }`}
           >
             <HelpCircle size={13} />
-            <span>Kontekst Testi (Quiz)</span>
+            <span>Kontekstda Qo'llash (Quiz)</span>
           </button>
 
           <button
@@ -337,7 +345,7 @@ export const VocabularyHub: React.FC<VocabularyHubProps> = ({
             }`}
           >
             <FileText size={13} />
-            <span>So'zlar Ro'yxati</span>
+            <span>So'zlar Ro'yxati (Table)</span>
           </button>
         </div>
 

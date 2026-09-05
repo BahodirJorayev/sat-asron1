@@ -36,6 +36,7 @@ import { User, Chat, LiveStreamSession, Message } from '../../types';
 import { LiveWhiteboard } from '../LiveWhiteboard';
 import { DesmosCalculator } from '../DesmosCalculator';
 import { uploadChatMedia, broadcastStreamSignalRealtime } from '../../lib/chatRealtimeService';
+import { EntityAvatar } from './EntityAvatar';
 
 interface Props {
   user: User;
@@ -142,10 +143,10 @@ export const LiveStreamStudio: React.FC<Props> = ({
   const [inputLiveQuestion, setInputLiveQuestion] = useState<string>('');
 
   // Live Attendees
-  const [attendees, setAttendees] = useState<{ id: string; name: string; avatar: string; handRaised: boolean; isMuted: boolean }[]>([
-    { id: 'usr-1', name: 'Azizbek K. (1520 Goal)', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80', handRaised: true, isMuted: true },
-    { id: 'usr-2', name: 'Madina Sh. (Math 800)', avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=80', handRaised: false, isMuted: true },
-    { id: 'usr-3', name: 'Javohir T. (RW 760)', avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=80', handRaised: false, isMuted: false },
+  const [attendees, setAttendees] = useState<{ id: string; name: string; avatar?: string; handRaised: boolean; isMuted: boolean }[]>([
+    { id: 'usr-1', name: 'Azizbek K. (1520 Goal)', handRaised: true, isMuted: true },
+    { id: 'usr-2', name: 'Madina Sh. (Math 800)', handRaised: false, isMuted: true },
+    { id: 'usr-3', name: 'Javohir T. (RW 760)', handRaised: false, isMuted: false },
   ]);
 
   const [handRaisedByMe, setHandRaisedByMe] = useState<boolean>(false);
@@ -718,10 +719,12 @@ export const LiveStreamStudio: React.FC<Props> = ({
                 />
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center bg-[#0A0F1D] p-3 text-center">
-                  <img
-                    src={user.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80'}
-                    alt={user.fullName}
-                    className="w-10 h-10 rounded-full object-cover border border-[#E07A5F] mb-1"
+                  <EntityAvatar
+                    name={user.fullName}
+                    avatarUrl={user.avatarUrl}
+                    size="md"
+                    shape="circle"
+                    className="border border-[#E07A5F] mb-1"
                   />
                   <span className="text-[11px] font-bold text-[#F8FAFC] truncate max-w-[120px]">
                     {user.fullName}
@@ -1049,10 +1052,11 @@ export const LiveStreamStudio: React.FC<Props> = ({
                       className="p-2.5 rounded-xl bg-[#0A0F1D] border border-[#1E293B] flex items-center justify-between text-xs"
                     >
                       <div className="flex items-center gap-2.5">
-                        <img
-                          src={att.avatar}
-                          alt={att.name}
-                          className="w-7 h-7 rounded-full object-cover border border-[#1E293B]"
+                        <EntityAvatar
+                          name={att.name}
+                          avatarUrl={att.avatar}
+                          size="xs"
+                          shape="circle"
                         />
                         <span className="font-medium text-[#F8FAFC] text-xs truncate max-w-[130px]">
                           {att.name}

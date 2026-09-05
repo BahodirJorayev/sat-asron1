@@ -95,11 +95,15 @@ export const Header: React.FC<Props> = ({
               onClick={() => setActiveTab('dashboard')}
               className="flex items-center gap-2.5 cursor-pointer select-none group"
             >
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-center font-mono font-bold text-[#E07A5F] text-xs sm:text-sm group-hover:border-[#E07A5F]/60 transition-colors shadow-2xs">
-                {logoIcon}
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#0B1B3D] dark:bg-[#0F172A] border border-slate-800 dark:border-[#1E293B] flex items-center justify-center text-white shrink-0 group-hover:border-[#E07A5F]/60 transition-colors shadow-2xs">
+                <svg viewBox="0 0 100 100" className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#E07A5F] fill-current" fill="none">
+                  <rect x="32" y="21" width="11" height="40" rx="5.5" transform="rotate(-45 32 21)" />
+                  <rect x="55" y="36" width="11" height="26" rx="5.5" transform="rotate(-45 55 36)" />
+                  <path d="M38.5 56.5L49.5 45.5C50.3 44.7 51.7 44.7 52.5 45.5L63.5 56.5" stroke="currentColor" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </div>
-              <span className="font-bold text-xs sm:text-sm tracking-tight text-[#0F172A] dark:text-[#F8FAFC]">
-                {brandName}
+              <span className="font-bold tracking-tight text-base sm:text-lg text-slate-900 dark:text-white">
+                ASRON <span className="text-[#E07A5F]">SAT</span>
               </span>
             </div>
           )}
@@ -178,14 +182,20 @@ export const Header: React.FC<Props> = ({
               {/* Current User Quick Profile Button */}
               <div
                 onClick={onOpenCurrentUserProfile}
-                className="flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#1E293B] hover:border-[#E07A5F]/50 transition-all cursor-pointer shadow-2xs"
+                className="flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] border border-slate-200 dark:border-[#1E293B] hover:border-[#E07A5F]/50 transition-all cursor-pointer shadow-2xs"
                 title="Mening Profilim sahifasini ochish"
               >
-                <img
-                  src={user.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}
-                  alt={user.fullName}
-                  className="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-cover border border-[#E2E8F0] dark:border-[#1E293B]"
-                />
+                {user.avatarUrl && !user.avatarUrl.startsWith('data:image') ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt={user.fullName}
+                    className="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-cover border border-slate-200 dark:border-[#1E293B]"
+                  />
+                ) : (
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#E07A5F] text-white flex items-center justify-center font-mono text-xs font-bold shadow-2xs">
+                    {user.fullName ? user.fullName[0].toUpperCase() : 'T'}
+                  </div>
+                )}
                 <div className="text-left hidden sm:block">
                   <div className="text-[11px] font-bold text-[#0F172A] dark:text-[#F8FAFC] leading-tight flex items-center gap-1">
                     <span>{user.fullName.split(' ')[0]}</span>

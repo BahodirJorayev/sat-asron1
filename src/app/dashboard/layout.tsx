@@ -111,16 +111,20 @@ export default function DashboardLayout({
         <div className="h-16 px-4 border-b border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-between gap-3">
           <Link
             href="/dashboard"
-            className="flex items-center gap-3 min-w-0 group cursor-pointer"
+            className="flex items-center gap-2.5 min-w-0 group cursor-pointer"
           >
-            <div className="w-9 h-9 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-center font-mono font-bold text-[#E07A5F] text-base shrink-0 group-hover:border-[#E07A5F]/60 transition-colors shadow-2xs">
-              Σ
+            <div className="w-8 h-8 rounded-xl bg-[#0B1B3D] dark:bg-[#0F172A] border border-slate-800 dark:border-[#1E293B] flex items-center justify-center text-white shrink-0 group-hover:border-[#E07A5F]/60 transition-colors shadow-2xs">
+              <svg viewBox="0 0 100 100" className="w-4 h-4 text-[#E07A5F] fill-current" fill="none">
+                <rect x="32" y="21" width="11" height="40" rx="5.5" transform="rotate(-45 32 21)" />
+                <rect x="55" y="36" width="11" height="26" rx="5.5" transform="rotate(-45 55 36)" />
+                <path d="M38.5 56.5L49.5 45.5C50.3 44.7 51.7 44.7 52.5 45.5L63.5 56.5" stroke="currentColor" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </div>
             {!isCollapsed && (
               <div className="min-w-0 leading-tight">
-                <div className="text-sm font-bold tracking-tight text-[#0F172A] dark:text-[#F8FAFC] truncate">
-                  ASRON SAT
-                </div>
+                <span className="font-bold tracking-tight text-lg text-slate-900 dark:text-white truncate">
+                  ASRON <span className="text-[#E07A5F]">SAT</span>
+                </span>
               </div>
             )}
           </Link>
@@ -219,9 +223,16 @@ export default function DashboardLayout({
             </button>
 
             {/* Clean Brand Title (Zero Breadcrumbs) */}
-            <Link href="/dashboard" className="flex items-center gap-2 group cursor-pointer">
-              <span className="font-bold text-sm tracking-tight text-[#0F172A] dark:text-[#F8FAFC]">
-                ASRON SAT
+            <Link href="/dashboard" className="flex items-center gap-2.5 group cursor-pointer select-none">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#0B1B3D] dark:bg-[#0F172A] border border-slate-800 dark:border-[#1E293B] flex items-center justify-center text-white shrink-0 group-hover:border-[#E07A5F]/60 transition-colors shadow-2xs">
+                <svg viewBox="0 0 100 100" className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#E07A5F] fill-current" fill="none">
+                  <rect x="32" y="21" width="11" height="40" rx="5.5" transform="rotate(-45 32 21)" />
+                  <rect x="55" y="36" width="11" height="26" rx="5.5" transform="rotate(-45 55 36)" />
+                  <path d="M38.5 56.5L49.5 45.5C50.3 44.7 51.7 44.7 52.5 45.5L63.5 56.5" stroke="currentColor" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <span className="font-bold tracking-tight text-base sm:text-lg text-slate-900 dark:text-white">
+                ASRON <span className="text-[#E07A5F]">SAT</span>
               </span>
             </Link>
           </div>
@@ -287,11 +298,15 @@ export default function DashboardLayout({
             <div className="space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0] dark:border-[#1E293B]">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-center font-mono font-bold text-[#E07A5F] text-sm">
-                    Σ
+                  <div className="w-8 h-8 rounded-xl bg-[#0B1B3D] dark:bg-[#0F172A] border border-slate-800 dark:border-[#1E293B] flex items-center justify-center text-white shrink-0 shadow-2xs">
+                    <svg viewBox="0 0 100 100" className="w-4 h-4 text-[#E07A5F] fill-current" fill="none">
+                      <rect x="32" y="21" width="11" height="40" rx="5.5" transform="rotate(-45 32 21)" />
+                      <rect x="55" y="36" width="11" height="26" rx="5.5" transform="rotate(-45 55 36)" />
+                      <path d="M38.5 56.5L49.5 45.5C50.3 44.7 51.7 44.7 52.5 45.5L63.5 56.5" stroke="currentColor" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
                   </div>
-                  <span className="font-bold text-sm text-[#0F172A] dark:text-[#F8FAFC]">
-                    ASRON SAT
+                  <span className="font-bold tracking-tight text-base sm:text-lg text-slate-900 dark:text-white">
+                    ASRON <span className="text-[#E07A5F]">SAT</span>
                   </span>
                 </div>
                 <button

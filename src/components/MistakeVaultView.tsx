@@ -515,10 +515,14 @@ export const MistakeVaultView: React.FC<Props> = ({
         {/* Left Side: Mistake Queue List */}
         <div className="lg:col-span-5 space-y-3">
           {filteredMistakes.length === 0 ? (
-            <div className="p-8 text-center bg-white border border-[#E5E0D8] rounded-3xl text-[#78716C] text-xs space-y-2">
-              <CheckCircle2 className="w-8 h-8 text-[#2A9D8F] mx-auto" />
-              <p className="font-bold text-sm text-[#1E1B18]">Hozircha xatolar mavjud emas</p>
-              <p className="text-[#78716C]">Bluebook mock testlari yoki kunlik mashqlarni yechish davomida xato qilgan savollaringiz Leitner tizimi orqali shu yerga avtomatik yig'iladi.</p>
+            <div className="p-8 text-center bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl text-slate-600 dark:text-[#94A3B8] text-xs space-y-3 shadow-xs">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/10 border border-emerald-500/20 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto shadow-2xs">
+                <CheckCircle2 className="w-6 h-6" />
+              </div>
+              <p className="font-bold text-sm text-[#0F172A] dark:text-[#F8FAFC]">Hozircha xatolar mavjud emas</p>
+              <p className="text-[#64748B] dark:text-[#94A3B8] max-w-sm mx-auto leading-relaxed">
+                Bluebook mock testlari yoki kunlik mashqlarni yechish davomida xato qilgan savollaringiz Leitner tizimi orqali shu yerga avtomatik yig'iladi.
+              </p>
             </div>
           ) : (
             filteredMistakes.map((item) => {
@@ -543,88 +547,88 @@ export const MistakeVaultView: React.FC<Props> = ({
                   }}
                   className={`p-4 rounded-2xl border-l-4 cursor-pointer transition-all shadow-2xs relative ${
                     isMastered
-                      ? 'border-l-[#2A9D8F] bg-[#2A9D8F]/5'
+                      ? 'border-l-[#2A9D8F] bg-[#2A9D8F]/5 dark:bg-[#2A9D8F]/10'
                       : isDue
-                      ? 'border-l-[#E07A5F] bg-[#E07A5F]/5'
+                      ? 'border-l-[#E07A5F] bg-[#E07A5F]/5 dark:bg-[#E07A5F]/10'
                       : item.stage === 2
-                      ? 'border-l-[#E9C46A]'
-                      : 'border-l-[#3D405B]'
+                      ? 'border-l-[#E9C46A] bg-[#E9C46A]/5 dark:bg-[#E9C46A]/10'
+                      : 'border-l-[#3D405B] dark:border-l-indigo-400'
                   } ${
                     isSelected
                       ? isMastered
-                        ? 'bg-[#2A9D8F]/10 border-y border-r border-[#2A9D8F]/50 shadow-sm ring-2 ring-[#2A9D8F]/30'
-                        : 'bg-white border-y border-r border-[#E07A5F] shadow-sm ring-2 ring-[#E07A5F]/20'
-                      : 'bg-white border-y border-r border-[#E5E0D8] hover:border-[#D6CEBE] hover:bg-[#FAF8F5]'
+                        ? 'bg-[#2A9D8F]/10 dark:bg-[#2A9D8F]/20 border-y border-r border-[#2A9D8F]/50 shadow-sm ring-2 ring-[#2A9D8F]/30'
+                        : 'bg-white dark:bg-[#1E293B] border-y border-r border-[#E07A5F] shadow-sm ring-2 ring-[#E07A5F]/30'
+                      : 'bg-white dark:bg-[#121A2F] border-y border-r border-slate-200 dark:border-slate-800 hover:border-[#E07A5F]/40 dark:hover:border-[#E07A5F]/40 hover:bg-[#FAF8F5] dark:hover:bg-[#16203a]'
                   }`}
                 >
                   <div className="flex items-center justify-between text-xs mb-2">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {isMastered ? (
-                        <span className="px-2 py-0.5 rounded-full font-extrabold text-[10px] bg-[#2A9D8F] text-white flex items-center gap-1 shadow-2xs uppercase">
+                        <span className="px-2 py-0.5 rounded-full font-bold text-[10px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1 shadow-2xs uppercase">
                           <CheckCircle2 className="w-3 h-3" /> Mastered (3/3)
                         </span>
                       ) : (
                         <span className={`px-2 py-0.5 rounded-md font-mono text-[10px] font-bold ${
                           item.stage === 2
-                            ? 'bg-[#E9C46A]/20 text-[#854D0E] border border-[#E9C46A]/40'
-                            : 'bg-[#FAF8F5] text-[#3D405B] border border-[#E5E0D8]'
+                            ? 'bg-[#E9C46A]/20 text-[#854D0E] dark:text-amber-300 border border-[#E9C46A]/40'
+                            : 'bg-[#FAF8F5] dark:bg-[#0A0F1D] text-[#3D405B] dark:text-slate-300 border border-slate-200 dark:border-slate-800'
                         }`}>
                           STAGE {item.stage} ({item.stage === 1 ? 'Learning' : 'Review Due'})
                         </span>
                       )}
 
-                      <span className="text-[#D6CEBE]">•</span>
-                      <span className="text-[#57534E] font-bold truncate max-w-[130px]">{item.question.skill}</span>
+                      <span className="text-slate-300 dark:text-slate-700">•</span>
+                      <span className="text-[#64748B] dark:text-[#94A3B8] font-bold truncate max-w-[130px]">{item.question.skill}</span>
                     </div>
 
                     {isDue && (
-                      <span className="flex items-center gap-1 text-[10px] font-bold text-[#E07A5F] bg-[#E07A5F]/10 px-2 py-0.5 rounded-full border border-[#E07A5F]/30 shrink-0 animate-pulse">
+                      <span className="flex items-center gap-1 text-[10px] font-bold text-[#E07A5F] bg-[#E07A5F]/10 px-2 py-0.5 rounded-full border border-[#E07A5F]/30 shrink-0">
                         <Flame className="w-3 h-3" /> Due Review
                       </span>
                     )}
                   </div>
 
-                  <p className="text-xs text-[#1E1B18] line-clamp-2 leading-relaxed font-sans font-medium">
+                  <p className="text-xs text-[#0F172A] dark:text-[#F8FAFC] line-clamp-2 leading-relaxed font-sans font-medium">
                     {item.question.passage || item.question.questionText}
                   </p>
 
                   {/* 3-Dot Leitner Streak Tracker */}
-                  <div className="mt-3 pt-2.5 border-t border-[#E5E0D8] flex items-center justify-between">
+                  <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="flex items-center gap-1">
                         <span
                           className={`w-2.5 h-2.5 rounded-full transition-colors ${
-                            streak >= 1 ? 'bg-[#2A9D8F] ring-1 ring-[#2A9D8F]/40' : 'bg-[#E5E0D8]'
+                            streak >= 1 ? 'bg-[#2A9D8F] ring-1 ring-[#2A9D8F]/40' : 'bg-slate-200 dark:bg-slate-700'
                           }`}
                           title="Stage 1 Review Check"
                         />
                         <span
                           className={`w-2.5 h-2.5 rounded-full transition-colors ${
-                            streak >= 2 ? 'bg-[#2A9D8F] ring-1 ring-[#2A9D8F]/40' : 'bg-[#E5E0D8]'
+                            streak >= 2 ? 'bg-[#2A9D8F] ring-1 ring-[#2A9D8F]/40' : 'bg-slate-200 dark:bg-slate-700'
                           }`}
                           title="Stage 2 Review Check"
                         />
                         <span
                           className={`w-2.5 h-2.5 rounded-full transition-colors ${
-                            streak >= 3 ? 'bg-[#2A9D8F] ring-1 ring-[#2A9D8F]/40 animate-pulse' : 'bg-[#E5E0D8]'
+                            streak >= 3 ? 'bg-[#2A9D8F] ring-1 ring-[#2A9D8F]/40 animate-pulse' : 'bg-slate-200 dark:bg-slate-700'
                           }`}
                           title="Stage 3 Mastery Lock"
                         />
                       </div>
 
-                      <span className={`text-[10px] font-bold ${isMastered ? 'text-[#2A9D8F]' : 'text-[#78716C]'}`}>
+                      <span className={`text-[10px] font-bold ${isMastered ? 'text-[#2A9D8F]' : 'text-[#64748B] dark:text-[#94A3B8]'}`}>
                         {isMastered ? '3/3 Retained' : `${streak}/3 Mastery Streak`}
                       </span>
                     </div>
 
                     <div className="flex items-center gap-2">
                       {item.clonedQuestion ? (
-                        <span className="text-[10px] text-[#3D405B] flex items-center gap-1 font-bold">
+                        <span className="text-[10px] text-[#E07A5F] flex items-center gap-1 font-bold">
                           <Sparkles className="w-3 h-3 text-[#E07A5F]" /> Clone Ready
                         </span>
                       ) : (
-                        <span className="text-[10px] text-[#78716C]">
-                          Missed: <strong className="text-rose-600">{item.userWrongAnswer}</strong>
+                        <span className="text-[10px] text-[#64748B] dark:text-[#94A3B8]">
+                          Missed: <strong className="text-rose-600 dark:text-rose-400">{item.userWrongAnswer}</strong>
                         </span>
                       )}
                     </div>
@@ -638,7 +642,7 @@ export const MistakeVaultView: React.FC<Props> = ({
         {/* Right Side: Active Diagnostic & Clone Studio */}
         <div className="lg:col-span-7">
           {activeItem ? (
-            <div className="bg-white/90 backdrop-blur-md border border-[#E5E0D8] rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
+            <div className="bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-5 sm:p-7 space-y-6 shadow-xs text-[#0F172A] dark:text-[#F8FAFC]">
               {/* Mastered Celebration Banner */}
               {(activeItem.isMastered || (activeItem.consecutiveCorrectCount ?? 0) >= 3) && (
                 <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#2A9D8F] to-[#1E6B61] text-white shadow-md border border-[#2A9D8F]/50 flex items-center justify-between gap-4 animate-in zoom-in-95">
@@ -661,16 +665,16 @@ export const MistakeVaultView: React.FC<Props> = ({
               )}
 
               {/* Header Info & Action Controls */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#E5E0D8]">
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
                 <div>
                   <div className="flex items-center gap-2 text-xs">
-                    <span className="font-bold text-[#1E1B18]">{activeItem.question.skill}</span>
-                    <span className="text-[#D6CEBE]">•</span>
-                    <span className="text-[#78716C]">{activeItem.question.domain}</span>
+                    <span className="font-bold text-[#0F172A] dark:text-[#F8FAFC]">{activeItem.question.skill}</span>
+                    <span className="text-slate-300 dark:text-slate-700">•</span>
+                    <span className="text-[#64748B] dark:text-[#94A3B8]">{activeItem.question.domain}</span>
                   </div>
-                  <div className="text-[11px] text-[#78716C] mt-0.5 flex items-center gap-2">
+                  <div className="text-[11px] text-[#64748B] dark:text-[#94A3B8] mt-0.5 flex items-center gap-2">
                     <span>
-                      Next Review: <strong className="text-[#1E1B18]">{new Date(activeItem.nextReviewAt).toLocaleDateString()}</strong>
+                      Next Review: <strong className="text-[#0F172A] dark:text-[#F8FAFC]">{new Date(activeItem.nextReviewAt).toLocaleDateString()}</strong>
                     </span>
                     <span>•</span>
                     <span className="text-[#2A9D8F] font-bold">
@@ -682,7 +686,7 @@ export const MistakeVaultView: React.FC<Props> = ({
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => onOpenSocraticTutor(activeItem.question, activeItem.userWrongAnswer)}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#FAF8F5] hover:bg-[#F5F0EB] border border-[#E5E0D8] text-[#3D405B] text-xs font-bold transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#FAF8F5] dark:bg-[#0A0F1D] hover:bg-[#F5F0EB] dark:hover:bg-[#1E293B] border border-slate-200 dark:border-slate-800 text-[#0F172A] dark:text-[#F8FAFC] text-xs font-bold transition-colors cursor-pointer"
                   >
                     <BrainCircuit className="w-3.5 h-3.5 text-[#E07A5F]" />
                     <span>Socratic Coach</span>
@@ -691,17 +695,17 @@ export const MistakeVaultView: React.FC<Props> = ({
                   <button
                     onClick={() => handleGenerateClone(activeItem)}
                     disabled={isGeneratingClone}
-                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#1E1B18] hover:bg-[#3D405B] text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#E07A5F] hover:bg-[#d0694e] text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
                   >
-                    <Sparkles className={`w-3.5 h-3.5 text-[#E9C46A] ${isGeneratingClone ? 'animate-spin' : ''}`} />
+                    <Sparkles className={`w-3.5 h-3.5 text-white ${isGeneratingClone ? 'animate-spin' : ''}`} />
                     <span>{isGeneratingClone ? 'Synthesizing...' : 'Generate Practice Clone'}</span>
-                    {!isPro && <Crown className="w-3 h-3 fill-[#E9C46A] text-[#E9C46A] ml-0.5" />}
+                    {!isPro && <Crown className="w-3 h-3 fill-amber-300 text-amber-300 ml-0.5" />}
                   </button>
                 </div>
               </div>
 
               {/* 3-Way Mode Switcher (Trap Analysis / Retest / AI Clone) */}
-              <div className="flex items-center gap-1.5 p-1 bg-[#FAF8F5] rounded-2xl border border-[#E5E0D8] text-xs font-bold">
+              <div className="flex items-center gap-1.5 p-1 bg-[#FAF8F5] dark:bg-[#0A0F1D] rounded-2xl border border-slate-200 dark:border-slate-800 text-xs font-bold">
                 <button
                   onClick={() => {
                     setActiveTab('TRAP_ANALYSIS');
@@ -709,8 +713,8 @@ export const MistakeVaultView: React.FC<Props> = ({
                   }}
                   className={`flex-1 py-2 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                     activeTab === 'TRAP_ANALYSIS'
-                      ? 'bg-white text-[#1E1B18] shadow-xs border border-[#E5E0D8]'
-                      : 'text-[#78716C] hover:text-[#1E1B18]'
+                      ? 'bg-white dark:bg-[#1E293B] text-[#E07A5F] dark:text-[#E07A5F] shadow-xs border border-slate-200 dark:border-slate-700'
+                      : 'text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]'
                   }`}
                 >
                   <Search className="w-3.5 h-3.5 text-[#E07A5F]" />
@@ -725,11 +729,11 @@ export const MistakeVaultView: React.FC<Props> = ({
                   }}
                   className={`flex-1 py-2 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                     activeTab === 'RETEST'
-                      ? 'bg-white text-[#1E1B18] shadow-xs border border-[#E5E0D8]'
-                      : 'text-[#78716C] hover:text-[#1E1B18]'
+                      ? 'bg-white dark:bg-[#1E293B] text-[#E07A5F] dark:text-[#E07A5F] shadow-xs border border-slate-200 dark:border-slate-700'
+                      : 'text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]'
                   }`}
                 >
-                  <RotateCcw className="w-3.5 h-3.5 text-[#3D405B]" />
+                  <RotateCcw className="w-3.5 h-3.5 text-[#3D405B] dark:text-slate-400" />
                   <span>Original Re-Test</span>
                 </button>
 
@@ -745,11 +749,11 @@ export const MistakeVaultView: React.FC<Props> = ({
                   }}
                   className={`flex-1 py-2 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                     activeTab === 'CLONE_STUDIO'
-                      ? 'bg-white text-[#1E1B18] shadow-xs border border-[#E5E0D8]'
-                      : 'text-[#78716C] hover:text-[#1E1B18]'
+                      ? 'bg-white dark:bg-[#1E293B] text-[#E07A5F] dark:text-[#E07A5F] shadow-xs border border-slate-200 dark:border-slate-700'
+                      : 'text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]'
                   }`}
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-[#E9C46A]" />
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                   <span>{activeItem.clonedQuestion ? 'AI Cloned Variant' : 'Generate Clone'}</span>
                 </button>
               </div>
@@ -758,20 +762,20 @@ export const MistakeVaultView: React.FC<Props> = ({
               {activeTab === 'TRAP_ANALYSIS' && (
                 <div className="space-y-4">
                   {isLoadingTrapAnalysis ? (
-                    <div className="p-10 text-center bg-[#FAF8F5] rounded-2xl border border-[#E5E0D8] space-y-3">
+                    <div className="p-10 text-center bg-[#FAF8F5] dark:bg-[#0A0F1D] rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
                       <BrainCircuit className="w-8 h-8 text-[#E07A5F] animate-pulse mx-auto" />
-                      <p className="text-xs font-bold text-[#1E1B18]">Gemini AI is performing cognitive trap diagnosis...</p>
-                      <p className="text-[11px] text-[#78716C]">Analyzing distractor psychology for option {activeItem.userWrongAnswer}.</p>
+                      <p className="text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC]">Gemini AI is performing cognitive trap diagnosis...</p>
+                      <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8]">Analyzing distractor psychology for option {activeItem.userWrongAnswer}.</p>
                     </div>
                   ) : activeItem.aiTrapAnalysis ? (
                     <div className="space-y-4">
                       {/* Audio Narration Bar */}
-                      <div className="flex items-center justify-between p-3 rounded-xl bg-[#FAF8F5] border border-[#E5E0D8] text-xs">
+                      <div className="flex items-center justify-between p-3 rounded-xl bg-[#FAF8F5] dark:bg-[#0A0F1D] border border-slate-200 dark:border-slate-800 text-xs">
                         <div className="flex items-center gap-2">
                           <span className="px-2 py-0.5 rounded-md bg-[#E07A5F]/10 text-[#E07A5F] font-mono font-bold text-[10px]">
                             {activeItem.aiTrapAnalysis.cognitiveBias || 'Psychological Trap'}
                           </span>
-                          <span className="text-[#78716C] text-[11px]">Cognitive Error Breakdown</span>
+                          <span className="text-[#64748B] dark:text-[#94A3B8] text-[11px]">Cognitive Error Breakdown</span>
                         </div>
 
                         <button
@@ -779,7 +783,7 @@ export const MistakeVaultView: React.FC<Props> = ({
                           className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold border transition-all cursor-pointer ${
                             isSpeakingTrap
                               ? 'bg-[#E07A5F] text-white border-[#E07A5F] animate-pulse'
-                              : 'bg-white text-[#78716C] hover:text-[#1E1B18] border-[#E5E0D8]'
+                              : 'bg-white dark:bg-[#1E293B] text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] border-slate-200 dark:border-slate-700'
                           }`}
                         >
                           {isSpeakingTrap ? (
@@ -797,38 +801,38 @@ export const MistakeVaultView: React.FC<Props> = ({
                       </div>
 
                       {/* 1. Core Rule Missed */}
-                      <div className="p-4 rounded-2xl bg-white border border-[#E5E0D8] space-y-1.5 shadow-2xs">
-                        <div className="text-[11px] font-mono font-bold text-[#3D405B] uppercase flex items-center gap-1.5">
-                          <ShieldCheck className="w-4 h-4 text-[#3D405B]" />
+                      <div className="p-4 rounded-2xl bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-2xs">
+                        <div className="text-[11px] font-mono font-bold text-[#3D405B] dark:text-indigo-400 uppercase flex items-center gap-1.5">
+                          <ShieldCheck className="w-4 h-4 text-[#3D405B] dark:text-indigo-400" />
                           <span>1. Core Rule / Formula Overlooked</span>
                         </div>
                         <FormattedMathText
                           text={activeItem.aiTrapAnalysis.coreRuleMissed}
-                          className="text-xs text-[#1E1B18] leading-relaxed"
+                          className="text-xs text-[#0F172A] dark:text-[#F8FAFC] leading-relaxed"
                         />
                       </div>
 
                       {/* 2. Why the Trap Was Chosen */}
-                      <div className="p-4 rounded-2xl bg-rose-50/50 border border-rose-200/80 space-y-1.5">
-                        <div className="text-[11px] font-mono font-bold text-rose-800 uppercase flex items-center gap-1.5">
-                          <AlertCircle className="w-4 h-4 text-rose-600" />
+                      <div className="p-4 rounded-2xl bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/40 space-y-1.5">
+                        <div className="text-[11px] font-mono font-bold text-rose-800 dark:text-rose-400 uppercase flex items-center gap-1.5">
+                          <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                           <span>2. Why Choice "{activeItem.userWrongAnswer}" Was Psychologically Tempting</span>
                         </div>
                         <FormattedMathText
                           text={activeItem.aiTrapAnalysis.trapReason}
-                          className="text-xs text-rose-950 leading-relaxed"
+                          className="text-xs text-rose-950 dark:text-rose-200 leading-relaxed"
                         />
                       </div>
 
                       {/* 3. 10-Second Prevention Strategy */}
-                      <div className="p-4 rounded-2xl bg-[#2A9D8F]/10 border border-[#2A9D8F]/30 space-y-1.5">
-                        <div className="text-[11px] font-mono font-bold text-[#2A9D8F] uppercase flex items-center gap-1.5">
-                          <Zap className="w-4 h-4 text-[#2A9D8F]" />
+                      <div className="p-4 rounded-2xl bg-[#2A9D8F]/10 dark:bg-[#2A9D8F]/15 border border-[#2A9D8F]/30 space-y-1.5">
+                        <div className="text-[11px] font-mono font-bold text-[#2A9D8F] dark:text-emerald-400 uppercase flex items-center gap-1.5">
+                          <Zap className="w-4 h-4 text-[#2A9D8F] dark:text-emerald-400" />
                           <span>3. 10-Second Prevention Strategy & Mental Filter</span>
                         </div>
                         <FormattedMathText
                           text={activeItem.aiTrapAnalysis.preventionStrategy}
-                          className="text-xs text-emerald-950 leading-relaxed font-medium"
+                          className="text-xs text-emerald-950 dark:text-emerald-200 leading-relaxed font-medium"
                         />
                       </div>
 
@@ -839,17 +843,17 @@ export const MistakeVaultView: React.FC<Props> = ({
                           setPracticeSubmitted(false);
                           setPracticeAnswer('');
                         }}
-                        className="w-full py-3 rounded-xl bg-[#1E1B18] hover:bg-[#3D405B] text-white font-bold text-xs transition-colors shadow-xs flex items-center justify-center gap-2 cursor-pointer"
+                        className="w-full py-3 rounded-xl bg-[#E07A5F] hover:bg-[#d0694e] text-white font-bold text-xs transition-colors shadow-xs flex items-center justify-center gap-2 cursor-pointer"
                       >
                         <RotateCcw className="w-4 h-4" />
                         <span>Ready to Re-test Now (Update Mastery Streak)</span>
                       </button>
                     </div>
                   ) : (
-                    <div className="p-6 text-center bg-[#FAF8F5] rounded-2xl border border-[#E5E0D8]">
+                    <div className="p-6 text-center bg-[#FAF8F5] dark:bg-[#0A0F1D] rounded-2xl border border-slate-200 dark:border-slate-800">
                       <button
                         onClick={() => handleFetchTrapAnalysis(activeItem)}
-                        className="px-4 py-2 rounded-xl bg-[#E07A5F] text-white text-xs font-bold cursor-pointer"
+                        className="px-4 py-2 rounded-xl bg-[#E07A5F] hover:bg-[#d0694e] text-white text-xs font-bold cursor-pointer transition-colors shadow-xs"
                       >
                         Generate AI Trap Diagnosis
                       </button>
@@ -860,27 +864,27 @@ export const MistakeVaultView: React.FC<Props> = ({
 
               {/* TAB 2: ORIGINAL QUESTION RE-TEST */}
               {activeTab === 'RETEST' && (
-                <div className="p-5 sm:p-6 rounded-2xl bg-[#FAF8F5] border border-[#E5E0D8] space-y-4">
+                <div className="p-5 sm:p-6 rounded-2xl bg-[#FAF8F5] dark:bg-[#0A0F1D] border border-slate-200 dark:border-slate-800 space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#3D405B]">
+                    <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#3D405B] dark:text-slate-300">
                       <RotateCcw className="w-3.5 h-3.5 text-[#E07A5F]" />
                       <span>Original Question Re-Test (Attempt #{((activeItem.consecutiveCorrectCount ?? 0) + 1)})</span>
                     </span>
 
-                    <span className="text-[11px] font-bold text-[#78716C]">
+                    <span className="text-[11px] font-bold text-[#64748B] dark:text-[#94A3B8]">
                       Streak: <strong className="text-[#2A9D8F]">{activeItem.consecutiveCorrectCount ?? 0}/3</strong>
                     </span>
                   </div>
 
                   {activeItem.question.passage && (
-                    <div className="p-4 bg-white rounded-xl text-xs text-[#1E1B18] font-serif leading-relaxed border border-[#E5E0D8]">
+                    <div className="p-4 bg-white dark:bg-[#121A2F] rounded-xl text-xs text-[#0F172A] dark:text-[#F8FAFC] font-serif leading-relaxed border border-slate-200 dark:border-slate-800">
                       {activeItem.question.passage}
                     </div>
                   )}
 
                   <FormattedMathText
                     text={activeItem.question.questionText}
-                    className="text-xs sm:text-sm font-semibold text-[#1E1B18] whitespace-pre-line leading-relaxed"
+                    className="text-xs sm:text-sm font-semibold text-[#0F172A] dark:text-[#F8FAFC] whitespace-pre-line leading-relaxed"
                   />
 
                   {/* Options */}
@@ -900,21 +904,21 @@ export const MistakeVaultView: React.FC<Props> = ({
                             className={`w-full text-left p-3.5 rounded-xl border text-xs flex items-start gap-2.5 transition-all cursor-pointer ${
                               practiceSubmitted
                                 ? isCorrect
-                                  ? 'bg-[#2A9D8F]/15 border-[#2A9D8F] text-[#1E1B18] font-bold ring-1 ring-[#2A9D8F]'
+                                  ? 'bg-emerald-500/15 border-emerald-500 text-emerald-800 dark:text-emerald-300 font-bold ring-1 ring-emerald-500'
                                   : isSelected
-                                  ? 'bg-rose-50 border-rose-400 text-rose-900'
-                                  : 'bg-white border-[#E5E0D8] opacity-50'
+                                  ? 'bg-rose-50 dark:bg-rose-950/30 border-rose-400 text-rose-900 dark:text-rose-200'
+                                  : 'bg-white dark:bg-[#121A2F] border-slate-200 dark:border-slate-800 opacity-50 text-slate-500'
                                 : isSelected
-                                ? 'bg-white border-[#E07A5F] text-[#1E1B18] font-bold ring-2 ring-[#E07A5F]'
-                                : 'bg-white border-[#E5E0D8] hover:bg-[#F5F0EB] text-[#1E1B18]'
+                                ? 'bg-[#E07A5F]/10 dark:bg-[#E07A5F]/20 border-[#E07A5F] text-[#0F172A] dark:text-[#F8FAFC] font-bold ring-2 ring-[#E07A5F]/30'
+                                : 'bg-white dark:bg-[#121A2F] border-slate-200 dark:border-slate-800 hover:bg-[#FAF8F5] dark:hover:bg-[#16203a] text-[#0F172A] dark:text-[#F8FAFC]'
                             }`}
                           >
-                            <span className="font-bold font-mono text-[#3D405B] shrink-0">{k}.</span>
+                            <span className="font-bold font-mono text-[#3D405B] dark:text-slate-400 shrink-0">{k}.</span>
                             <span className="flex-1">
                               <FormattedMathText text={optText} />
                             </span>
                             {!practiceSubmitted && isOldWrong && (
-                              <span className="text-[10px] text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200 font-semibold shrink-0">
+                              <span className="text-[10px] text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded border border-rose-200 dark:border-rose-900/50 font-semibold shrink-0">
                                 Your past mistake
                               </span>
                             )}
@@ -934,17 +938,17 @@ export const MistakeVaultView: React.FC<Props> = ({
                     <button
                       onClick={() => handlePracticeSubmit(activeItem, activeItem.question)}
                       disabled={!practiceAnswer}
-                      className="w-full py-3 rounded-xl bg-[#1E1B18] hover:bg-[#3D405B] disabled:opacity-40 text-white font-bold text-xs transition-colors shadow-xs cursor-pointer flex items-center justify-center gap-2"
+                      className="w-full py-3 rounded-xl bg-[#E07A5F] hover:bg-[#d0694e] disabled:opacity-40 text-white font-bold text-xs transition-colors shadow-xs cursor-pointer flex items-center justify-center gap-2"
                     >
                       <Check className="w-4 h-4" />
                       <span>Submit Answer & Update SRS Streak</span>
                     </button>
                   ) : (
-                    <div className="pt-3 border-t border-[#E5E0D8] space-y-3">
+                    <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-3">
                       <div className={`p-4 rounded-xl text-xs space-y-1.5 ${
                         lastPracticeCorrect
-                          ? 'bg-[#2A9D8F]/10 text-emerald-950 border border-[#2A9D8F]/30'
-                          : 'bg-rose-50 text-rose-950 border border-rose-200'
+                          ? 'bg-[#2A9D8F]/10 text-emerald-950 dark:text-emerald-200 border border-[#2A9D8F]/30'
+                          : 'bg-rose-50 dark:bg-rose-950/20 text-rose-950 dark:text-rose-200 border border-rose-200 dark:border-rose-900/40'
                       }`}>
                         <div className="flex items-center justify-between">
                           <strong className="text-sm font-extrabold flex items-center gap-1.5">
@@ -955,30 +959,30 @@ export const MistakeVaultView: React.FC<Props> = ({
                               </>
                             ) : (
                               <>
-                                <AlertCircle className="w-4 h-4 text-rose-600" />
+                                <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                                 <span>Incorrect Choice.</span>
                               </>
                             )}
                           </strong>
 
-                          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-white border border-[#E5E0D8]">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-slate-700">
                             Mastery Streak: {activeItem.consecutiveCorrectCount ?? 0} / 3
                           </span>
                         </div>
 
                         <FormattedMathText
                           text={activeItem.question.explanation}
-                          className="text-[#57534E] leading-relaxed pt-1"
+                          className="text-[#64748B] dark:text-[#94A3B8] leading-relaxed pt-1"
                         />
                       </div>
 
                       {/* Manual Leitner Override Controls */}
                       <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-                        <span className="text-xs text-[#78716C]">Manual Leitner Override:</span>
+                        <span className="text-xs text-[#64748B] dark:text-[#94A3B8]">Manual Leitner Override:</span>
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleAdvanceStage(activeItem, false)}
-                            className="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs font-semibold cursor-pointer"
+                            className="px-3 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-950/50 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-400 text-xs font-semibold cursor-pointer"
                           >
                             Reset Streak (0/3)
                           </button>
@@ -1000,10 +1004,10 @@ export const MistakeVaultView: React.FC<Props> = ({
               {activeTab === 'CLONE_STUDIO' && (
                 <div className="space-y-4">
                   {activeItem.clonedQuestion ? (
-                    <div className="p-5 sm:p-6 rounded-2xl bg-[#FAF8F5] border border-[#E5E0D8] space-y-4">
+                    <div className="p-5 sm:p-6 rounded-2xl bg-[#FAF8F5] dark:bg-[#0A0F1D] border border-slate-200 dark:border-slate-800 space-y-4">
                       <div className="flex items-center justify-between">
-                        <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#3D405B]">
-                          <Sparkles className="w-3.5 h-3.5 text-[#E9C46A]" />
+                        <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#3D405B] dark:text-slate-300">
+                          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                           <span>AI Cloned Problem Twin (Isomorphic Skill Test)</span>
                         </span>
 
@@ -1017,14 +1021,14 @@ export const MistakeVaultView: React.FC<Props> = ({
                       </div>
 
                       {activeItem.clonedQuestion.passage && (
-                        <div className="p-4 bg-white rounded-xl text-xs text-[#1E1B18] font-serif leading-relaxed border border-[#E5E0D8]">
+                        <div className="p-4 bg-white dark:bg-[#121A2F] rounded-xl text-xs text-[#0F172A] dark:text-[#F8FAFC] font-serif leading-relaxed border border-slate-200 dark:border-slate-800">
                           {activeItem.clonedQuestion.passage}
                         </div>
                       )}
 
                       <FormattedMathText
                         text={activeItem.clonedQuestion.questionText}
-                        className="text-xs sm:text-sm font-semibold text-[#1E1B18] whitespace-pre-line leading-relaxed"
+                        className="text-xs sm:text-sm font-semibold text-[#0F172A] dark:text-[#F8FAFC] whitespace-pre-line leading-relaxed"
                       />
 
                       {/* Cloned Options */}
@@ -1043,16 +1047,16 @@ export const MistakeVaultView: React.FC<Props> = ({
                                 className={`w-full text-left p-3.5 rounded-xl border text-xs flex items-start gap-2.5 transition-all cursor-pointer ${
                                   clonePracticeSubmitted
                                     ? isCorrect
-                                      ? 'bg-[#2A9D8F]/15 border-[#2A9D8F] text-[#1E1B18] font-bold ring-1 ring-[#2A9D8F]'
+                                      ? 'bg-emerald-500/15 border-emerald-500 text-emerald-800 dark:text-emerald-300 font-bold ring-1 ring-emerald-500'
                                       : isSelected
-                                      ? 'bg-rose-50 border-rose-400 text-rose-900'
-                                      : 'bg-white border-[#E5E0D8] opacity-50'
+                                      ? 'bg-rose-50 dark:bg-rose-950/30 border-rose-400 text-rose-900 dark:text-rose-200'
+                                      : 'bg-white dark:bg-[#121A2F] border-slate-200 dark:border-slate-800 opacity-50 text-slate-500'
                                     : isSelected
-                                    ? 'bg-white border-[#E07A5F] text-[#1E1B18] font-bold ring-2 ring-[#E07A5F]'
-                                    : 'bg-white border-[#E5E0D8] hover:bg-[#F5F0EB] text-[#1E1B18]'
+                                    ? 'bg-[#E07A5F]/10 dark:bg-[#E07A5F]/20 border-[#E07A5F] text-[#0F172A] dark:text-[#F8FAFC] font-bold ring-2 ring-[#E07A5F]/30'
+                                    : 'bg-white dark:bg-[#121A2F] border-slate-200 dark:border-slate-800 hover:bg-[#FAF8F5] dark:hover:bg-[#16203a] text-[#0F172A] dark:text-[#F8FAFC]'
                                 }`}
                               >
-                                <span className="font-bold font-mono text-[#3D405B] shrink-0">{k}.</span>
+                                <span className="font-bold font-mono text-[#3D405B] dark:text-slate-400 shrink-0">{k}.</span>
                                 <span className="flex-1">
                                   <FormattedMathText text={optText} />
                                 </span>
@@ -1072,39 +1076,39 @@ export const MistakeVaultView: React.FC<Props> = ({
                         <button
                           onClick={() => handleClonePracticeSubmit(activeItem, activeItem.clonedQuestion!)}
                           disabled={!clonePracticeAnswer}
-                          className="w-full py-3 rounded-xl bg-[#1E1B18] hover:bg-[#3D405B] disabled:opacity-40 text-white font-bold text-xs transition-colors shadow-xs cursor-pointer flex items-center justify-center gap-2"
+                          className="w-full py-3 rounded-xl bg-[#E07A5F] hover:bg-[#d0694e] disabled:opacity-40 text-white font-bold text-xs transition-colors shadow-xs cursor-pointer flex items-center justify-center gap-2"
                         >
                           <Check className="w-4 h-4" />
                           <span>Validate Cloned Variant Answer</span>
                         </button>
                       ) : (
-                        <div className="pt-3 border-t border-[#E5E0D8] space-y-3">
-                          <div className="p-4 rounded-xl text-xs bg-white border border-[#E5E0D8] space-y-1.5 shadow-2xs">
-                            <strong className="text-sm font-bold text-[#1E1B18] flex items-center gap-1.5">
+                        <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-3">
+                          <div className="p-4 rounded-xl text-xs bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-2xs">
+                            <strong className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-1.5">
                               <CheckCircle2 className="w-4 h-4 text-[#2A9D8F]" />
                               <span>Step-by-Step Solution Breakdown</span>
                             </strong>
                             <FormattedMathText
                               text={activeItem.clonedQuestion.explanation}
-                              className="text-[#57534E] leading-relaxed pt-1"
+                              className="text-[#64748B] dark:text-[#94A3B8] leading-relaxed pt-1"
                             />
                           </div>
                         </div>
                       )}
                     </div>
                   ) : (
-                    <div className="p-8 text-center bg-[#FAF8F5] rounded-2xl border border-[#E5E0D8] space-y-3">
-                      <Sparkles className="w-8 h-8 text-[#E9C46A] mx-auto" />
-                      <p className="font-bold text-sm text-[#1E1B18]">No Cloned Variant Generated Yet</p>
-                      <p className="text-xs text-[#78716C]">
+                    <div className="p-8 text-center bg-[#FAF8F5] dark:bg-[#0A0F1D] rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
+                      <Sparkles className="w-8 h-8 text-amber-500 mx-auto" />
+                      <p className="font-bold text-sm text-[#0F172A] dark:text-[#F8FAFC]">No Cloned Variant Generated Yet</p>
+                      <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">
                         Generate an isomorphic problem twin targeting the exact same skill with novel numbers.
                       </p>
                       <button
                         onClick={() => handleGenerateClone(activeItem)}
                         disabled={isGeneratingClone}
-                        className="px-5 py-2.5 rounded-xl bg-[#1E1B18] hover:bg-[#3D405B] text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1.5"
+                        className="px-5 py-2.5 rounded-xl bg-[#E07A5F] hover:bg-[#d0694e] text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1.5"
                       >
-                        <Sparkles className="w-4 h-4 text-[#E9C46A]" />
+                        <Sparkles className="w-4 h-4 text-white" />
                         <span>{isGeneratingClone ? 'Synthesizing Clone...' : 'Generate Practice Clone'}</span>
                       </button>
                     </div>
@@ -1113,8 +1117,14 @@ export const MistakeVaultView: React.FC<Props> = ({
               )}
             </div>
           ) : (
-            <div className="p-12 text-center bg-white border border-[#E5E0D8] rounded-3xl text-[#78716C] text-sm">
-              Select a mistake item from the left queue to open the diagnostic studio.
+            <div className="p-12 text-center bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl text-slate-600 dark:text-[#94A3B8] text-sm shadow-xs space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-[#FAF8F5] dark:bg-[#0A0F1D] border border-slate-200 dark:border-slate-800 text-[#E07A5F] flex items-center justify-center mx-auto shadow-2xs">
+                <BrainCircuit className="w-6 h-6" />
+              </div>
+              <p className="font-bold text-base text-[#0F172A] dark:text-[#F8FAFC]">Diagnostika va tahlil markazi</p>
+              <p className="text-xs text-[#64748B] dark:text-[#94A3B8] max-w-sm mx-auto leading-relaxed">
+                Xatolar ro'yxatidan savolni tanlang yoki yangi mashq variantini generatsiya qiling.
+              </p>
             </div>
           )}
         </div>

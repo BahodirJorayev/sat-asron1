@@ -300,7 +300,6 @@ export const UserProfileModal: React.FC<Props> = ({
             Close Profile
           </button>
         </div>
-        </div>
       </div>
     </div>
   );

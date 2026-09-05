@@ -1,15 +1,14 @@
 'use client';
 
-import React from 'react';
-import { CommunityChatHub } from '../../components/chat/CommunityChatHub';
+import { CommunityHub } from '../../components/chat/CommunityHub';
 import { INITIAL_USERS } from '../../data/mockDatabase';
 
 export default function CommunityPage() {
   const currentUser = INITIAL_USERS[0];
 
   return (
-    <main className="h-screen w-screen p-2 sm:p-4 bg-[#F8FAFC] dark:bg-[#0A0F1D] overflow-hidden">
-      <CommunityChatHub
+    <main className="h-[100dvh] w-full p-0 sm:p-2 md:p-4 bg-slate-50 dark:bg-[#0A0F1D] overflow-hidden flex flex-col">
+      <CommunityHub
         currentUser={currentUser}
         usersList={INITIAL_USERS}
       />

@@ -66,6 +66,9 @@ import { ForwardMessageModal } from './ForwardMessageModal';
 import { LiveStreamStudio } from './LiveStreamStudio';
 import { InviteLinkModal } from '../InviteLinkModal';
 import { EntityAvatar } from './EntityAvatar';
+import { ChatHeader } from './ChatHeader';
+import { MessageBubble } from './MessageBubble';
+import { MessageComposer } from './MessageComposer';
 import {
   searchGlobalCommunity,
   joinChannelByToken,
@@ -701,7 +704,7 @@ export const CommunityChatHub: React.FC<Props> = ({
   };
 
   return (
-    <div className="h-[calc(100dvh-4rem)] max-h-[calc(100dvh-4rem)] flex bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#0F172A] dark:text-[#F8FAFC] font-sans overflow-hidden select-none border border-[#E2E8F0] dark:border-[#1E293B] rounded-2xl">
+    <div className="h-[calc(100dvh-3.5rem)] max-h-[calc(100dvh-3.5rem)] md:h-[calc(100dvh-4rem)] md:max-h-[calc(100dvh-4rem)] w-full flex bg-slate-50 dark:bg-[#0A0F1D] text-[#0F172A] dark:text-[#F8FAFC] font-sans overflow-hidden select-none border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs">
       {/* ============================================================= */}
       {/* 1. LEFT SIDEBAR: FOLDERS & CLEAN CHATS LIST                   */}
       {/* ============================================================= */}
@@ -951,102 +954,25 @@ export const CommunityChatHub: React.FC<Props> = ({
       <main
         className={`${
           isMobileChatViewOpen ? 'flex' : 'hidden md:flex'
-        } flex-1 flex-col bg-white dark:bg-[#0A0F1D] overflow-hidden relative`}
+        } flex-1 flex flex-col bg-slate-50 dark:bg-[#0A0F1D] overflow-hidden relative min-w-0`}
       >
         {activeChat ? (
           <>
-            {/* Header */}
-            <header className="h-16 px-4 sm:px-6 bg-white dark:bg-[#121A2F] border-b border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-3 min-w-0">
-                <button
-                  onClick={() => setIsMobileChatViewOpen(false)}
-                  className="md:hidden p-1.5 rounded-lg text-[#64748B] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-
-                <div className="relative shrink-0">
-                  <EntityAvatar
-                    name={activeChat.name}
-                    avatarUrl={activeChat.avatarUrl}
-                    size="md"
-                    shape={activeChat.type === 'DIRECT' ? 'circle' : 'rounded'}
-                  />
-                  {activeChat.isLiveActive && (
-                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
-                    </span>
-                  )}
-                </div>
-
-                <div className="min-w-0">
-                  <h3 className="text-xs sm:text-sm font-bold truncate text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-1.5">
-                    <span>{activeChat.name}</span>
-                    {activeChat.username && (
-                      <span className="text-[11px] font-mono text-[#E07A5F] font-normal">
-                        @{activeChat.username}
-                      </span>
-                    )}
-                    {activeChat.isVerified && (
-                      <CheckCircle2 className="w-3.5 h-3.5 text-[#E07A5F] shrink-0" />
-                    )}
-                    {activeChat.isPublic === false && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-mono text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
-                        <Lock className="w-3 h-3" /> Maxfiy
-                      </span>
-                    )}
-                  </h3>
-                  <div className="text-[11px] font-mono text-[#64748B] dark:text-[#94A3B8] flex items-center gap-2">
-                    <span>{onlinePresenceCount} nafar onlayn</span>
-                    {activeChat.isLiveActive && (
-                      <span className="text-rose-500 font-bold flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-                        Jonli Efirda
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center gap-2">
-                {canStream && (
-                  <button
-                    onClick={() => setIsLiveStudioOpen(true)}
-                    className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-mono text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
-                    title="Jonli efir boshlash"
-                  >
-                    <Radio className="w-3.5 h-3.5 animate-pulse" />
-                    <span className="hidden sm:inline">Jonli Efir</span>
-                  </button>
-                )}
-
-                <button
-                  onClick={() => setIsInviteModalOpen(true)}
-                  className="p-2 rounded-xl bg-[#F1F5F9] dark:bg-[#0A0F1D] hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#1E293B] text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] transition-colors cursor-pointer"
-                  title="Havola orqali ulashish"
-                >
-                  <Share2 className="w-4 h-4" />
-                </button>
-
-                <button
-                  onClick={() => setIsChannelInfoOpen((prev) => !prev)}
-                  className={`p-2 rounded-xl border border-[#E2E8F0] dark:border-[#1E293B] transition-colors cursor-pointer ${
-                    isChannelInfoOpen
-                      ? 'bg-[#E07A5F] text-white'
-                      : 'bg-[#F1F5F9] dark:bg-[#0A0F1D] text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]'
-                  }`}
-                  title="A'zolar & Kanal Ma'lumotlari"
-                >
-                  <Info className="w-4 h-4" />
-                </button>
-              </div>
-            </header>
+            {/* 1. Top Pinned Header (flex-shrink-0 h-12) */}
+            <ChatHeader
+              chat={activeChat}
+              onBack={() => setIsMobileChatViewOpen(false)}
+              onlinePresenceCount={onlinePresenceCount}
+              canStream={canStream}
+              onStartLive={() => setIsLiveStudioOpen(true)}
+              onShareInvite={() => setIsInviteModalOpen(true)}
+              onToggleInfo={() => setIsChannelInfoOpen((prev) => !prev)}
+              isInfoOpen={isChannelInfoOpen}
+            />
 
             {/* Active Live Stream Sticky Banner */}
             {activeChat.isLiveActive && (
-              <div className="px-4 py-2.5 bg-gradient-to-r from-rose-950/80 to-[#121A2F] border-b border-rose-900/60 flex items-center justify-between text-xs font-mono shrink-0">
+              <div className="px-3 py-1.5 bg-gradient-to-r from-rose-950/80 to-[#121A2F] border-b border-rose-900/60 flex items-center justify-between text-xs font-mono shrink-0">
                 <div className="flex items-center gap-2 text-rose-300">
                   <span className="flex h-2 w-2 relative">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
@@ -1064,341 +990,61 @@ export const CommunityChatHub: React.FC<Props> = ({
               </div>
             )}
 
-            {/* Messages Scroll Area (Isolated Scroll Container) */}
-            <div ref={messagesContainerRef} className="flex-1 p-4 sm:p-6 overflow-y-auto overscroll-contain space-y-3.5">
-              {messages.map((msg) => {
-                const isMe = msg.senderId === currentUser.id;
-
-                return (
-                  <div
-                    key={msg.id}
-                    className={`group flex items-start gap-2.5 max-w-2xl relative ${
-                      isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'
-                    }`}
-                  >
-                    {!isMe && (
-                      <div
-                        onClick={() => {
-                          if (onSelectUserProfile) {
-                            const found = usersList.find((u) => u.id === msg.senderId);
-                            if (found) onSelectUserProfile(found);
-                          }
-                        }}
-                        className="cursor-pointer shrink-0 mt-0.5"
-                      >
-                        <EntityAvatar
-                          name={msg.senderName}
-                          avatarUrl={msg.senderAvatar}
-                          size="sm"
-                          shape="circle"
-                        />
-                      </div>
-                    )}
-
-                    <div className="relative group/msg max-w-full">
-                      <div
-                        className={`p-3.5 rounded-2xl text-xs space-y-2 relative shadow-xs ${
-                          isMe
-                            ? 'bg-[#E07A5F] text-white border border-[#E07A5F]'
-                            : 'bg-[#F1F5F9] dark:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] border border-[#E2E8F0] dark:border-[#334155]/60'
-                        }`}
-                      >
-                        {/* Sender Tag */}
-                        {!isMe && (
-                          <div className="flex items-center gap-1.5 text-[11px] font-mono mb-1">
-                            <span className="font-bold text-[#E07A5F]">{msg.senderName}</span>
-                            {msg.senderRole === 'SUPER_ADMIN' && (
-                              <span className="px-1 py-0.2 rounded bg-rose-500/10 border border-rose-500/20 text-rose-500 dark:text-rose-300 text-[9px] font-bold">
-                                ADMIN
-                              </span>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Reply Reference Header */}
-                        {msg.replyToMessage && (
-                          <div className={`p-2 rounded-lg border-l-2 border-[#E07A5F] text-[11px] ${
-                            isMe
-                              ? 'bg-black/10 text-white/90'
-                              : 'bg-white/80 dark:bg-[#0A0F1D]/80 text-[#64748B] dark:text-[#94A3B8]'
-                          }`}>
-                            <div className={`font-bold ${isMe ? 'text-white' : 'text-[#0F172A] dark:text-[#F8FAFC]'}`}>
-                              {msg.replyToMessage.senderName}
-                            </div>
-                            <div className="truncate">{msg.replyToMessage.content}</div>
-                          </div>
-                        )}
-
-                        {/* Video Recording Attachment */}
-                        {msg.recordingVideoUrl && (
-                          <div className="rounded-xl overflow-hidden bg-black border border-[#E2E8F0] dark:border-[#1E293B] p-1 space-y-2">
-                            <video
-                              src={msg.recordingVideoUrl}
-                              controls
-                              className="w-full rounded-lg max-h-64 object-contain"
-                            />
-                            <div className="px-2 py-1 flex items-center justify-between text-[11px] font-mono text-[#64748B] dark:text-[#94A3B8]">
-                              <span>{msg.recordingTitle || 'Live Lesson Recording'}</span>
-                              <a
-                                href={msg.recordingVideoUrl}
-                                download
-                                className="text-[#E07A5F] hover:underline flex items-center gap-1 cursor-pointer"
-                              >
-                                <Download className="w-3.5 h-3.5" />
-                                <span>Yuklash</span>
-                              </a>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Media Attachment: Image with Framed Box */}
-                        {msg.mediaUrl && msg.mediaType === 'image' && (
-                          <div className="rounded-xl overflow-hidden border border-black/10 dark:border-white/10 bg-black/20">
-                            <img
-                              src={msg.mediaUrl}
-                              alt={msg.mediaName || "Biriktirilgan rasm"}
-                              className="rounded-xl max-h-80 w-full object-cover"
-                            />
-                          </div>
-                        )}
-
-                        {/* Media Attachment: Document */}
-                        {msg.mediaUrl && msg.mediaType === 'document' && (
-                          <div className="p-3 rounded-xl bg-white/20 dark:bg-[#0A0F1D]/60 border border-white/20 dark:border-[#1E293B] flex items-center justify-between gap-3">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <FileText size={20} className={isMe ? 'text-white' : 'text-[#E07A5F]'} />
-                              <div className="min-w-0">
-                                <div className="font-bold truncate text-xs">{msg.mediaName || 'Hujjat'}</div>
-                                <div className="text-[10px] font-mono opacity-80">PDF / Fayl</div>
-                              </div>
-                            </div>
-                            <a
-                              href={msg.mediaUrl}
-                              download={msg.mediaName}
-                              target="_blank"
-                              rel="noreferrer"
-                              className={`p-1.5 rounded-lg ${isMe ? 'bg-white/20 text-white' : 'bg-[#E07A5F] text-white'}`}
-                            >
-                              <Download size={13} />
-                            </a>
-                          </div>
-                        )}
-
-                        {/* Voice Note Player */}
-                        {msg.voiceAudioUrl && (
-                          <div className="flex items-center gap-2 p-2 rounded-xl bg-white/40 dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B]">
-                            <Volume2 className={`w-4 h-4 ${isMe ? 'text-white' : 'text-[#E07A5F]'}`} />
-                            <audio src={msg.voiceAudioUrl} controls className="h-8 max-w-[200px]" />
-                          </div>
-                        )}
-
-                        {/* Rich Telegram Formatted Text / Caption */}
-                        {(msg.caption || msg.content) && (
-                          <RichTextRenderer
-                            content={msg.caption || msg.content}
-                            className="leading-relaxed"
-                            currentUser={currentUser}
-                            onJoinSuccess={(joinedChat) => {
-                              setChats((prev) => {
-                                if (prev.some((c) => c.id === joinedChat.id)) {
-                                  return prev.map((c) => (c.id === joinedChat.id ? joinedChat : c));
-                                }
-                                return [joinedChat, ...prev];
-                              });
-                              persistChatsList([joinedChat, ...chats]);
-                              setActiveChatId(joinedChat.id);
-                            }}
-                          />
-                        )}
-
-                        {/* Timestamp & Flags */}
-                        <div className={`text-[10px] font-mono flex items-center justify-end gap-1.5 ${
-                          isMe ? 'text-white/80' : 'text-[#64748B] dark:text-[#94A3B8]'
-                        }`}>
-                          {msg.isEdited && <span className="italic">(tahrirlandi)</span>}
-                          <span>
-                            {new Date(msg.createdAt).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </span>
-                          {isMe && <CheckCheck size={11} className="text-white" />}
-                        </div>
-                      </div>
-
-                      {/* Floating Message Action Buttons */}
-                      <div className={`absolute -top-3 ${isMe ? 'left-0' : 'right-0'} opacity-0 group-hover/msg:opacity-100 transition-opacity flex items-center gap-0.5 p-1 bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] rounded-xl shadow-lg z-10 select-none`}>
-                        <button
-                          type="button"
-                          onClick={() => setReplyingTo(msg)}
-                          className="p-1 rounded-md text-[#64748B] hover:text-[#0F172A] dark:hover:text-white hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] cursor-pointer"
-                          title="Javob qaytarish"
-                        >
-                          <CornerUpLeft size={12} />
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setForwardingMessage(msg)}
-                          className="p-1 rounded-md text-[#64748B] hover:text-[#0F172A] dark:hover:text-white hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] cursor-pointer"
-                          title="Uzatish (Forward)"
-                        >
-                          <Forward size={12} />
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (navigator.clipboard) {
-                              navigator.clipboard.writeText(msg.caption || msg.content || '');
-                            }
-                          }}
-                          className="p-1 rounded-md text-[#64748B] hover:text-[#0F172A] dark:hover:text-white hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] cursor-pointer"
-                          title="Nusxa olish"
-                        >
-                          <Copy size={12} />
-                        </button>
-
-                        {isMe && (
-                          <button
-                            type="button"
-                            onClick={() => handleStartEdit(msg)}
-                            className="p-1 rounded-md text-[#64748B] hover:text-[#0F172A] dark:hover:text-white hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] cursor-pointer"
-                            title="Tahrirlash"
-                          >
-                            <Edit2 size={12} />
-                          </button>
-                        )}
-
-                        {(isMe || currentUser.role === 'ADMIN' || currentUser.role === 'SUPER_ADMIN') && (
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteMessage(msg.id)}
-                            className="p-1 rounded-md text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 cursor-pointer"
-                            title="O'chirish"
-                          >
-                            <Trash2 size={12} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+            {/* 2. Middle Scrollable Message Feed */}
+            <div
+              ref={messagesContainerRef}
+              className="flex-1 p-3 sm:p-4 overflow-y-auto overscroll-contain space-y-3 bg-slate-50 dark:bg-[#0A0F1D]"
+            >
+              {messages.map((msg) => (
+                <MessageBubble
+                  key={msg.id}
+                  message={msg}
+                  isMe={msg.senderId === currentUser.id}
+                  currentUser={currentUser}
+                  onReply={(m) => setReplyingTo(m)}
+                  onForward={(m) => setForwardingMessage(m)}
+                  onEdit={(m) => handleStartEdit(m)}
+                  onDelete={(id) => handleDeleteMessage(id)}
+                  onSelectUserProfile={(uid) => {
+                    if (onSelectUserProfile) {
+                      const found = usersList.find((u) => u.id === uid);
+                      if (found) onSelectUserProfile(found);
+                    }
+                  }}
+                  onJoinSuccess={(joinedChat) => {
+                    setChats((prev) => {
+                      if (prev.some((c) => c.id === joinedChat.id)) {
+                        return prev.map((c) => (c.id === joinedChat.id ? joinedChat : c));
+                      }
+                      return [joinedChat, ...prev];
+                    });
+                    persistChatsList([joinedChat, ...chats]);
+                    setActiveChatId(joinedChat.id);
+                  }}
+                />
+              ))}
             </div>
 
-            {/* Replying Banner */}
-            {replyingTo && (
-              <div className="px-4 py-2 bg-[#F1F5F9] dark:bg-[#1E293B] border-t border-[#E2E8F0] dark:border-[#334155] flex items-center justify-between text-xs shrink-0">
-                <div className="flex items-center gap-2 border-l-2 border-[#E07A5F] pl-2 min-w-0">
-                  <CornerUpLeft size={13} className="text-[#E07A5F] shrink-0" />
-                  <div className="min-w-0">
-                    <span className="font-bold text-[#E07A5F]">{replyingTo.senderName}: </span>
-                    <span className="truncate text-[#64748B] dark:text-[#94A3B8]">
-                      {replyingTo.caption || replyingTo.content || 'Biriktirilgan fayl'}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setReplyingTo(null)}
-                  className="p-1 text-[#64748B] hover:text-[#0F172A] dark:hover:text-white cursor-pointer"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            )}
-
-            {/* Editing Banner */}
-            {editingMessage && (
-              <div className="px-4 py-2 bg-amber-500/10 border-t border-amber-500/20 flex items-center justify-between text-xs font-mono shrink-0">
-                <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-                  <Edit2 size={13} />
-                  <span>Xabarni tahrirlash</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditingMessage(null);
-                    setMessageInput('');
-                  }}
-                  className="p-1 text-amber-600 dark:text-amber-400 hover:text-rose-500 cursor-pointer"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            )}
-
-            {/* Message Input Bottom Bar */}
-            {canPost ? (
-              <form
-                onSubmit={handleSendMessage}
-                className="p-3 sm:p-4 bg-white dark:bg-[#121A2F] border-t border-[#E2E8F0] dark:border-[#1E293B] flex items-center gap-2 shrink-0"
-              >
-                {/* Media Attachment Button */}
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="p-2.5 rounded-xl bg-[#F1F5F9] dark:bg-[#0A0F1D] hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#1E293B] text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] transition-colors cursor-pointer"
-                    title="Fayl yoki Rasm biriktirish (Tagyozuv bilan)"
-                  >
-                    <Paperclip className="w-4 h-4" />
-                  </button>
-
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*,.pdf,.doc,.docx,.txt"
-                    className="hidden"
-                    onChange={handleFilePicked}
-                  />
-                </div>
-
-                {/* Voice Note Button */}
-                <button
-                  type="button"
-                  onClick={handleToggleVoiceRecord}
-                  className={`p-2.5 rounded-xl transition-colors cursor-pointer ${
-                    isRecordingVoice
-                      ? 'bg-rose-600 text-white animate-pulse'
-                      : 'bg-[#F1F5F9] dark:bg-[#0A0F1D] hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#1E293B] text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]'
-                  }`}
-                  title="Ovozli xabar"
-                >
-                  <Mic className="w-4 h-4" />
-                </button>
-
-                {/* Text Field */}
-                <input
-                  type="text"
-                  value={messageInput}
-                  onChange={(e) => setMessageInput(e.target.value)}
-                  placeholder={
-                    isRecordingVoice
-                      ? `Ovoz yozilmoqda (${voiceSeconds}s)...`
-                      : editingMessage
-                      ? "Tahrirlangan xabarni kiriting..."
-                      : "Xabar yozing (Formula: $x^2$, spoiler: ||javob||)..."
-                  }
-                  className="flex-1 px-4 py-2.5 rounded-xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] text-xs text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-hidden focus:border-[#E07A5F]"
-                />
-
-                {/* Send Button */}
-                <button
-                  type="submit"
-                  disabled={!messageInput.trim()}
-                  className="p-2.5 rounded-xl bg-[#E07A5F] hover:bg-[#c96c53] text-white font-bold transition-colors cursor-pointer disabled:opacity-40"
-                  title={editingMessage ? "Saqlash" : "Yuborish"}
-                >
-                  {editingMessage ? <Check className="w-4 h-4" /> : <Send className="w-4 h-4" />}
-                </button>
-              </form>
-            ) : (
-              <div className="p-3.5 bg-white dark:bg-[#121A2F] border-t border-[#E2E8F0] dark:border-[#1E293B] text-center text-xs font-mono text-[#64748B] dark:text-[#94A3B8]">
-                Faqat kanal ma'murlari xabar yuborishi mumkin.
-              </div>
-            )}
+            {/* 3. Bottom Pinned Composer (pb-16 md:pb-2 so floating BottomNav never obscures input) */}
+            <MessageComposer
+              value={messageInput}
+              onChange={setMessageInput}
+              onSend={handleSendMessage}
+              onPickFile={() => fileInputRef.current?.click()}
+              onFilePicked={handleFilePicked}
+              fileInputRef={fileInputRef}
+              onToggleVoice={handleToggleVoiceRecord}
+              isRecordingVoice={isRecordingVoice}
+              voiceSeconds={voiceSeconds}
+              replyingTo={replyingTo}
+              onCancelReply={() => setReplyingTo(null)}
+              editingMessage={editingMessage}
+              onCancelEdit={() => {
+                setEditingMessage(null);
+                setMessageInput('');
+              }}
+              canPost={canPost}
+            />
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center text-xs font-mono text-[#64748B] dark:text-[#94A3B8]">

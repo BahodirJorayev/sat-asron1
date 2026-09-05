@@ -747,7 +747,7 @@ export const CommunityChatHub: React.FC<Props> = ({
 
         {/* Search Results Dropdown Overlay or Feed */}
         {globalSearchQuery.trim() ? (
-          <div className="flex-1 overflow-y-auto p-3 space-y-4 font-sans">
+          <div className="flex-1 overflow-y-auto overscroll-contain p-3 space-y-4 font-sans">
             {isSearching ? (
               <div className="py-8 flex flex-col items-center justify-center text-center text-[#64748B] dark:text-[#94A3B8] gap-2">
                 <Loader2 className="w-5 h-5 animate-spin text-[#E07A5F]" />
@@ -876,7 +876,7 @@ export const CommunityChatHub: React.FC<Props> = ({
             </div>
 
             {/* Chats Feed */}
-            <div className="flex-1 overflow-y-auto divide-y divide-[#E2E8F0] dark:divide-[#1E293B]/40">
+            <div className="flex-1 overflow-y-auto overscroll-contain divide-y divide-[#E2E8F0] dark:divide-[#1E293B]/40">
               {filteredChats.map((chat) => {
                 const isSelected = chat.id === activeChat?.id;
 
@@ -1065,7 +1065,7 @@ export const CommunityChatHub: React.FC<Props> = ({
             )}
 
             {/* Messages Scroll Area (Isolated Scroll Container) */}
-            <div ref={messagesContainerRef} className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-3.5">
+            <div ref={messagesContainerRef} className="flex-1 p-4 sm:p-6 overflow-y-auto overscroll-contain space-y-3.5">
               {messages.map((msg) => {
                 const isMe = msg.senderId === currentUser.id;
 

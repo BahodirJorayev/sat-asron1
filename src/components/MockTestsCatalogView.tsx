@@ -407,41 +407,14 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 font-sans text-[#1E1B18] dark:text-[#F8FAFC] animate-in fade-in duration-300">
       {/* 1. HEADER & EXECUTIVE SUMMARY BANNER (OnePrep Luxury Minimalism) */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-white/90 dark:bg-[#121A2F]/90 backdrop-blur-md border border-[#E5E0D8] dark:border-[#1E293B] shadow-xs relative overflow-hidden space-y-6">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-3 max-w-2xl">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#FAF5F0] dark:bg-[#1E293B] text-[#E07A5F] border border-[#FCD9CE] dark:border-[#334155]">
-                Sinov Markazi
-              </span>
-              <span className="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                Rasmiy Format · Moslashuvchan
-              </span>
-              <span className="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-[#1E293B] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800">
-                134 Daqiqa
-              </span>
-              <span className="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-[#1E293B] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800">
-                2 Modul MST
-              </span>
-            </div>
-
+      <div className="p-6 sm:p-7 rounded-3xl bg-white/90 dark:bg-[#121A2F]/90 backdrop-blur-md border border-[#E5E0D8] dark:border-[#1E293B] shadow-xs space-y-6">
+        <div className="flex items-center justify-between gap-4">
+          <div className="space-y-1">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1E1B18] dark:text-[#F8FAFC] tracking-tight">
-              To'liq Formatdagi Mock Testlar
+              Testlar
             </h1>
-          </div>
-
-          {/* 100% Free Access Status Banner */}
-          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-[#EBF8F5] dark:bg-[#0A0F1D] border border-[#BCE8DE] dark:border-[#1E293B] shrink-0 self-start lg:self-auto">
-            <div className="p-2 rounded-xl bg-[#2A9D8F] text-white">
-              <Sparkles size={18} />
-            </div>
-            <div>
-              <div className="text-[10px] uppercase font-bold text-[#2A9D8F] tracking-wider">
-                100% Bepul Kirish
-              </div>
-              <div className="text-xs font-bold text-[#1E1B18] dark:text-[#F8FAFC]">
-                Barcha Ommaviy Mocklar Ochiq
-              </div>
+            <div className="text-xs font-mono text-[#78716C] dark:text-[#94A3B8]">
+              {allTests.length} ta rasmiy va moslashuvchan test
             </div>
           </div>
         </div>

@@ -218,7 +218,7 @@ export const CreateEntityModal: React.FC<CreateEntityModalProps> = ({
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Privacy Selector for Channel & Group */}
+          {/* Privacy Selector for Channel & Group: ONLY Ochiq and Yopiq */}
           {(activeTab === 'CHANNEL' || activeTab === 'GROUP') && (
             <div className="space-y-1.5">
               <label className="text-[11px] font-mono text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider block">
@@ -228,33 +228,27 @@ export const CreateEntityModal: React.FC<CreateEntityModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setEntityPrivacy('PUBLIC')}
-                  className={`p-3 rounded-xl border flex items-center gap-2.5 text-xs font-mono transition-all cursor-pointer ${
+                  className={`py-2.5 px-3 rounded-xl border flex items-center justify-center gap-2 text-xs font-mono transition-all cursor-pointer ${
                     entityPrivacy === 'PUBLIC'
                       ? 'border-[#E07A5F] bg-[#E07A5F]/10 text-[#E07A5F] font-bold'
                       : 'border-[#E2E8F0] dark:border-[#1E293B] text-[#64748B] dark:text-[#94A3B8]'
                   }`}
                 >
-                  <Globe size={16} />
-                  <div className="text-left">
-                    <div className="text-xs">Ommaviy</div>
-                    <div className="text-[10px] text-slate-400 font-normal">Qidiruvda chiqadi (@username)</div>
-                  </div>
+                  <Globe size={15} />
+                  <span>Ochiq</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setEntityPrivacy('PRIVATE')}
-                  className={`p-3 rounded-xl border flex items-center gap-2.5 text-xs font-mono transition-all cursor-pointer ${
+                  className={`py-2.5 px-3 rounded-xl border flex items-center justify-center gap-2 text-xs font-mono transition-all cursor-pointer ${
                     entityPrivacy === 'PRIVATE'
                       ? 'border-[#E07A5F] bg-[#E07A5F]/10 text-[#E07A5F] font-bold'
                       : 'border-[#E2E8F0] dark:border-[#1E293B] text-[#64748B] dark:text-[#94A3B8]'
                   }`}
                 >
-                  <Lock size={16} />
-                  <div className="text-left">
-                    <div className="text-xs">Yopiq (Xususiy)</div>
-                    <div className="text-[10px] text-slate-400 font-normal">Faqat taklif havolasi bilan</div>
-                  </div>
+                  <Lock size={15} />
+                  <span>Yopiq</span>
                 </button>
               </div>
             </div>
@@ -279,17 +273,14 @@ export const CreateEntityModal: React.FC<CreateEntityModalProps> = ({
                   )}
                 </div>
 
-                <div className="flex-1 space-y-1">
+                <div className="flex-1">
                   <button
                     type="button"
                     onClick={() => avatarInputRef.current?.click()}
                     className="px-3 py-1.5 rounded-lg bg-[#F1F5F9] dark:bg-[#1E293B] hover:bg-[#E2E8F0] dark:hover:bg-[#2A3756] border border-[#E2E8F0] dark:border-[#1E293B] text-xs font-mono text-[#0F172A] dark:text-[#F8FAFC] transition-colors cursor-pointer"
                   >
-                    Haqiqiy Logo Yuklash (Ixtiyoriy)
+                    Logo Yuklash
                   </button>
-                  <p className="text-[10px] font-mono text-[#64748B] dark:text-[#94A3B8]">
-                    Yuklanmasa, minimalist 2-harfli monogramma o'rnatiladi
-                  </p>
                   <input
                     ref={avatarInputRef}
                     type="file"
@@ -323,7 +314,7 @@ export const CreateEntityModal: React.FC<CreateEntityModalProps> = ({
               {entityPrivacy === 'PUBLIC' && (
                 <div className="space-y-1">
                   <label className="text-xs font-mono text-[#64748B] dark:text-[#94A3B8] flex items-center justify-between">
-                    <span>Ommaviy Havola (@username)</span>
+                    <span>Havola (@username)</span>
                     <span className="text-[10px] font-bold text-[#E07A5F]">Majburiy</span>
                   </label>
                   <div className="relative">
@@ -339,12 +330,8 @@ export const CreateEntityModal: React.FC<CreateEntityModalProps> = ({
                       }`}
                     />
                   </div>
-                  {usernameError ? (
+                  {usernameError && (
                     <p className="text-[10px] font-mono text-rose-500">{usernameError}</p>
-                  ) : (
-                    <p className="text-[10px] font-mono text-[#64748B] dark:text-[#94A3B8]">
-                      Kichik harflar (a-z), raqamlar va pastki chiziq (_). Havola: /chat?c=@{username || 'nomi'}
-                    </p>
                   )}
                 </div>
               )}

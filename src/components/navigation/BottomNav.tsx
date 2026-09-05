@@ -22,7 +22,7 @@ export const NAV_ITEMS = [
   {
     id: 'dashboard',
     href: '/dashboard',
-    label: 'Bosh sahifa',
+    label: 'Uy',
     icon: LayoutDashboard,
   },
   {
@@ -34,13 +34,13 @@ export const NAV_ITEMS = [
   {
     id: 'bluebook',
     href: '/mocks',
-    label: 'Mocklar',
+    label: 'Testlar',
     icon: FileText,
   },
   {
     id: 'vocab',
     href: '/vocabulary',
-    label: 'Lug‘at',
+    label: "Lug'at",
     icon: BookOpen,
   },
   {
@@ -83,42 +83,42 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   return (
     <nav
       aria-label="Mobil Navigatsiya"
-      className="md:hidden fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-md h-16 rounded-full bg-white/80 dark:bg-[#121A2F]/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] px-3 flex items-center justify-between select-none transition-all duration-200"
+      className="md:hidden fixed bottom-3 left-3 right-3 z-50 mx-auto max-w-sm h-14 rounded-full bg-white/70 dark:bg-[#0D1527]/70 backdrop-blur-2xl border border-white/40 dark:border-white/10 shadow-[0_10px_35px_rgba(0,0,0,0.06)] dark:shadow-[0_10px_35px_rgba(0,0,0,0.35)] px-2.5 flex items-center justify-between select-none transition-all duration-200"
     >
       {NAV_ITEMS.map((item) => {
         const Icon = item.icon;
         const isActive = isCurrentActive(item);
 
         const content = (
-          <div className="relative flex flex-col items-center justify-center w-full py-1">
+          <div className="relative flex flex-col items-center justify-center w-full py-0.5">
             <div className="relative">
               <Icon
-                size={18}
+                size={19}
                 strokeWidth={isActive ? 2.4 : 1.7}
-                className={`transition-all duration-150 ${
+                className={`transition-transform duration-150 ${
                   isActive
-                    ? 'text-[#E07A5F] scale-110'
-                    : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white'
+                    ? 'text-[#E07A5F] scale-105'
+                    : 'text-slate-500 dark:text-slate-400'
                 }`}
               />
 
               {/* Unread badge on Community */}
               {item.id === 'community' && unreadCount > 0 && (
-                <span className="absolute -top-1.5 -right-2.5 px-1 py-0.2 rounded-full text-[9px] font-mono font-bold bg-[#E07A5F] text-white ring-2 ring-white dark:ring-[#121A2F]">
+                <span className="absolute -top-1.5 -right-2 px-1 py-0.2 rounded-full text-[8px] font-mono font-bold bg-[#E07A5F] text-white ring-2 ring-white dark:ring-[#0D1527]">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
 
-              {/* Active glow pip */}
+              {/* Active pip */}
               {isActive && (
-                <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#E07A5F]" />
+                <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#E07A5F]" />
               )}
             </div>
 
             <span
-              className={`text-[10px] tracking-tight mt-1 truncate font-mono transition-colors duration-150 ${
+              className={`text-[9px] font-medium tracking-tight mt-0.5 truncate transition-colors duration-150 ${
                 isActive
-                  ? 'text-slate-950 dark:text-white font-bold'
+                  ? 'text-slate-950 dark:text-white font-semibold'
                   : 'text-slate-500 dark:text-slate-400'
               }`}
             >

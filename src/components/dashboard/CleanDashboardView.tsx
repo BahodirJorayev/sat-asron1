@@ -258,7 +258,7 @@ export const CleanDashboardView: React.FC<Props> = ({
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Tile 1: Bluebook Mock Tests */}
+          {/* Tile 1: Testlar */}
           <button
             type="button"
             onClick={handleLaunchFirstBluebook}
@@ -270,17 +270,17 @@ export const CleanDashboardView: React.FC<Props> = ({
               </div>
               <div className="text-left">
                 <div className="font-bold text-sm text-[#0F172A] dark:text-[#F8FAFC]">
-                  Bluebook Mocklar
+                  Testlar
                 </div>
                 <span className="inline-block mt-0.5 text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-[#0A0F1D] text-slate-600 dark:text-slate-400">
-                  Rasmiy Format · Moslashuvchan
+                  Rasmiy MST
                 </span>
               </div>
             </div>
             <ArrowUpRight size={18} className="text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
           </button>
 
-          {/* Tile 2: Question Bank (SQB) */}
+          {/* Tile 2: Savollar */}
           <button
             type="button"
             onClick={() => onOpenQuestionBank && onOpenQuestionBank()}
@@ -292,17 +292,17 @@ export const CleanDashboardView: React.FC<Props> = ({
               </div>
               <div className="text-left">
                 <div className="font-bold text-sm text-[#0F172A] dark:text-[#F8FAFC]">
-                  Savollar Banki
+                  Savollar
                 </div>
                 <span className="inline-block mt-0.5 text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-[#0A0F1D] text-slate-600 dark:text-slate-400">
-                  3,000+ Savol · Rasmiy Filtrlar
+                  3,000+ Savol
                 </span>
               </div>
             </div>
             <ArrowUpRight size={18} className="text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
           </button>
 
-          {/* Tile 3: SAT Vocab */}
+          {/* Tile 3: Lug'at */}
           <button
             type="button"
             onClick={() => setIsVocabModalOpen(true)}
@@ -314,20 +314,20 @@ export const CleanDashboardView: React.FC<Props> = ({
               </div>
               <div className="text-left">
                 <div className="font-bold text-sm text-[#0F172A] dark:text-[#F8FAFC]">
-                  SAT Lug‘at
+                  Lug'at
                 </div>
                 <span className="inline-block mt-0.5 text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-[#0A0F1D] text-slate-600 dark:text-slate-400">
-                  SRS Flashcard · 4 Kitob
+                  SRS Flashcard
                 </span>
               </div>
             </div>
             <ArrowUpRight size={18} className="text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
           </button>
 
-          {/* Tile 4: Multiplayer Arena */}
+          {/* Tile 4: Hamjamiyat */}
           <button
             type="button"
-            onClick={() => setIsArenaModalOpen(true)}
+            onClick={() => onOpenCommunity ? onOpenCommunity() : setIsArenaModalOpen(true)}
             className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] hover:border-slate-300 dark:hover:border-slate-700 transition-all flex items-center justify-between group cursor-pointer shadow-xs"
           >
             <div className="flex items-center gap-3">
@@ -336,10 +336,10 @@ export const CleanDashboardView: React.FC<Props> = ({
               </div>
               <div className="text-left">
                 <div className="font-bold text-sm text-[#0F172A] dark:text-[#F8FAFC]">
-                  Multiplayer Arena
+                  Hamjamiyat
                 </div>
                 <span className="inline-block mt-0.5 text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-[#0A0F1D] text-slate-600 dark:text-slate-400">
-                  1v1 Jonli Bellashuv
+                  Kanallar & Guruhlar
                 </span>
               </div>
             </div>

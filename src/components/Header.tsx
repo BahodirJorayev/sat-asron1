@@ -72,55 +72,35 @@ export const Header: React.FC<Props> = ({
   return (
     <header className="sticky top-0 z-40 w-full bg-white/95 dark:bg-[#121A2F]/95 backdrop-blur-md border-b border-[#E2E8F0] dark:border-[#1E293B] select-none font-sans transition-colors text-[#0F172A] dark:text-[#F8FAFC]">
       {/* Main Nav Header */}
-      <div className="px-4 sm:px-8 flex items-center justify-between h-16">
-        {/* Left Section: Active View Title / Breadcrumbs or Logo */}
-        <div className="flex items-center gap-4">
+      <div className="px-4 sm:px-8 flex items-center justify-between h-12 sm:h-14">
+        {/* Left Section: Minimal Brand/Logo - Zero Breadcrumbs */}
+        <div className="flex items-center gap-3">
           {isLandingOrBlog ? (
             <div
               onClick={() => setActiveTab('landing')}
-              className="flex items-center gap-3 cursor-pointer select-none"
+              className="flex items-center gap-2.5 cursor-pointer select-none"
             >
-              <AsronLogo size={36} variant="mark-only" />
+              <AsronLogo size={32} variant="mark-only" />
               <div>
-                <div className="text-base font-extrabold text-[#0F172A] dark:text-[#F8FAFC] tracking-tight leading-none flex items-center gap-1.5">
+                <div className="text-sm sm:text-base font-extrabold text-[#0F172A] dark:text-[#F8FAFC] tracking-tight leading-none flex items-center gap-1.5">
                   <span>{brandName}</span>
                   <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-md bg-[#0B1B3D]/10 dark:bg-blue-900/40 text-[#0F172A] dark:text-blue-400 border border-[#0B1B3D]/20 dark:border-blue-800">
                     {siteBranding?.logoBadgeYear || '2026'}
                   </span>
                 </div>
-                <div className="text-[10px] uppercase font-mono tracking-wider text-[#64748B] dark:text-[#94A3B8] mt-0.5">
-                  {brandTagline}
-                </div>
               </div>
             </div>
           ) : (
-            <div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setActiveTab('landing')}
-                  className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8] hover:text-[#E07A5F] transition-colors cursor-pointer"
-                >
-                  {brandName}
-                </button>
-                <span className="text-[10px] text-[#94A3B8]">•</span>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] dark:text-[#64748B]">
-                  Bosh Sahifa
-                </span>
+            <div
+              onClick={() => setActiveTab('dashboard')}
+              className="flex items-center gap-2.5 cursor-pointer select-none group"
+            >
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-center font-mono font-bold text-[#E07A5F] text-xs sm:text-sm group-hover:border-[#E07A5F]/60 transition-colors shadow-2xs">
+                {logoIcon}
               </div>
-              <div className="text-xs sm:text-sm font-extrabold text-[#0F172A] dark:text-[#F8FAFC] capitalize truncate max-w-[160px] sm:max-w-xs md:max-w-none">
-                {activeTab === 'dashboard' && 'Bosh sahifa'}
-                {activeTab === 'vault' && 'Xatolar Ombori'}
-                {activeTab === 'bluebook' && 'Mock Testlar'}
-                {activeTab === 'qbank' && 'Savollar Banki (SQB)'}
-                {activeTab === 'vocab' && 'SAT Lug‘at'}
-                {activeTab === 'community' && 'Hamjamiyat'}
-                {activeTab === 'profile' && 'Profil'}
-                {activeTab === 'settings' && 'Sozlamalar'}
-                {activeTab === 'roadmap' && 'O‘quv Rejasi'}
-                {activeTab === 'blog' && 'Blog & Yangiliklar'}
-                {activeTab === 'admin' && 'Admin Panel'}
-                {activeTab === 'arena' && 'Multiplayer Arena'}
-              </div>
+              <span className="font-bold text-xs sm:text-sm tracking-tight text-[#0F172A] dark:text-[#F8FAFC]">
+                {brandName}
+              </span>
             </div>
           )}
         </div>
@@ -161,7 +141,19 @@ export const Header: React.FC<Props> = ({
         )}
 
         {/* Right Section: Controls, Search, Theme Toggle, Profile */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          {/* Profile Search Button - Contextual: ONLY on 'dashboard' (Uy) */}
+          {!isLandingOrBlog && activeTab === 'dashboard' && onOpenProfileSearch && (
+            <button
+              onClick={onOpenProfileSearch}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg sm:rounded-xl bg-[#FAF7F2] dark:bg-[#181B26] hover:bg-[#F3EFE6] dark:hover:bg-[#202534] border border-[#E8E2D5] dark:border-[#262B3D] text-[#57534E] dark:text-[#94A3B8] hover:text-[#1C1917] dark:hover:text-[#EAEBED] text-xs font-semibold transition-colors cursor-pointer"
+              title="Qidiruv"
+            >
+              <Search className="w-3.5 h-3.5 text-[#2563EB] dark:text-[#4EA8DE]" />
+              <span className="hidden sm:inline">Search</span>
+            </button>
+          )}
+
           {/* Top Header Theme Toggle */}
           <ThemeToggle />
 
@@ -169,52 +161,37 @@ export const Header: React.FC<Props> = ({
             <>
               <button
                 onClick={() => onOpenAuthModal('signin')}
-                className="px-4 py-2 rounded-xl bg-[#FFFFFF] dark:bg-[#181B26] hover:bg-[#F3EFE6] dark:hover:bg-[#202534] border border-[#D6CEBE] dark:border-[#262B3D] text-[#1C1917] dark:text-[#EAEBED] text-xs font-semibold transition-colors cursor-pointer"
+                className="px-3.5 py-1.5 rounded-xl bg-[#FFFFFF] dark:bg-[#181B26] hover:bg-[#F3EFE6] dark:hover:bg-[#202534] border border-[#D6CEBE] dark:border-[#262B3D] text-[#1C1917] dark:text-[#EAEBED] text-xs font-semibold transition-colors cursor-pointer"
               >
                 Log In
               </button>
 
               <button
                 onClick={() => onOpenAuthModal('signup')}
-                className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] dark:bg-[#3B82F6] dark:hover:bg-[#2563EB] text-white font-bold text-xs shadow-md shadow-blue-600/20 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                className="px-3.5 py-1.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] dark:bg-[#3B82F6] dark:hover:bg-[#2563EB] text-white font-bold text-xs shadow-md shadow-blue-600/20 transition-all hover:scale-105 active:scale-95 cursor-pointer"
               >
                 Sign Up Free
               </button>
             </>
           ) : (
             <>
-              {/* Profile Search Button */}
-              {onOpenProfileSearch && (
-                <button
-                  onClick={onOpenProfileSearch}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#FAF7F2] dark:bg-[#181B26] hover:bg-[#F3EFE6] dark:hover:bg-[#202534] border border-[#E8E2D5] dark:border-[#262B3D] text-[#57534E] dark:text-[#94A3B8] hover:text-[#1C1917] dark:hover:text-[#EAEBED] text-xs font-semibold transition-colors cursor-pointer"
-                  title="Talabalar profillarini qidirish"
-                >
-                  <Search className="w-3.5 h-3.5 text-[#2563EB] dark:text-[#4EA8DE]" />
-                  <span className="hidden sm:inline">Search Profiles</span>
-                </button>
-              )}
-
               {/* Current User Quick Profile Button */}
               <div
                 onClick={onOpenCurrentUserProfile}
-                className="flex items-center gap-2.5 pl-2 pr-3.5 py-1.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#1E293B] hover:border-[#E07A5F]/50 transition-all cursor-pointer shadow-2xs"
+                className="flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#1E293B] hover:border-[#E07A5F]/50 transition-all cursor-pointer shadow-2xs"
                 title="Mening Profilim sahifasini ochish"
               >
                 <img
                   src={user.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}
                   alt={user.fullName}
-                  className="w-7 h-7 rounded-full object-cover border border-[#E2E8F0] dark:border-[#1E293B]"
+                  className="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-cover border border-[#E2E8F0] dark:border-[#1E293B]"
                 />
-                <div className="text-left">
-                  <div className="text-[12px] font-bold text-[#0F172A] dark:text-[#F8FAFC] leading-tight flex items-center gap-1">
+                <div className="text-left hidden sm:block">
+                  <div className="text-[11px] font-bold text-[#0F172A] dark:text-[#F8FAFC] leading-tight flex items-center gap-1">
                     <span>{user.fullName.split(' ')[0]}</span>
-                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                    <span className="text-[8px] font-mono font-bold px-1 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                       {user.role === 'SUPER_ADMIN' ? 'ADMIN' : 'TALABA'}
                     </span>
-                  </div>
-                  <div className="text-[10px] text-[#64748B] dark:text-[#94A3B8] font-mono">
-                    @{user.username || 'user'}
                   </div>
                 </div>
               </div>

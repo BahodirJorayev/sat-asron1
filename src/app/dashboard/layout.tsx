@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   ChevronDown,
+  Search,
 } from 'lucide-react';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { BottomNav } from '../../components/navigation/BottomNav';
@@ -206,24 +207,41 @@ export default function DashboardLayout({
       {/* ========================================================================= */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {/* Top Navbar with Zero Breadcrumb Noise */}
-        <header className="h-16 px-4 sm:px-8 border-b border-[#E2E8F0] dark:border-[#1E293B] bg-white/95 dark:bg-[#121A2F]/95 backdrop-blur-md flex items-center justify-between sticky top-0 z-20 shrink-0 transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.03)] dark:shadow-none">
-          <div className="flex items-center gap-3">
+        <header className="h-12 sm:h-14 px-4 sm:px-8 border-b border-[#E2E8F0] dark:border-[#1E293B] bg-white/95 dark:bg-[#121A2F]/95 backdrop-blur-md flex items-center justify-between sticky top-0 z-20 shrink-0 transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.03)] dark:shadow-none select-none">
+          <div className="flex items-center gap-2.5">
             <button
               type="button"
               onClick={() => setIsMobileDrawerOpen(true)}
               aria-label="Menyuni ochish"
-              className="md:hidden p-2 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] border border-[#E2E8F0] dark:border-[#1E293B] transition-colors cursor-pointer"
+              className="md:hidden p-1.5 rounded-lg bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] border border-[#E2E8F0] dark:border-[#1E293B] transition-colors cursor-pointer"
             >
-              <Menu size={18} />
+              <Menu size={16} />
             </button>
 
             {/* Clean Brand Title (Zero Breadcrumbs) */}
-            <span className="font-bold text-sm tracking-tight text-[#0F172A] dark:text-[#F8FAFC]">
-              ASRON SAT
-            </span>
+            <Link href="/dashboard" className="flex items-center gap-2 group cursor-pointer">
+              <span className="font-bold text-sm tracking-tight text-[#0F172A] dark:text-[#F8FAFC]">
+                ASRON SAT
+              </span>
+            </Link>
           </div>
 
-          <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Contextual Search Icon - rendered ONLY when on 'Uy' (/dashboard) route */}
+            {pathname === '/dashboard' && (
+              <button
+                type="button"
+                aria-label="Qidiruv"
+                title="Qidiruv"
+                className="p-1.5 sm:p-2 rounded-xl text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] bg-[#FAF8F5] dark:bg-[#181B26] hover:bg-[#F0EBE4] dark:hover:bg-[#202534] border border-[#E5E0D8] dark:border-[#262B3D] transition-colors cursor-pointer flex items-center gap-1.5"
+              >
+                <Search size={15} />
+                <span className="hidden sm:inline text-xs font-medium text-slate-500 dark:text-slate-400">
+                  Qidirish
+                </span>
+              </button>
+            )}
+
             <ThemeToggle />
 
             {/* Profile Avatar */}
@@ -231,16 +249,16 @@ export default function DashboardLayout({
               <button
                 type="button"
                 onClick={() => setIsProfileMenuOpen((prev) => !prev)}
-                className="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] border border-transparent hover:border-[#E2E8F0] dark:hover:border-[#334155] transition-all cursor-pointer group"
+                className="flex items-center gap-1.5 sm:gap-2 p-1 rounded-xl hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] border border-transparent hover:border-[#E2E8F0] dark:hover:border-[#334155] transition-all cursor-pointer group"
                 aria-expanded={isProfileMenuOpen}
                 aria-haspopup="true"
               >
-                <div className="w-8 h-8 rounded-lg bg-[#E07A5F] text-white flex items-center justify-center font-mono text-xs font-bold shadow-2xs group-hover:scale-105 transition-transform">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#E07A5F] text-white flex items-center justify-center font-mono text-xs font-bold shadow-2xs group-hover:scale-105 transition-transform">
                   T
                 </div>
                 <ChevronDown
-                  size={14}
-                  className={`text-[#64748B] dark:text-[#94A3B8] transition-transform duration-150 ${
+                  size={13}
+                  className={`text-[#64748B] dark:text-[#94A3B8] transition-transform duration-150 hidden sm:block ${
                     isProfileMenuOpen ? 'rotate-180' : ''
                   }`}
                 />

@@ -96,7 +96,7 @@ export const MistakeVaultView: React.FC<Props> = ({
   onUpdateMistakeItem,
 }) => {
   // Filter States
-  const [selectedStageFilter, setSelectedStageFilter] = useState<'ALL' | 'DUE' | 1 | 2 | 3 | 'MASTERED'>('ALL');
+  const [selectedStageFilter, setSelectedStageFilter] = useState<'ALL' | 'DUE' | 'LEARNING' | 1 | 2 | 3 | 'MASTERED'>('ALL');
   const [selectedSectionFilter, setSelectedSectionFilter] = useState<'ALL' | 'READING_AND_WRITING' | 'MATH'>('ALL');
   const [selectedDomainFilter, setSelectedDomainFilter] = useState<string>('ALL');
   const [selectedSourceFilter, setSelectedSourceFilter] = useState<'ALL' | 'MOCK_TEST' | 'DAILY_WORKOUT' | 'QUESTION_BANK'>('ALL');
@@ -166,6 +166,7 @@ export const MistakeVaultView: React.FC<Props> = ({
       // Stage Filter
       if (selectedStageFilter === 'DUE' && !isDue) return false;
       if (selectedStageFilter === 'MASTERED' && !isItemMastered) return false;
+      if (selectedStageFilter === 'LEARNING' && (isItemMastered || (m.stage !== 1 && m.stage !== 2))) return false;
       if (typeof selectedStageFilter === 'number') {
         if (m.stage !== selectedStageFilter || isItemMastered) return false;
       }
@@ -346,92 +347,79 @@ export const MistakeVaultView: React.FC<Props> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 text-[#1E1B18] font-sans">
-      {/* 1. METRICS & EXECUTIVE DASHBOARD HEADER */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-white/90 backdrop-blur-md border border-[#E5E0D8] shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <div className="space-y-2.5 max-w-2xl">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-[#E07A5F] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#FAF5F0] dark:bg-[#1E293B] border border-[#FCD9CE] dark:border-[#334155]">
-              <BrainCircuit className="w-3.5 h-3.5 text-[#E07A5F]" />
-              Leitner SRS Tizimi
-            </span>
-            <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-              3 Bosqichli Takrorlash
-            </span>
-            <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-[#1E293B] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800">
-              AI Xatolar Tahlili
-            </span>
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-5 space-y-4 text-slate-900 dark:text-slate-100 font-sans">
+      {/* 1. COMPACT METRIC CARDS GRID (Zero Descriptive Clutter & Badges, No Outer Wrapper Border) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+        {/* Total Logged */}
+        <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200/80 dark:border-slate-800/80 text-center shadow-2xs">
+          <div className="text-[10px] font-bold tracking-wider text-slate-500 uppercase truncate">
+            Total Logged
           </div>
-
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1E1B18] dark:text-[#F8FAFC] tracking-tight">
-            Xatolar Banki &amp; Tahlil Markazi
-          </h1>
+          <div className="text-xl font-bold font-mono text-slate-900 dark:text-white mt-0.5">
+            {mistakes.length}
+          </div>
         </div>
 
-        {/* Executive Metrics Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 shrink-0">
-          {/* Total Vaulted */}
-          <div className="px-4 py-3 rounded-2xl bg-[#FAF8F5] border border-[#E5E0D8] text-center shadow-2xs">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-[#78716C]">Total Logged</div>
-            <div className="text-2xl font-black font-mono text-[#1E1B18] mt-0.5">{mistakes.length}</div>
-          </div>
-
-          {/* Due Today (Terracotta Accent) */}
-          <div className={`px-4 py-3 rounded-2xl border text-center shadow-2xs transition-all ${
+        {/* Due Today (Terracotta Accent) */}
+        <div
+          className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border text-center shadow-2xs transition-all ${
             dueCount > 0
-              ? 'bg-[#E07A5F]/10 border-[#E07A5F]/40 text-[#E07A5F] ring-2 ring-[#E07A5F]/20'
-              : 'bg-[#FAF8F5] border-[#E5E0D8] text-[#78716C]'
-          }`}>
-            <div className="text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 text-[#E07A5F]">
-              <Flame className="w-3 h-3" /> Due Today
-            </div>
-            <div className="text-2xl font-black font-mono text-[#E07A5F] mt-0.5">{dueCount}</div>
+              ? 'bg-[#E07A5F]/10 border-[#E07A5F]/40 text-[#E07A5F]'
+              : 'bg-white dark:bg-[#121A2F] border-slate-200/80 dark:border-slate-800/80 text-slate-500'
+          }`}
+        >
+          <div className="text-[10px] font-bold tracking-wider uppercase flex items-center justify-center gap-1 truncate text-[#E07A5F]">
+            <Flame className="w-3 h-3 shrink-0" /> Due Today
           </div>
-
-          {/* In Learning Cycle */}
-          <div className="px-4 py-3 rounded-2xl bg-[#FAF8F5] border border-[#E5E0D8] text-center shadow-2xs">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-[#3D405B]">In Cycle (S1/S2)</div>
-            <div className="text-2xl font-black font-mono text-[#3D405B] mt-0.5">{stage1Count + stage2Count}</div>
+          <div className="text-xl font-bold font-mono text-[#E07A5F] mt-0.5">
+            {dueCount}
           </div>
+        </div>
 
-          {/* Mastered Skills (Emerald Accent) */}
-          <div className="px-4 py-3 rounded-2xl bg-[#2A9D8F]/10 border border-[#2A9D8F]/40 text-center shadow-2xs">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-[#2A9D8F] flex items-center justify-center gap-1">
-              <Award className="w-3 h-3 text-[#2A9D8F]" /> Mastered 🎯
-            </div>
-            <div className="text-2xl font-black font-mono text-[#2A9D8F] mt-0.5">{masteredCount}</div>
+        {/* In Cycle */}
+        <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200/80 dark:border-slate-800/80 text-center shadow-2xs">
+          <div className="text-[10px] font-bold tracking-wider text-slate-500 uppercase truncate">
+            In Cycle
+          </div>
+          <div className="text-xl font-bold font-mono text-[#3D405B] dark:text-indigo-400 mt-0.5">
+            {stage1Count + stage2Count}
+          </div>
+        </div>
+
+        {/* Mastered */}
+        <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-[#2A9D8F]/10 border border-[#2A9D8F]/30 text-center shadow-2xs">
+          <div className="text-[10px] font-bold tracking-wider text-[#2A9D8F] flex items-center justify-center gap-1 uppercase truncate">
+            <Award className="w-3 h-3 shrink-0 text-[#2A9D8F]" /> Mastered
+          </div>
+          <div className="text-xl font-bold font-mono text-[#2A9D8F] mt-0.5">
+            {masteredCount}
           </div>
         </div>
       </div>
 
       {/* 2. ADVANCED FILTER & SEARCH CONTROLS */}
-      <div className="p-4 sm:p-5 rounded-2xl bg-white/80 backdrop-blur-md border border-[#E5E0D8] shadow-2xs space-y-3.5">
-        {/* Stage Filter Buttons */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+      <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200/80 dark:border-slate-800/80 shadow-2xs space-y-2.5">
+        {/* Streamlined Review Stage Filters */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
           {[
-            { id: 'ALL', label: `All Mistakes (${mistakes.length})` },
-            { id: 'DUE', label: `🔥 Due for Review (${dueCount})`, isDue: true },
-            { id: 1, label: `Stage 1: Learning (${stage1Count})` },
-            { id: 2, label: `Stage 2: Review Due (${stage2Count})` },
-            { id: 'MASTERED', label: `🎯 Mastered (${masteredCount})`, isMastered: true },
+            { id: 'ALL', label: `Barchasi (${mistakes.length})` },
+            { id: 'DUE', label: `Takrorlash kerak (${dueCount})`, isDue: true },
+            { id: 'LEARNING', label: `O'rganilmoqda (${stage1Count + stage2Count})` },
+            { id: 'MASTERED', label: `O'zlashtirildi (${masteredCount})`, isMastered: true },
           ].map((tab) => {
             const isSelected = selectedStageFilter === tab.id;
             return (
               <button
                 key={String(tab.id)}
                 onClick={() => setSelectedStageFilter(tab.id as any)}
-                className={`px-3.5 py-2 rounded-xl font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 text-xs ${
+                className={`px-3 py-1.5 rounded-lg sm:rounded-xl font-medium whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 text-xs border ${
                   isSelected
                     ? tab.isMastered
-                      ? 'bg-[#2A9D8F] text-white shadow-sm ring-2 ring-[#2A9D8F]/30'
+                      ? 'bg-[#2A9D8F] text-white border-[#2A9D8F] shadow-xs'
                       : tab.isDue
-                      ? 'bg-[#E07A5F] text-white shadow-sm ring-2 ring-[#E07A5F]/30'
-                      : 'bg-[#1E1B18] text-white shadow-sm'
-                    : tab.isMastered
-                    ? 'bg-[#2A9D8F]/10 border border-[#2A9D8F]/30 text-[#2A9D8F] hover:bg-[#2A9D8F]/20'
-                    : tab.isDue
-                    ? 'bg-[#E07A5F]/10 border border-[#E07A5F]/30 text-[#E07A5F] hover:bg-[#E07A5F]/20'
-                    : 'bg-[#FAF8F5] border border-[#E5E0D8] text-[#57534E] hover:text-[#1E1B18] hover:bg-white'
+                      ? 'bg-[#E07A5F] text-white border-[#E07A5F] shadow-xs'
+                      : 'bg-[#1E1B18] dark:bg-white text-white dark:text-[#0F172A] border-[#1E1B18] dark:border-white shadow-xs'
+                    : 'bg-white dark:bg-[#121A2F] border-slate-200/80 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-300'
                 }`}
               >
                 {tab.label}
@@ -441,29 +429,35 @@ export const MistakeVaultView: React.FC<Props> = ({
         </div>
 
         {/* Secondary Filter Bar: Section, Domain, Source, Search */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2.5 pt-2 border-t border-[#E5E0D8] text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
           {/* Section Filter */}
-          <div className="lg:col-span-3 flex items-center gap-1 p-1 bg-[#FAF8F5] rounded-xl border border-[#E5E0D8]">
+          <div className="lg:col-span-3 flex items-center gap-1 p-1 bg-[#FAF8F5] dark:bg-[#0A0F1D] rounded-xl border border-slate-200/80 dark:border-slate-800">
             <button
               onClick={() => setSelectedSectionFilter('ALL')}
-              className={`flex-1 py-1.5 rounded-lg font-bold transition-all text-[11px] ${
-                selectedSectionFilter === 'ALL' ? 'bg-white text-[#1E1B18] shadow-xs' : 'text-[#78716C]'
+              className={`flex-1 py-1.5 rounded-lg font-semibold transition-all text-[11px] ${
+                selectedSectionFilter === 'ALL'
+                  ? 'bg-white dark:bg-[#1E293B] text-slate-900 dark:text-white shadow-2xs'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               All Sections
             </button>
             <button
               onClick={() => setSelectedSectionFilter('READING_AND_WRITING')}
-              className={`flex-1 py-1.5 rounded-lg font-bold transition-all text-[11px] ${
-                selectedSectionFilter === 'READING_AND_WRITING' ? 'bg-white text-[#1E1B18] shadow-xs' : 'text-[#78716C]'
+              className={`flex-1 py-1.5 rounded-lg font-semibold transition-all text-[11px] ${
+                selectedSectionFilter === 'READING_AND_WRITING'
+                  ? 'bg-white dark:bg-[#1E293B] text-slate-900 dark:text-white shadow-2xs'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               RW
             </button>
             <button
               onClick={() => setSelectedSectionFilter('MATH')}
-              className={`flex-1 py-1.5 rounded-lg font-bold transition-all text-[11px] ${
-                selectedSectionFilter === 'MATH' ? 'bg-white text-[#1E1B18] shadow-xs' : 'text-[#78716C]'
+              className={`flex-1 py-1.5 rounded-lg font-semibold transition-all text-[11px] ${
+                selectedSectionFilter === 'MATH'
+                  ? 'bg-white dark:bg-[#1E293B] text-slate-900 dark:text-white shadow-2xs'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Math
@@ -476,7 +470,7 @@ export const MistakeVaultView: React.FC<Props> = ({
               value={selectedDomainFilter}
               onChange={(e) => setSelectedDomainFilter(e.target.value)}
               aria-label="Filter by Domain"
-              className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E5E0D8] rounded-xl text-xs text-[#1E1B18] focus:outline-none focus:border-[#E07A5F]"
+              className="w-full px-3 py-2 bg-[#FAF8F5] dark:bg-[#0A0F1D] border border-slate-200/80 dark:border-slate-800 rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-[#E07A5F]"
             >
               <option value="ALL">All Domains</option>
               {availableDomains.map((dom) => (
@@ -493,7 +487,7 @@ export const MistakeVaultView: React.FC<Props> = ({
               value={selectedSourceFilter}
               onChange={(e) => setSelectedSourceFilter(e.target.value as any)}
               aria-label="Filter by Source"
-              className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E5E0D8] rounded-xl text-xs text-[#1E1B18] focus:outline-none focus:border-[#E07A5F]"
+              className="w-full px-3 py-2 bg-[#FAF8F5] dark:bg-[#0A0F1D] border border-slate-200/80 dark:border-slate-800 rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-[#E07A5F]"
             >
               <option value="ALL">All Sources</option>
               <option value="MOCK_TEST">Mock Test</option>
@@ -504,13 +498,13 @@ export const MistakeVaultView: React.FC<Props> = ({
 
           {/* Search Input */}
           <div className="lg:col-span-4 relative">
-            <Search className="w-3.5 h-3.5 text-[#78716C] absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search skill, passage, or problem text..."
-              className="w-full pl-8 pr-3 py-2 bg-[#FAF8F5] border border-[#E5E0D8] rounded-xl text-xs text-[#1E1B18] placeholder-[#A8A29E] focus:outline-none focus:border-[#E07A5F]"
+              className="w-full pl-8 pr-3 py-2 bg-[#FAF8F5] dark:bg-[#0A0F1D] border border-slate-200/80 dark:border-slate-800 rounded-xl text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-[#E07A5F]"
             />
           </div>
         </div>

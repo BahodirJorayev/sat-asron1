@@ -19,7 +19,7 @@ export default function MistakesPage() {
   const [mistakes, setMistakes] = useState<MistakeVaultItem[]>(INITIAL_MISTAKES);
 
   return (
-    <main className="min-h-screen bg-[#FAF8F5] dark:bg-[#0A0F1D] py-6 pb-24 md:pb-12">
+    <main className="min-h-screen bg-[#FAF8F5] dark:bg-[#0A0F1D] py-3 sm:py-4 pb-24 md:pb-8">
       <MistakeVaultView
         mistakes={mistakes}
         user={currentUser}

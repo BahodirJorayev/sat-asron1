@@ -23,6 +23,7 @@ import { ThemeToggle } from '../../components/ThemeToggle';
 import { Header } from '../../components/navigation/Header';
 import { BottomNav } from '../../components/navigation/BottomNav';
 import { GlobalSearchModal } from '../../components/chat/GlobalSearchModal';
+import { supabase } from '../../lib/supabase';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -89,6 +90,48 @@ export default function DashboardLayout({
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState<boolean>(false);
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
+  const [currentUser, setCurrentUser] = useState<{
+    fullName?: string;
+    username?: string;
+    avatarUrl?: string;
+  } | null>(null);
+
+  // Clean non-blocking layout guard: fetch auth and listen for changes without blocking children rendering
+  useEffect(() => {
+    let isMounted = true;
+    const fetchUser = async () => {
+      try {
+        const { data: authData } = await supabase.auth.getUser();
+        if (authData?.user && isMounted) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name, username, avatar_url')
+            .eq('id', authData.user.id)
+            .maybeSingle();
+
+          const meta = authData.user.user_metadata || {};
+          setCurrentUser({
+            fullName: profile?.full_name || meta.full_name || meta.name || 'Foydalanuvchi',
+            username: profile?.username || meta.username || authData.user.email?.split('@')[0] || 'talaba',
+            avatarUrl: profile?.avatar_url || meta.avatar_url || meta.picture || '',
+          });
+        }
+      } catch {
+        // Non-blocking fallback
+      }
+    };
+
+    fetchUser();
+
+    const { data: authSub } = supabase.auth.onAuthStateChange(() => {
+      fetchUser();
+    });
+
+    return () => {
+      isMounted = false;
+      authSub?.subscription?.unsubscribe?.();
+    };
+  }, []);
 
   // Global search shortcut (Cmd+K / Ctrl+K)
   useEffect(() => {
@@ -197,16 +240,24 @@ export default function DashboardLayout({
               className="flex items-center gap-2 min-w-0 group cursor-pointer"
               title="Profilga o'tish"
             >
-              <div className="w-7 h-7 rounded-lg bg-[#E07A5F] text-white flex items-center justify-center font-mono text-xs font-bold shrink-0 shadow-2xs">
-                T
-              </div>
+              {currentUser?.avatarUrl ? (
+                <img
+                  src={currentUser.avatarUrl}
+                  alt={currentUser.fullName || 'User'}
+                  className="w-7 h-7 rounded-lg object-cover border border-slate-200 dark:border-slate-800 shrink-0"
+                />
+              ) : (
+                <div className="w-7 h-7 rounded-lg bg-[#E07A5F] text-white flex items-center justify-center font-mono text-xs font-bold shrink-0 shadow-2xs">
+                  {currentUser?.fullName ? currentUser.fullName[0].toUpperCase() : 'T'}
+                </div>
+              )}
               {!isCollapsed && (
                 <div className="min-w-0 leading-tight">
                   <div className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] truncate group-hover:text-[#E07A5F] transition-colors">
-                    Foydalanuvchi
+                    {currentUser?.fullName || 'Foydalanuvchi'}
                   </div>
                   <div className="text-[10px] font-mono text-[#64748B] dark:text-[#94A3B8] truncate">
-                    @talaba
+                    @{currentUser?.username || 'talaba'}
                   </div>
                 </div>
               )}
@@ -225,6 +276,7 @@ export default function DashboardLayout({
       >
         {/* Top Header with Apple-grade Mobile Identity Capsule & Desktop Brand */}
         <Header
+          user={currentUser}
           onOpenMobileDrawer={() => setIsMobileDrawerOpen(true)}
           onOpenSearch={() => setIsSearchOpen(true)}
         />

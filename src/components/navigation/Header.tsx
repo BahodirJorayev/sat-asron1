@@ -146,9 +146,11 @@ export const Header: React.FC<HeaderProps> = ({
           )}
 
           {/* MOBILE VIEWPORT: Sleek Clickable User Identity Capsule (Navigates to /profile) */}
-          <button
-            type="button"
-            onClick={handleOpenProfile}
+          <Link
+            href="/profile"
+            onClick={() => {
+              if (setActiveTab) setActiveTab('profile');
+            }}
             aria-label="Profilga o'tish"
             className="flex md:hidden items-center gap-2 p-1 pl-1 pr-2.5 rounded-full bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 hover:border-[#E07A5F]/40 active:scale-95 transition-all cursor-pointer text-left"
           >
@@ -166,7 +168,7 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="text-sm font-semibold text-slate-900 dark:text-white truncate max-w-[120px]">
               {displayName}
             </span>
-          </button>
+          </Link>
 
           {/* DESKTOP VIEWPORT: Clean Brand Logo & Mark (Hidden on Mobile) */}
           <Link
@@ -214,15 +216,17 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
 
           {/* Dedicated Mobile-only Hamjamiyat (Community) Action Button (Navigates to /chat) */}
-          <button
-            type="button"
-            onClick={handleOpenCommunity}
+          <Link
+            href="/chat"
+            onClick={() => {
+              if (setActiveTab) setActiveTab('community');
+            }}
             aria-label="Hamjamiyat"
             title="Hamjamiyat"
             className="flex md:hidden w-9 h-9 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white border border-slate-200/50 dark:border-slate-700/50 active:scale-95 transition-transform cursor-pointer"
           >
             <Users size={17} />
-          </button>
+          </Link>
 
           {/* Desktop-only Profile Menu */}
           <div className="relative hidden md:block" ref={profileMenuRef}>

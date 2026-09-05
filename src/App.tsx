@@ -944,9 +944,8 @@ export default function App() {
           setCurrentUserIndex(0);
           localStorage.setItem('aurasat_user_profile', JSON.stringify(appUser));
 
-          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
-            setActiveTab('dashboard');
-            window.location.hash = '#/dashboard';
+          if (event === 'SIGNED_IN') {
+            setActiveTab((current) => (current === 'landing' ? 'dashboard' : current));
           }
         }
       });
@@ -966,16 +965,69 @@ export default function App() {
 
   // Listen to hash and pushState route changes (back/forward navigation, direct deep links)
   useEffect(() => {
-    const handleRouteSync = () => {
+    const handleRouteSync = (e?: any) => {
+      const customPath = e?.detail?.path;
       const hash = window.location.hash.replace('#/', '').replace('#', '').trim();
-      const pathname = window.location.pathname;
+      const pathname = customPath || window.location.pathname;
       const authenticated = isUserAuthenticated();
 
-      // Canonical pathname mappings
-      if (pathname === '/dashboard') {
-        setActiveTab('dashboard');
+      if (hash === 'login' || hash === 'signin') {
+        if (authenticated) {
+          setActiveTab('dashboard');
+        } else {
+          setAuthModalMode('signin');
+          setIsAuthModalOpen(true);
+        }
         return;
       }
+
+      if (hash === 'register' || hash === 'signup') {
+        if (authenticated) {
+          setActiveTab('dashboard');
+        } else {
+          setAuthModalMode('signup');
+          setIsAuthModalOpen(true);
+        }
+        return;
+      }
+
+      // Check hash-based tabs first
+      const cleanHash = hash.split('?')[0];
+      const hashTabMap: Record<string, string> = {
+        dashboard: 'dashboard',
+        questions: 'qbank',
+        qbank: 'qbank',
+        practice: 'qbank',
+        mocks: 'bluebook',
+        bluebook: 'bluebook',
+        vocabulary: 'vocab',
+        vocab: 'vocab',
+        mistakes: 'vault',
+        vault: 'vault',
+        chat: 'community',
+        community: 'community',
+        profile: 'profile',
+        admin: 'admin',
+        arena: 'arena',
+        'daily-workout': 'daily-workout',
+        'ai-tutor': 'ai-tutor',
+        roadmap: 'roadmap',
+        blog: 'blog',
+        landing: 'landing',
+      };
+
+      if (cleanHash && hashTabMap[cleanHash]) {
+        const mappedTab = hashTabMap[cleanHash];
+        if (['dashboard', 'vault', 'bluebook', 'qbank', 'daily-workout', 'arena', 'ai-tutor', 'profile', 'admin'].includes(mappedTab) && !authenticated) {
+          setAuthModalMode('signin');
+          setIsAuthModalOpen(true);
+        } else {
+          setActiveTab(mappedTab);
+        }
+        return;
+      }
+
+      // Fallback to pathname-based tabs
       if (pathname === '/questions') {
         setActiveTab('qbank');
         return;
@@ -1004,43 +1056,9 @@ export default function App() {
         setActiveTab('admin');
         return;
       }
-
-      if (hash === 'login' || hash === 'signin') {
-        if (authenticated) {
-          setActiveTab('dashboard');
-          window.location.hash = '#/dashboard';
-        } else {
-          setAuthModalMode('signin');
-          setIsAuthModalOpen(true);
-        }
+      if (pathname === '/dashboard') {
+        setActiveTab('dashboard');
         return;
-      }
-
-      if (hash === 'register' || hash === 'signup') {
-        if (authenticated) {
-          setActiveTab('dashboard');
-          window.location.hash = '#/dashboard';
-        } else {
-          setAuthModalMode('signup');
-          setIsAuthModalOpen(true);
-        }
-        return;
-      }
-
-      if (hash === 'chat' || hash.startsWith('chat?') || hash === 'community' || hash.startsWith('community?')) {
-        setActiveTab('community');
-        return;
-      }
-
-      const validTabs = ['landing', 'blog', 'dashboard', 'daily-workout', 'vault', 'bluebook', 'qbank', 'community', 'arena', 'ai-tutor', 'roadmap', 'profile', 'admin', 'vocab'];
-      if (validTabs.includes(hash)) {
-        // Protected tabs guard
-        if (['dashboard', 'vault', 'bluebook', 'qbank', 'daily-workout', 'arena', 'ai-tutor', 'profile', 'admin'].includes(hash) && !authenticated) {
-          setAuthModalMode('signin');
-          setIsAuthModalOpen(true);
-        } else {
-          setActiveTab(hash);
-        }
       }
     };
 

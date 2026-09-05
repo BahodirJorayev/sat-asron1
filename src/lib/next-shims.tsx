@@ -82,23 +82,45 @@ export const Link: React.FC<LinkProps> = ({
 
 export default Link;
 
-export function usePathname(): string {
+function resolveCurrentPath(): string {
   if (typeof window !== 'undefined') {
     const p = window.location.pathname;
     if (p && p !== '/') return p;
     // Fallback from hash
     const hash = window.location.hash.replace('#/', '').replace('#', '').trim();
     if (hash === 'dashboard') return '/dashboard';
-    if (hash === 'qbank') return '/questions';
-    if (hash === 'bluebook') return '/mocks';
-    if (hash === 'vocab') return '/vocabulary';
-    if (hash === 'vault') return '/mistakes';
+    if (hash === 'qbank' || hash === 'questions') return '/questions';
+    if (hash === 'bluebook' || hash === 'mocks') return '/mocks';
+    if (hash === 'vocab' || hash === 'vocabulary') return '/vocabulary';
+    if (hash === 'vault' || hash === 'mistakes') return '/mistakes';
     if (hash === 'community' || hash.startsWith('chat')) return '/chat';
     if (hash === 'profile') return '/profile';
     if (hash === 'admin') return '/admin';
     return p || '/dashboard';
   }
   return '/dashboard';
+}
+
+export function usePathname(): string {
+  const [pathname, setPathname] = React.useState<string>(resolveCurrentPath);
+
+  React.useEffect(() => {
+    const handleLocationChange = () => {
+      setPathname(resolveCurrentPath());
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+    window.addEventListener('hashchange', handleLocationChange);
+    window.addEventListener('asron_navigate', handleLocationChange);
+
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+      window.removeEventListener('hashchange', handleLocationChange);
+      window.removeEventListener('asron_navigate', handleLocationChange);
+    };
+  }, []);
+
+  return pathname;
 }
 
 export function useSearchParams(): URLSearchParams {

@@ -168,10 +168,6 @@ export default function DashboardPage() {
           {/* Module 1: Testlar */}
           <Link
             href="/mocks"
-            onClick={(e) => {
-              e.preventDefault();
-              router.push('/mocks');
-            }}
             className="p-3.5 sm:p-4 md:p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 hover:border-[#E07A5F]/40 transition-all cursor-pointer group active:scale-[0.99] flex items-center justify-between shadow-2xs"
           >
             <div className="flex items-center gap-3">
@@ -193,10 +189,6 @@ export default function DashboardPage() {
           {/* Module 2: Savollar */}
           <Link
             href="/questions"
-            onClick={(e) => {
-              e.preventDefault();
-              router.push('/questions');
-            }}
             className="p-3.5 sm:p-4 md:p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 hover:border-[#E07A5F]/40 transition-all cursor-pointer group active:scale-[0.99] flex items-center justify-between shadow-2xs"
           >
             <div className="flex items-center gap-3">
@@ -218,10 +210,6 @@ export default function DashboardPage() {
           {/* Module 3: Lug'at */}
           <Link
             href="/vocabulary"
-            onClick={(e) => {
-              e.preventDefault();
-              router.push('/vocabulary');
-            }}
             className="p-3.5 sm:p-4 md:p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 hover:border-[#E07A5F]/40 transition-all cursor-pointer group active:scale-[0.99] flex items-center justify-between shadow-2xs"
           >
             <div className="flex items-center gap-3">
@@ -243,10 +231,6 @@ export default function DashboardPage() {
           {/* Module 4: Hamjamiyat */}
           <Link
             href="/chat"
-            onClick={(e) => {
-              e.preventDefault();
-              router.push('/chat');
-            }}
             className="p-3.5 sm:p-4 md:p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 hover:border-[#E07A5F]/40 transition-all cursor-pointer group active:scale-[0.99] flex items-center justify-between shadow-2xs"
           >
             <div className="flex items-center gap-3">

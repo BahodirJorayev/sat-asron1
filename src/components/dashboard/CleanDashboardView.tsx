@@ -186,10 +186,6 @@ export const CleanDashboardView: React.FC<Props> = ({
           {/* Tile 1: Testlar */}
           <Link
             href="/mocks"
-            onClick={(e) => {
-              e.preventDefault();
-              router.push('/mocks');
-            }}
             className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] hover:border-[#E07A5F]/40 transition-all cursor-pointer group active:scale-[0.99] flex items-center justify-between shadow-xs"
           >
             <div className="flex items-center gap-3">
@@ -211,16 +207,14 @@ export const CleanDashboardView: React.FC<Props> = ({
           {/* Tile 2: Savollar */}
           <Link
             href="/questions"
-            onClick={(e) => {
-              e.preventDefault();
+            onClick={() => {
               if (onOpenQuestionBank) onOpenQuestionBank();
-              else router.push('/questions');
             }}
             className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] hover:border-[#E07A5F]/40 transition-all cursor-pointer group active:scale-[0.99] flex items-center justify-between shadow-xs"
           >
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-orange-500/10 text-[#E07A5F]">
-                <Database size={20} strokeWidth={2} />
+                <Layers size={20} strokeWidth={2} />
               </div>
               <div className="text-left">
                 <div className="font-bold text-sm text-[#0F172A] dark:text-[#F8FAFC]">
@@ -237,10 +231,6 @@ export const CleanDashboardView: React.FC<Props> = ({
           {/* Tile 3: Lug'at */}
           <Link
             href="/vocabulary"
-            onClick={(e) => {
-              e.preventDefault();
-              router.push('/vocabulary');
-            }}
             className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] hover:border-[#E07A5F]/40 transition-all cursor-pointer group active:scale-[0.99] flex items-center justify-between shadow-xs"
           >
             <div className="flex items-center gap-3">
@@ -262,10 +252,8 @@ export const CleanDashboardView: React.FC<Props> = ({
           {/* Tile 4: Hamjamiyat */}
           <Link
             href="/chat"
-            onClick={(e) => {
-              e.preventDefault();
+            onClick={() => {
               if (onOpenCommunity) onOpenCommunity();
-              else router.push('/chat');
             }}
             className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] hover:border-[#E07A5F]/40 transition-all cursor-pointer group active:scale-[0.99] flex items-center justify-between shadow-xs"
           >

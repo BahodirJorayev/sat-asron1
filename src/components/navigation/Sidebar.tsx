@@ -5,10 +5,10 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
-  Database,
+  Layers,
   FileText,
   BookOpen,
-  BookmarkCheck,
+  AlertCircle,
   Users,
   PanelLeftClose,
   PanelLeftOpen,
@@ -33,11 +33,11 @@ export const EXACT_SIDEBAR_ITEMS: NavItem[] = [
     icon: LayoutDashboard,
   },
   {
-    id: 'practice',
+    id: 'questions',
     label: 'Savollar',
     shortLabel: 'Savollar',
     href: '/questions',
-    icon: Database,
+    icon: Layers,
   },
   {
     id: 'mocks',
@@ -58,7 +58,7 @@ export const EXACT_SIDEBAR_ITEMS: NavItem[] = [
     label: 'Xatolar',
     shortLabel: 'Xatolar',
     href: '/mistakes',
-    icon: BookmarkCheck,
+    icon: AlertCircle,
   },
   {
     id: 'community',
@@ -69,8 +69,12 @@ export const EXACT_SIDEBAR_ITEMS: NavItem[] = [
   },
 ];
 
+export const SIDEBAR_ITEMS = EXACT_SIDEBAR_ITEMS;
+
 interface SidebarProps {
   currentPath?: string;
+  activeTab?: string;
+  setActiveTab?: (tab: string) => void;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
   isAdmin?: boolean;
@@ -84,6 +88,8 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({
   currentPath,
+  activeTab,
+  setActiveTab,
   isCollapsed: controlledCollapsed,
   onToggleCollapse,
   isAdmin = false,
@@ -147,14 +153,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {EXACT_SIDEBAR_ITEMS.map((item) => {
           const Icon = item.icon;
-          const isActive =
-            pathname === item.href ||
-            (item.href !== '/dashboard' && pathname.startsWith(item.href));
+          const isCurrentActive = () => {
+            if (activeTab) {
+              if (activeTab === item.id) return true;
+              if (item.id === 'questions' && (activeTab === 'qbank' || activeTab === 'practice')) return true;
+              if (item.id === 'mocks' && activeTab === 'bluebook') return true;
+              if (item.id === 'vocabulary' && activeTab === 'vocab') return true;
+              if (item.id === 'mistakes' && activeTab === 'vault') return true;
+              if (item.id === 'community' && activeTab === 'community') return true;
+            }
+            if (!pathname) return false;
+            if (item.href === '/dashboard') {
+              return pathname === '/dashboard' || pathname === '/';
+            }
+            return pathname === item.href || pathname.startsWith(item.href + '/');
+          };
+
+          const isActive = isCurrentActive();
 
           return (
             <div key={item.id} className="relative group">
               <Link
                 href={item.href}
+                onClick={() => {
+                  if (setActiveTab) {
+                    setActiveTab(item.id);
+                  }
+                }}
                 title={isCollapsed ? item.label : undefined}
                 className={`relative flex items-center gap-3 ${
                   isCollapsed ? 'justify-center h-10 w-10 mx-auto' : 'px-3 py-2.5'

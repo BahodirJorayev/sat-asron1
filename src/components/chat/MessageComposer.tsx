@@ -70,7 +70,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
 
   if (!canPost) {
     return (
-      <footer className="flex-shrink-0 pb-16 md:pb-2 bg-white/95 dark:bg-[#0A0F1D]/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 p-3 text-center text-xs font-mono text-slate-500 dark:text-slate-400 select-none transition-colors">
+      <footer className="flex-shrink-0 bg-white dark:bg-[#0A0F1D] border-t border-slate-200 dark:border-slate-800 p-2 text-center text-xs font-mono text-slate-500 dark:text-slate-400 select-none transition-colors">
         <div className="flex items-center justify-center gap-1.5 py-1">
           <Lock className="w-3.5 h-3.5 text-amber-500" />
           <span>Faqat kanal ma'murlari xabar yuborishi mumkin.</span>
@@ -80,7 +80,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
   }
 
   return (
-    <footer className="flex-shrink-0 pb-16 md:pb-2 bg-white/95 dark:bg-[#0A0F1D]/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 p-2 sm:p-3 transition-colors z-10">
+    <footer className="flex-shrink-0 bg-white dark:bg-[#0A0F1D] border-t border-slate-200 dark:border-slate-800 p-2 transition-colors z-10">
       {/* 1. Reply Banner */}
       {replyingTo && (
         <div className="mb-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between text-xs animate-in fade-in duration-150">
@@ -180,7 +180,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
               ? `Ovoz yozilmoqda (${voiceSeconds}s)...`
               : editingMessage
               ? 'Tahrirlangan xabarni kiriting...'
-              : placeholder || "Xabar yozing (Formula: $x^2$, ||spoiler||)..."
+              : placeholder || "Xabar yozing..."
           }
           className="flex-1 min-w-0 px-3.5 py-2 sm:py-2.5 rounded-xl bg-slate-100 dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 text-xs md:text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden focus:border-[#E07A5F] transition-colors"
         />

@@ -174,14 +174,6 @@ export const VocabularyHub: React.FC<VocabularyHubProps> = ({
       {/* 1. EXECUTIVE HEADER BANNER */}
       <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div className="space-y-2.5 max-w-2xl">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#FAF5F0] dark:bg-[#1E293B] text-[#E07A5F] border border-[#FCD9CE] dark:border-[#334155]">
-              Leksika Markazi
-            </span>
-            <span className="text-xs font-mono text-[#64748B] dark:text-[#94A3B8]">
-              • Spaced Repetition (SRS) Faol
-            </span>
-          </div>
 
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0F172A] dark:text-[#F8FAFC]">
             SAT Lug'at &amp; So'z Boyligi

@@ -281,12 +281,6 @@ export const QuestionBankView: React.FC<Props> = ({
                 <Layers className="w-3.5 h-3.5" />
                 Rasmiy Savollar Banki (SQB)
               </span>
-              <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                3,000+ Savol · Aniq Filtrlar
-              </span>
-              <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-[#1E293B] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800">
-                Desmos Faol
-              </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1E1B18] tracking-tight">
               Savollar Banki

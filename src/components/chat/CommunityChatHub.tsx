@@ -704,7 +704,7 @@ export const CommunityChatHub: React.FC<Props> = ({
   };
 
   return (
-    <div className="h-[calc(100dvh-3.5rem)] max-h-[calc(100dvh-3.5rem)] md:h-[calc(100dvh-4rem)] md:max-h-[calc(100dvh-4rem)] w-full flex bg-slate-50 dark:bg-[#0A0F1D] text-[#0F172A] dark:text-[#F8FAFC] font-sans overflow-hidden select-none border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs">
+    <div className="h-full w-full flex bg-slate-50 dark:bg-[#0A0F1D] text-[#0F172A] dark:text-[#F8FAFC] font-sans overflow-hidden select-none border border-slate-200 dark:border-slate-800 rounded-none sm:rounded-2xl shadow-xs">
       {/* ============================================================= */}
       {/* 1. LEFT SIDEBAR: FOLDERS & CLEAN CHATS LIST                   */}
       {/* ============================================================= */}

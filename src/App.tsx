@@ -1451,17 +1451,6 @@ export default function App() {
             />
           )}
         </main>
-
-        {/* Minimal Discrete Admin Link at the very bottom */}
-        <footer className="py-4 px-4 sm:px-8 border-t border-[#E5E0D8]/60 dark:border-[#1E293B]/60 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] font-mono text-neutral-400 select-none mb-16 md:mb-0">
-          <div>© 2026 {siteBranding?.brandName || 'ASRON SAT'}. All rights reserved.</div>
-          <button
-            onClick={() => setIsAdminLoginModalOpen(true)}
-            className="flex items-center gap-1.5 text-neutral-400/60 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors cursor-pointer"
-          >
-            <span>🔒 Boshqaruv Markazi (Admin Portal)</span>
-          </button>
-        </footer>
       </div>
 
       {/* Mobile Bottom Navigation Bar (Visible only on < 768px in student/dashboard views) */}

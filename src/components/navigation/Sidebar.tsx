@@ -123,9 +123,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div className="text-sm font-bold tracking-tight text-[#0F172A] dark:text-[#F8FAFC] truncate">
                 ASRON SAT
               </div>
-              <div className="text-[10px] font-mono text-[#64748B] dark:text-[#94A3B8] font-semibold tracking-wider uppercase">
-                Academic Suite
-              </div>
             </div>
           )}
         </Link>

@@ -168,9 +168,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
               <div className="font-bold text-sm tracking-tight text-[#0F172A] dark:text-[#F8FAFC] truncate">
                 {brandName}
               </div>
-              <p className="text-[10px] font-mono text-[#64748B] dark:text-[#94A3B8] font-medium truncate mt-0.5">
-                Academic Suite
-              </p>
             </div>
           </div>
 

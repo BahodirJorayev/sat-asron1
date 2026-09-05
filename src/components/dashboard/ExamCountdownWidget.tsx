@@ -170,9 +170,6 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
                 <Clock size={11} className="text-[#E07A5F]" />
                 Rasmiy Digital SAT
               </span>
-              <span className="text-xs font-mono text-[#64748B] dark:text-[#94A3B8]">
-                {formattedTargetLabel}
-              </span>
             </div>
 
             <div>

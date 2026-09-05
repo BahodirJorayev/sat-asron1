@@ -61,29 +61,14 @@ export default function DashboardPage() {
     };
   }, []);
 
-  const todayFormatted = new Date().toLocaleDateString('uz-UZ', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
 
   return (
     <div className="space-y-4 md:space-y-6 font-sans text-[#0F172A] dark:text-[#F8FAFC] transition-colors w-full">
       {/* 1. Header Strip: Minimalist Identification */}
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-200 dark:border-slate-800">
-        <div className="flex items-center gap-2.5">
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#0F172A] dark:text-[#F8FAFC]">
-            Uy
-          </h1>
-          <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-[#1E293B] text-[11px] font-mono text-slate-500 dark:text-slate-400">
-            {todayFormatted}
-          </span>
-        </div>
-
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-bold self-start sm:self-auto">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span>MST Adaptiv</span>
-        </div>
+      <header className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#0F172A] dark:text-[#F8FAFC]">
+          Uy
+        </h1>
       </header>
 
       {/* 2. Dismissible Platform Announcement Banner (Synced with Supabase & localStorage) */}
@@ -118,9 +103,6 @@ export default function DashboardPage() {
             <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold truncate">
               Savollar
             </span>
-            <span className="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#0A0F1D] text-slate-500">
-              3,000+
-            </span>
           </div>
           <div className="mt-1.5 sm:mt-2 text-xl sm:text-2xl lg:text-3xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC] truncate">
             {stats.questionsDone} <span className="text-[10px] sm:text-xs font-normal text-slate-400">/ 3k</span>
@@ -132,9 +114,6 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold truncate">
               Aniqlik
-            </span>
-            <span className="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#0A0F1D] text-slate-500">
-              MST
             </span>
           </div>
           <div className="mt-1.5 sm:mt-2 text-xl sm:text-2xl lg:text-3xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC]">
@@ -163,9 +142,6 @@ export default function DashboardPage() {
                 <div className="font-bold text-xs sm:text-sm text-[#0F172A] dark:text-[#F8FAFC]">
                   Savollar
                 </div>
-                <span className="inline-block mt-0.5 text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-[#0A0F1D] text-slate-600 dark:text-slate-400">
-                  3,000+ Savol
-                </span>
               </div>
             </div>
             <ArrowUpRight size={16} className="text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
@@ -184,9 +160,6 @@ export default function DashboardPage() {
                 <div className="font-bold text-xs sm:text-sm text-[#0F172A] dark:text-[#F8FAFC]">
                   Testlar
                 </div>
-                <span className="inline-block mt-0.5 text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-[#0A0F1D] text-slate-600 dark:text-slate-400">
-                  Rasmiy MST
-                </span>
               </div>
             </div>
             <ArrowUpRight size={16} className="text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
@@ -205,9 +178,6 @@ export default function DashboardPage() {
                 <div className="font-bold text-xs sm:text-sm text-[#0F172A] dark:text-[#F8FAFC]">
                   Lug'at
                 </div>
-                <span className="inline-block mt-0.5 text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-[#0A0F1D] text-slate-600 dark:text-slate-400">
-                  SRS Flashcard
-                </span>
               </div>
             </div>
             <ArrowUpRight size={16} className="text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
@@ -226,9 +196,6 @@ export default function DashboardPage() {
                 <div className="font-bold text-xs sm:text-sm text-[#0F172A] dark:text-[#F8FAFC]">
                   Hamjamiyat
                 </div>
-                <span className="inline-block mt-0.5 text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-[#0A0F1D] text-slate-600 dark:text-slate-400">
-                  Kanallar & Guruhlar
-                </span>
               </div>
             </div>
             <ArrowUpRight size={16} className="text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />

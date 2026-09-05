@@ -68,7 +68,7 @@ import {
   GlobalPlatformSettings,
   DesmosSatHack
 } from './types';
-import { getSupabaseClient, mapSupabaseUserToAppUser, signOutUser, saveUserProfile } from './lib/supabase';
+import { getSupabaseClient, mapSupabaseUserToAppUser, signOutUser, saveUserProfile, supabase } from './lib/supabase';
 import {
   fetchGlobalPlatformSettings,
   saveGlobalPlatformSettings,
@@ -371,7 +371,7 @@ export default function App() {
     }
   });
 
-  // Fetch initial global settings from Supabase / Backend API
+  // Fetch initial global settings from Supabase / Backend API and listen to live cloud updates
   useEffect(() => {
     fetchGlobalPlatformSettings().then((remoteSettings) => {
       if (remoteSettings) {
@@ -387,13 +387,90 @@ export default function App() {
       }
     });
 
+    // 1. Local window broadcast listener
     const handleSettingsBroadcast = (e: any) => {
       if (e.detail) {
         setGlobalSettings(e.detail);
       }
     };
     window.addEventListener('asron_settings_updated', handleSettingsBroadcast);
-    return () => window.removeEventListener('asron_settings_updated', handleSettingsBroadcast);
+
+    // 2. Supabase Realtime Broadcast Channel (instant cross-device & visitor synchronization)
+    const broadcastChannel = supabase
+      .channel('global-platform-events')
+      .on('broadcast', { event: 'settings_updated' }, (payload: any) => {
+        if (payload.payload) {
+          const newSettings = payload.payload;
+          setGlobalSettings(newSettings);
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('asron_global_settings', JSON.stringify(newSettings));
+          }
+          if (newSettings.platformName) {
+            setSiteBranding((prev) => ({
+              ...prev,
+              brandName: newSettings.platformName,
+              brandTagline: newSettings.platformTagline || prev.brandTagline,
+              logoIcon: newSettings.logoUrl || prev.logoIcon,
+            }));
+          }
+        }
+      })
+      .subscribe();
+
+    // 3. Supabase Postgres Changes listener on global_platform_settings table
+    const dbSettingsChannel = supabase
+      .channel('global-platform-db-sync')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'global_platform_settings' },
+        (payload: any) => {
+          if (payload.new) {
+            const data = payload.new;
+            setGlobalSettings((prev) => {
+              const updated: GlobalPlatformSettings = {
+                ...prev,
+                id: data.id || 'global_config',
+                platformName: data.platform_name || prev.platformName,
+                logoUrl: data.logo_url || prev.logoUrl,
+                adminTelegram: data.admin_telegram || prev.adminTelegram,
+                contactTelegram: data.admin_telegram || prev.contactTelegram,
+                landingHeadline: data.landing_headline || prev.landingHeadline,
+                landingHeroTitle: data.landing_headline || prev.landingHeroTitle,
+                announcementText: data.announcement_text ?? prev.announcementText,
+                announcementEnabled: data.announcement_enabled ?? prev.announcementEnabled,
+                announcementActive: data.announcement_enabled ?? prev.announcementActive,
+                freeDailyLimit: data.free_daily_limit ?? prev.freeDailyLimit,
+                isMaintenance: data.is_maintenance ?? prev.isMaintenance,
+                arenaEnabled: data.arena_enabled ?? prev.arenaEnabled,
+                liveStreamEnabled: data.live_stream_enabled ?? prev.liveStreamEnabled,
+                voiceNotesEnabled: data.voice_notes_enabled ?? prev.voiceNotesEnabled,
+                faqs: data.faqs || prev.faqs,
+                testimonials: data.testimonials || prev.testimonials,
+                updatedAt: data.updated_at || new Date().toISOString(),
+              };
+              if (typeof localStorage !== 'undefined') {
+                localStorage.setItem('asron_global_settings', JSON.stringify(updated));
+              }
+              if (updated.platformName) {
+                setSiteBranding((bPrev) => ({
+                  ...bPrev,
+                  brandName: updated.platformName,
+                  brandTagline: updated.platformTagline || bPrev.brandTagline,
+                  logoIcon: updated.logoUrl || bPrev.logoIcon,
+                }));
+              }
+              return updated;
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      window.removeEventListener('asron_settings_updated', handleSettingsBroadcast);
+      broadcastChannel.unsubscribe();
+      dbSettingsChannel.unsubscribe();
+    };
   }, []);
 
   const handleSaveGlobalSettings = (settings: GlobalPlatformSettings) => {
@@ -433,8 +510,26 @@ export default function App() {
   const handleUpdateSiteBranding = (updated: Partial<SiteBrandingConfig>) => {
     setSiteBranding((prev) => {
       const next = { ...prev, ...updated };
-      localStorage.setItem('aurasat_site_config', JSON.stringify(next));
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('aurasat_site_config', JSON.stringify(next));
+      }
       return next;
+    });
+
+    // Cloud synchronization: push branding updates to remote Supabase database and broadcast to external visitors
+    setGlobalSettings((prev) => {
+      const newSettings: GlobalPlatformSettings = {
+        ...prev,
+        platformName: updated.brandName || prev.platformName,
+        platformTagline: updated.brandTagline || prev.platformTagline,
+        logoUrl: updated.logoIcon || prev.logoUrl,
+        adminTelegram: updated.adminTelegram || prev.adminTelegram,
+        contactTelegram: updated.adminTelegram || prev.contactTelegram,
+        supportEmail: updated.supportEmail || prev.supportEmail,
+        updatedAt: new Date().toISOString(),
+      };
+      saveGlobalPlatformSettings(newSettings);
+      return newSettings;
     });
   };
 

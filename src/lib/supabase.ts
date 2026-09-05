@@ -276,7 +276,6 @@ export async function signUpWithEmail(
         avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanUsername}`,
         target_score: 1500,
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
       }, { onConflict: 'id' });
     } catch (e) {
       console.warn('Profiles table sync:', e);
@@ -331,7 +330,30 @@ export async function saveUserProfile(user: User): Promise<User> {
   }
   setAuthCookie(user);
 
-  // Update Supabase user metadata if logged in
+  // 1. Direct Cloud Persistence: Upsert directly into Supabase public.profiles table
+  try {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const activeId = sessionData?.session?.user?.id || user.id;
+    if (activeId) {
+      const { error: profileError } = await supabase.from('profiles').upsert(
+        {
+          id: activeId,
+          full_name: user.fullName,
+          username: user.username,
+          avatar_url: user.avatarUrl,
+          target_score: Number(user.targetScore) || 1500,
+        },
+        { onConflict: 'id' }
+      );
+      if (profileError) {
+        console.warn('Supabase public.profiles upsert error:', profileError.message);
+      }
+    }
+  } catch (profErr) {
+    console.warn('Could not sync to public.profiles:', profErr);
+  }
+
+  // 2. Update Supabase user metadata if logged in
   try {
     const { data } = await supabase.auth.getSession();
     if (data?.session?.user) {

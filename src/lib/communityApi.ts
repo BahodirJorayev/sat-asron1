@@ -121,8 +121,8 @@ export async function searchGlobalCommunity(
   try {
     const { data: channelData, error: channelErr } = await supabase
       .from('community_channels')
-      .select('id, name, title, username, description, type, avatar_url, invite_code, invite_token, is_public, is_verified')
-      .or(`name.ilike.%${query}%,title.ilike.%${query}%,username.ilike.%${query}%,description.ilike.%${query}%`)
+      .select('id, name, username, description, type, avatar_url, is_public')
+      .or(`name.ilike.%${query}%,username.ilike.%${query}%,description.ilike.%${query}%`)
       .limit(10);
 
     if (!channelErr && Array.isArray(channelData)) {
@@ -133,14 +133,12 @@ export async function searchGlobalCommunity(
           foundChannelIds.add(ch.id);
           channelResults.push({
             id: ch.id,
-            name: ch.name || ch.title || 'Kanal',
+            name: ch.name || 'Kanal',
             username: ch.username,
             description: ch.description,
             type: (ch.type?.toUpperCase() as ChatType) || 'PUBLIC_CHANNEL',
             avatarUrl: ch.avatar_url,
             isPublic: true,
-            isVerified: ch.is_verified,
-            inviteToken: ch.invite_token || ch.invite_code,
           });
         }
       });

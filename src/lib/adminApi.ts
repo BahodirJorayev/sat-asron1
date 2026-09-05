@@ -213,6 +213,22 @@ export async function saveGlobalPlatformSettings(settings: GlobalPlatformSetting
     console.warn('Supabase DB upsert notice:', supaErr);
   }
 
+  // 4. Broadcast to all active browser windows & external visitors via Supabase Realtime
+  try {
+    const channel = supabase.channel('global-platform-events');
+    channel.subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        channel.send({
+          type: 'broadcast',
+          event: 'settings_updated',
+          payload,
+        });
+      }
+    });
+  } catch (bcErr) {
+    // Non-critical, ignore
+  }
+
   return payload;
 }
 

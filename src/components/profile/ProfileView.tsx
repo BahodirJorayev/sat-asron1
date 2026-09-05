@@ -19,7 +19,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { User } from '../../types';
-import { supabase } from '../../lib/supabase';
+import { supabase, saveUserProfile } from '../../lib/supabase';
 import { ThemeToggle } from '../ThemeToggle';
 
 interface ProfileViewProps {
@@ -71,36 +71,40 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
   const [mockTestsCompleted, setMockTestsCompleted] = useState<number>(0);
 
-  // Load active user profile from Supabase
+  // Load active user profile from Supabase profiles table
   useEffect(() => {
     let isMounted = true;
+    let profileChannel: any = null;
+
     const fetchProfile = async () => {
       try {
         const { data: authData } = await supabase.auth.getUser();
         const activeUser = authData?.user;
 
         if (activeUser) {
-          const { data: dbUser } = await supabase
-            .from('users')
-            .select('*')
+          const { data: dbProfile } = await supabase
+            .from('profiles')
+            .select('id, full_name, username, avatar_url, target_score, created_at')
             .eq('id', activeUser.id)
-            .single();
+            .maybeSingle();
 
-          if (dbUser && isMounted) {
+          const meta = activeUser.user_metadata || {};
+
+          if (isMounted) {
             const resolvedUser: User = {
-              id: dbUser.id,
-              email: dbUser.email || activeUser.email || '',
-              fullName: dbUser.full_name || 'Talaba',
-              username: dbUser.username || 'talaba',
-              phoneNumber: dbUser.phone_number || '',
-              planTier: (dbUser.plan_tier as any) || 'STANDARD',
-              role: (dbUser.role as any) || 'STUDENT',
-              streakDays: dbUser.streak_days || 0,
-              totalQuestionsDone: dbUser.total_questions_done || 0,
-              overallAccuracy: dbUser.overall_accuracy || 0,
-              targetScore: dbUser.target_score || 1550,
-              targetExamDate: dbUser.target_exam_date || '2026-10-03',
-              createdAt: dbUser.created_at || new Date().toISOString(),
+              id: activeUser.id,
+              email: activeUser.email || '',
+              fullName: dbProfile?.full_name || meta.full_name || meta.name || user.fullName || 'Talaba',
+              username: dbProfile?.username || meta.username || activeUser.email?.split('@')[0] || user.username || 'talaba',
+              phoneNumber: meta.phone || meta.phoneNumber || user.phoneNumber || '',
+              planTier: (meta.plan_tier as any) || user.planTier || 'STANDARD',
+              role: (meta.role as any) || user.role || 'STUDENT',
+              streakDays: user.streakDays || 0,
+              totalQuestionsDone: user.totalQuestionsDone || 0,
+              overallAccuracy: user.overallAccuracy || 0,
+              targetScore: Number(dbProfile?.target_score) || Number(meta.target_score) || user.targetScore || 1550,
+              targetExamDate: meta.target_exam_date || user.targetExamDate || '2026-10-03',
+              createdAt: dbProfile?.created_at || activeUser.created_at || user.createdAt || new Date().toISOString(),
             };
 
             setUser(resolvedUser);
@@ -110,9 +114,35 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             setPhoneNumber(resolvedUser.phoneNumber || '');
             setTargetScore(resolvedUser.targetScore || 1550);
             setTargetExamDate(resolvedUser.targetExamDate?.slice(0, 10) || '2026-10-03');
-          } else if (isMounted) {
-            setEmail(activeUser.email || '');
           }
+
+          // Realtime cross-device synchronization (PC <-> Mobile)
+          profileChannel = supabase
+            .channel(`profile-sync-${activeUser.id}`)
+            .on(
+              'postgres_changes',
+              {
+                event: '*',
+                schema: 'public',
+                table: 'profiles',
+                filter: `id=eq.${activeUser.id}`,
+              },
+              (payload: any) => {
+                const newRow = payload.new;
+                if (newRow && isMounted) {
+                  if (newRow.full_name) setFullName(newRow.full_name);
+                  if (newRow.username) setUsername(newRow.username);
+                  if (newRow.target_score) setTargetScore(Number(newRow.target_score));
+                  setUser((prev) => ({
+                    ...prev,
+                    fullName: newRow.full_name || prev.fullName,
+                    username: newRow.username || prev.username,
+                    targetScore: Number(newRow.target_score) || prev.targetScore,
+                  }));
+                }
+              }
+            )
+            .subscribe();
         }
       } catch (err) {
         console.warn('Profile fetch warning:', err);
@@ -136,10 +166,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
     return () => {
       isMounted = false;
+      if (profileChannel) profileChannel.unsubscribe();
     };
   }, []);
 
-  // Save Personal Info
+  // Save Personal Info directly to Supabase profiles and Auth metadata
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
@@ -150,34 +181,53 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       const activeUserId = authData?.user?.id || user.id;
 
       if (activeUserId) {
-        const payload = {
-          full_name: fullName.trim(),
-          username: username.trim().toLowerCase().replace(/^@/, ''),
-          phone_number: phoneNumber.trim(),
-          target_score: targetScore,
-          target_exam_date: targetExamDate,
-          updated_at: new Date().toISOString(),
-        };
+        const cleanFullName = fullName.trim();
+        const cleanUsername = username.trim().toLowerCase().replace(/^@/, '');
+        const cleanPhone = phoneNumber.trim();
 
-        const { error } = await supabase
-          .from('users')
-          .update(payload)
-          .eq('id', activeUserId);
+        // 1. Direct Cloud Upsert into Supabase public.profiles table
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert(
+            {
+              id: activeUserId,
+              full_name: cleanFullName,
+              username: cleanUsername,
+              target_score: targetScore,
+            },
+            { onConflict: 'id' }
+          );
 
-        if (error) {
-          console.warn('Supabase profile update warning:', error.message);
+        if (profileError) {
+          console.warn('Supabase profiles update warning:', profileError.message);
+        }
+
+        // 2. Persist to Auth user metadata for immediate cross-device retrieval
+        try {
+          await supabase.auth.updateUser({
+            data: {
+              full_name: cleanFullName,
+              username: cleanUsername,
+              phone: cleanPhone,
+              target_score: targetScore,
+              target_exam_date: targetExamDate,
+            },
+          });
+        } catch (authMetaErr) {
+          console.warn('Auth metadata update notice:', authMetaErr);
         }
 
         const updatedUser: User = {
           ...user,
-          fullName: payload.full_name,
-          username: payload.username,
-          phoneNumber: payload.phone_number,
-          targetScore: payload.target_score,
-          targetExamDate: payload.target_exam_date,
+          fullName: cleanFullName,
+          username: cleanUsername,
+          phoneNumber: cleanPhone,
+          targetScore: targetScore,
+          targetExamDate: targetExamDate,
         };
 
         setUser(updatedUser);
+        await saveUserProfile(updatedUser);
         onUpdateUser?.(updatedUser);
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 3000);

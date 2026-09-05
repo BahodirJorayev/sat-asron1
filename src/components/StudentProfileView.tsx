@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   User as UserIcon,
   Crown,
@@ -37,9 +37,8 @@ import {
   BookOpen,
 } from 'lucide-react';
 import { User, PlanTier } from '../types';
-import { saveUserProfile } from '../lib/supabase';
+import { saveUserProfile, supabase } from '../lib/supabase';
 import { AvatarSelectorModal } from './AvatarSelectorModal';
-import { BadgeCollection } from './BadgeCollection';
 
 interface StudentProfileViewProps {
   currentUser: User;
@@ -70,7 +69,7 @@ export const StudentProfileView: React.FC<StudentProfileViewProps> = ({
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'BADGES' | 'ACTIVITY' | 'TARGETS'>('OVERVIEW');
+  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'ACTIVITY' | 'TARGETS'>('OVERVIEW');
 
   // Editable form fields
   const [fullName, setFullName] = useState<string>(currentUser.fullName || 'Talaba');
@@ -89,6 +88,89 @@ export const StudentProfileView: React.FC<StudentProfileViewProps> = ({
     currentUser.highestScore || 0
   );
   const [streakDays, setStreakDays] = useState<number>(currentUser.streakDays || 0);
+
+  // Live Cloud Profile Synchronization (Fetch from Supabase profiles table)
+  useEffect(() => {
+    let isMounted = true;
+    const fetchLatestProfile = async () => {
+      try {
+        const { data: authData } = await supabase.auth.getUser();
+        const activeId = authData?.user?.id || currentUser.id;
+        if (!activeId) return;
+
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', activeId)
+          .maybeSingle();
+
+        if (!error && profile && isMounted) {
+          if (profile.full_name) setFullName(profile.full_name);
+          if (profile.username) setUsername(profile.username);
+          if (profile.bio) setBio(profile.bio);
+          if (profile.institution) setInstitution(profile.institution);
+          if (profile.target_university) setTargetUniversity(profile.target_university);
+          if (profile.target_score) setTargetScore(Number(profile.target_score));
+
+          onUpdateUser({
+            ...currentUser,
+            fullName: profile.full_name || currentUser.fullName,
+            username: profile.username || currentUser.username,
+            avatarUrl: profile.avatar_url || currentUser.avatarUrl,
+            bio: profile.bio || currentUser.bio,
+            institution: profile.institution || currentUser.institution,
+            targetUniversity: profile.target_university || currentUser.targetUniversity,
+            targetScore: Number(profile.target_score) || currentUser.targetScore,
+          });
+        }
+      } catch (err) {
+        console.warn('StudentProfileView cloud fetch warning:', err);
+      }
+    };
+
+    fetchLatestProfile();
+
+    // Realtime cross-device sync (PC <-> Mobile)
+    const channel = supabase
+      .channel(`profile-realtime-${currentUser.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${currentUser.id}`,
+        },
+        (payload: any) => {
+          const newRow = payload.new;
+          if (newRow && isMounted) {
+            if (newRow.full_name) setFullName(newRow.full_name);
+            if (newRow.username) setUsername(newRow.username);
+            if (newRow.bio) setBio(newRow.bio);
+            if (newRow.institution) setInstitution(newRow.institution);
+            if (newRow.target_university) setTargetUniversity(newRow.target_university);
+            if (newRow.target_score) setTargetScore(Number(newRow.target_score));
+
+            onUpdateUser({
+              ...currentUser,
+              fullName: newRow.full_name || currentUser.fullName,
+              username: newRow.username || currentUser.username,
+              avatarUrl: newRow.avatar_url || currentUser.avatarUrl,
+              bio: newRow.bio || currentUser.bio,
+              institution: newRow.institution || currentUser.institution,
+              targetUniversity: newRow.target_university || currentUser.targetUniversity,
+              targetScore: Number(newRow.target_score) || currentUser.targetScore,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      channel.unsubscribe();
+    };
+  }, [currentUser.id]);
 
   const isPro = currentUser.planTier === 'PRO' || currentUser.planTier === 'VIP';
   const isStandard = currentUser.planTier === 'STANDARD';
@@ -125,24 +207,53 @@ export const StudentProfileView: React.FC<StudentProfileViewProps> = ({
       defaultAvatarIndex: defaultIndex,
     };
     onUpdateUser(updated);
+
+    // Direct Supabase cloud persistence for avatar
+    try {
+      await supabase.from('profiles').upsert({
+        id: currentUser.id,
+        avatar_url: newAvatarUrl,
+      }, { onConflict: 'id' });
+    } catch (e) {
+      console.warn('Avatar cloud sync notice:', e);
+    }
+
     await saveUserProfile(updated);
   };
 
-  // Save profile updates
+  // Save profile updates to Supabase Cloud
   const handleSaveProfile = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setIsSaving(true);
     try {
+      const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
+      const cleanFullName = fullName.trim();
       const updated: User = {
         ...currentUser,
-        fullName: fullName.trim(),
-        username: username.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_'),
+        fullName: cleanFullName,
+        username: cleanUsername,
         bio: bio.trim().slice(0, 140),
         institution: institution.trim(),
         targetUniversity: targetUniversity.trim(),
         targetScore: Number(targetScore) || 1500,
       };
       onUpdateUser(updated);
+
+      // Cloud Persistence: Upsert verified columns into Supabase public.profiles
+      const { error: profileErr } = await supabase
+        .from('profiles')
+        .upsert({
+          id: currentUser.id,
+          full_name: cleanFullName,
+          username: cleanUsername,
+          avatar_url: currentUser.avatarUrl,
+          target_score: Number(targetScore) || 1500,
+        }, { onConflict: 'id' });
+
+      if (profileErr) {
+        console.warn('Supabase profiles save notice:', profileErr.message);
+      }
+
       await saveUserProfile(updated);
       setIsEditModalOpen(false);
     } catch (err) {
@@ -202,11 +313,11 @@ export const StudentProfileView: React.FC<StudentProfileViewProps> = ({
                   @{currentUser.username}
                 </span>
               </div>
-              <p className="text-[11px] text-[#78716C]">
-                {isPublicMode
-                  ? 'Boshqa talabalar va mentorlar ko‘radigan ommaviy portfel ko‘rinishi'
-                  : 'Shaxsiy boshqaruv va platforma natijalari konsoli'}
-              </p>
+              {isPublicMode && (
+                <p className="text-[11px] text-[#78716C]">
+                  Boshqa talabalar va mentorlar ko‘radigan ommaviy portfel ko‘rinishi
+                </p>
+              )}
             </div>
           </div>
 
@@ -341,15 +452,11 @@ export const StudentProfileView: React.FC<StudentProfileViewProps> = ({
                   {bio}
                 </p>
 
-                {/* Internal Scholar ID & Verified Badge */}
+                {/* Internal Scholar ID */}
                 <div className="flex items-center gap-3 pt-1 text-xs font-mono">
                   <span className="px-2.5 py-0.5 rounded-md bg-[#FAF8F5] border border-[#E5E0D8] text-[#57534E] flex items-center gap-1.5">
                     <Shield size={11} className="text-[#3D405B]" />
                     <span>ID: {currentUser.scholarId || `ASRON-${currentUser.id.slice(0, 8).toUpperCase()}`}</span>
-                  </span>
-                  <span className="text-[#64748B] flex items-center gap-1 text-[11px]">
-                    <CheckCircle2 size={12} className="text-emerald-500" />
-                    <span>Tasdiqlangan Profil</span>
                   </span>
                 </div>
               </div>
@@ -362,7 +469,6 @@ export const StudentProfileView: React.FC<StudentProfileViewProps> = ({
               <div className="p-3.5 rounded-2xl bg-[#1E1B18] text-white border border-[#3D405B]/40 shadow-sm space-y-2 min-w-[240px]">
                 <div className="flex items-center justify-between text-[11px] font-mono text-[#A8A29E] border-b border-white/10 pb-1.5">
                   <span>SAT REYTING KO‘RSATKICHLARI</span>
-                  <span className="text-emerald-400 font-bold">2026 SIKL</span>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 text-center pt-0.5">
@@ -433,7 +539,6 @@ export const StudentProfileView: React.FC<StudentProfileViewProps> = ({
         <div className="flex items-center gap-2 border-b border-[#EBE5DF] pb-2">
           {[
             { id: 'OVERVIEW', label: 'Umumiy Tahlil', icon: BarChart3 },
-            { id: 'BADGES', label: 'Nishonlar & Yutuqlar', icon: Trophy },
             { id: 'ACTIVITY', label: '365-Kunlik Faollik', icon: Calendar },
             { id: 'TARGETS', label: 'Universitet & SAT Maqsad', icon: Target },
           ].map((tab) => {
@@ -462,8 +567,8 @@ export const StudentProfileView: React.FC<StudentProfileViewProps> = ({
         {activeTab === 'OVERVIEW' && (
           <div className="space-y-6">
             
-            {/* Key Metrics Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+            {/* Key Metrics Grid (Apple-grade 3-column triad) */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
               
               {/* Stat 1: Total Time */}
               <div className="p-4 rounded-2xl bg-white border border-[#E5E0D8] shadow-2xs">
@@ -500,7 +605,7 @@ export const StudentProfileView: React.FC<StudentProfileViewProps> = ({
                 </div>
               </div>
 
-              {/* Stat 3: Overall Accuracy */}
+              {/* Stat 3: Overall Accuracy (Cleaned without descriptive noise) */}
               <div className="p-4 rounded-2xl bg-white border border-[#E5E0D8] shadow-2xs">
                 <div className="flex items-center justify-between text-[#78716C] mb-2">
                   <span className="text-xs font-medium">Umumiy Aniqlik</span>
@@ -510,21 +615,7 @@ export const StudentProfileView: React.FC<StudentProfileViewProps> = ({
                   {overallAccuracy}%
                 </div>
                 <div className="text-[11px] text-[#57534E] font-mono mt-1">
-                  {overallAccuracy > 0 ? 'Hozirgi o\'rtacha aniqlik' : 'Diagnostik testdan so\'ng'}
-                </div>
-              </div>
-
-              {/* Stat 4: XP & Rank */}
-              <div className="p-4 rounded-2xl bg-white border border-[#E5E0D8] shadow-2xs">
-                <div className="flex items-center justify-between text-[#78716C] mb-2">
-                  <span className="text-xs font-medium">Akademik XP Ball</span>
-                  <Sparkles size={15} className="text-amber-500" />
-                </div>
-                <div className="text-xl font-bold font-mono text-[#1E1B18]">
-                  {currentUser.xpPoints ?? 0} <span className="text-xs font-normal text-[#78716C]">XP</span>
-                </div>
-                <div className="text-[11px] text-[#3D405B] font-mono mt-1">
-                  {(currentUser.xpPoints ?? 0) > 0 ? 'Faol Aspirant' : 'Boshlang\'ich Bosqich'}
+                  Akademik aniqlik indeksi
                 </div>
               </div>
 
@@ -623,41 +714,11 @@ export const StudentProfileView: React.FC<StudentProfileViewProps> = ({
 
             </div>
 
-            {/* Badges Preview Section */}
-            <div className="p-6 rounded-3xl bg-white border border-[#E5E0D8] space-y-4">
-              <div className="flex items-center justify-between border-b border-[#EBE5DF] pb-3">
-                <div className="flex items-center gap-2">
-                  <Trophy size={16} className="text-amber-600" />
-                  <span className="text-sm font-bold text-[#1E1B18]">
-                    Eng So‘nggi Erishilgan Yutuqlar
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('BADGES')}
-                  className="text-xs font-semibold text-[#E07A5F] hover:underline cursor-pointer"
-                >
-                  Barcha 12 nishonni ko‘rish →
-                </button>
-              </div>
-
-              <BadgeCollection user={currentUser} isPublicView={isPublicMode} />
-            </div>
-
           </div>
         )}
 
         {/* ========================================================================= */}
-        {/* TAB 2: BADGE COLLECTION */}
-        {/* ========================================================================= */}
-        {activeTab === 'BADGES' && (
-          <div className="p-6 rounded-3xl bg-white border border-[#E5E0D8]">
-            <BadgeCollection user={currentUser} isPublicView={isPublicMode} />
-          </div>
-        )}
-
-        {/* ========================================================================= */}
-        {/* TAB 3: 365-DAY MONOCHROMATIC HEATMAP */}
+        {/* TAB 2: 365-DAY MONOCHROMATIC HEATMAP */}
         {/* ========================================================================= */}
         {activeTab === 'ACTIVITY' && (
           <div className="p-6 sm:p-7 rounded-3xl bg-white border border-[#E5E0D8] space-y-5">

@@ -213,13 +213,13 @@ export const Header: React.FC<HeaderProps> = ({
             <Search size={17} />
           </button>
 
-          {/* Dedicated Hamjamiyat (Community) Action Button (Navigates to /chat) */}
+          {/* Dedicated Mobile-only Hamjamiyat (Community) Action Button (Navigates to /chat) */}
           <button
             type="button"
             onClick={handleOpenCommunity}
             aria-label="Hamjamiyat"
             title="Hamjamiyat"
-            className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white border border-slate-200/50 dark:border-slate-700/50 active:scale-95 transition-transform cursor-pointer"
+            className="flex md:hidden w-9 h-9 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white border border-slate-200/50 dark:border-slate-700/50 active:scale-95 transition-transform cursor-pointer"
           >
             <MessageSquare size={17} />
           </button>

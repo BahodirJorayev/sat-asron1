@@ -1265,35 +1265,7 @@ export default function App() {
           </div>
         )}
 
-        {/* Dynamic Top Announcement Banner (Supabase platform_content.announcement_banner) */}
-        {platformContentMap.announcement_banner?.is_active && (
-          <div className="w-full bg-gradient-to-r from-[#0F172A] via-[#1E293B] to-[#0F172A] text-white border-b border-white/10 px-4 py-2 text-xs flex items-center justify-between z-40 shadow-xs animate-in fade-in duration-200">
-            <div className="flex items-center gap-2.5 truncate max-w-4xl mx-auto">
-              <span className="w-2 h-2 rounded-full bg-[#E07A5F] animate-pulse shrink-0" />
-              <span className="font-bold truncate">
-                {platformContentMap.announcement_banner.title || 'Yangi Digital SAT 2026 Mock Testlari yuklandi!'}
-              </span>
-              {platformContentMap.announcement_banner.subtitle && (
-                <span className="text-slate-300 hidden md:inline truncate">
-                  — {platformContentMap.announcement_banner.subtitle}
-                </span>
-              )}
-            </div>
-            {platformContentMap.announcement_banner.content?.linkText && (
-              <button
-                onClick={() => {
-                  const target = platformContentMap.announcement_banner.content?.linkUrl || 'mocks';
-                  setActiveTab(target);
-                }}
-                className="px-3 py-1 rounded-lg bg-[#E07A5F] hover:bg-[#c96c53] text-[#0A0F1D] text-[11px] font-mono font-bold shrink-0 transition-colors cursor-pointer"
-              >
-                {platformContentMap.announcement_banner.content.linkText} →
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Top Header with Promo Announcement & Quick Actions */}
+        {/* Top Header with Quick Actions */}
         <Header
           user={currentUser}
           activeTab={activeTab}

@@ -9,7 +9,11 @@ import {
   fetchMockTestsRemote,
   fetchMockCategories,
   INITIAL_MOCK_CATEGORIES,
+  subscribeToMockTests,
 } from '../../lib/adminApi';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 const DEFAULT_GUEST_USER: User = {
   id: 'guest-user',
@@ -58,8 +62,11 @@ export default function MocksPage() {
   const [activeBluebookTest, setActiveBluebookTest] = useState<MockTest | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+
+    // 1. Live zero-stale remote fetch from Supabase
     fetchMockTestsRemote().then((remoteTests) => {
-      if (remoteTests && remoteTests.length > 0) {
+      if (isMounted && remoteTests && remoteTests.length > 0) {
         setMockTests((prev) => {
           const remoteIds = new Set(remoteTests.map((t) => t.id));
           const localOnly = prev.filter((t) => !remoteIds.has(t.id));
@@ -69,10 +76,26 @@ export default function MocksPage() {
     });
 
     fetchMockCategories().then((remoteCats) => {
-      if (remoteCats && remoteCats.length > 0) {
+      if (isMounted && remoteCats && remoteCats.length > 0) {
         setMockCategories(remoteCats);
       }
     });
+
+    // 2. Realtime subscription to public.mock_tests table
+    const unsubscribe = subscribeToMockTests((updatedTests) => {
+      if (isMounted && updatedTests && updatedTests.length > 0) {
+        setMockTests((prev) => {
+          const remoteIds = new Set(updatedTests.map((t) => t.id));
+          const localOnly = prev.filter((t) => !remoteIds.has(t.id));
+          return [...updatedTests, ...localOnly];
+        });
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   return (

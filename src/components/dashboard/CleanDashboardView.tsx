@@ -13,7 +13,6 @@ import { User, MistakeVaultItem, MockTest, Question } from '../../types';
 import { VocabTrainerModal } from '../VocabTrainerModal';
 import { MultiplayerArenaModal } from '../MultiplayerArenaModal';
 import { ExamCountdownWidget } from './ExamCountdownWidget';
-import { AnnouncementBanner } from './AnnouncementBanner';
 import { supabase } from '../../lib/supabase';
 
 
@@ -131,9 +130,6 @@ export const CleanDashboardView: React.FC<Props> = ({
         initialTargetDate={user.targetExamDate || '2026-10-03T08:00:00'}
         userId={user.id}
       />
-
-      {/* Dynamic Official Announcements from Supabase & Dismissible Banner */}
-      <AnnouncementBanner targetRoute="dashboard" />
 
       {/* 3. Core Metrics: Data-Dense Triad */}
       <section aria-label="Asosiy Metrikalar" className="grid grid-cols-3 gap-2 sm:gap-4">

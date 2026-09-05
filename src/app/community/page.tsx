@@ -3,6 +3,9 @@
 import { CommunityHub } from '../../components/chat/CommunityHub';
 import { INITIAL_USERS } from '../../data/mockDatabase';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default function CommunityPage() {
   const currentUser = INITIAL_USERS[0];
 

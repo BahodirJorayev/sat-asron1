@@ -11,8 +11,10 @@ import {
   ArrowUpRight,
 } from 'lucide-react';
 import { ExamCountdownWidget } from '../../components/dashboard/ExamCountdownWidget';
-import { AnnouncementBanner } from '../../components/dashboard/AnnouncementBanner';
 import { supabase } from '../../lib/supabase';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default function DashboardPage() {
   const [targetExamDate, setTargetExamDate] = useState<string>('2026-10-03T08:00:00');
@@ -106,10 +108,7 @@ export default function DashboardPage() {
         </h1>
       </header>
 
-      {/* 2. Dismissible Platform Announcement Banner (Synced with Supabase & localStorage) */}
-      <AnnouncementBanner targetRoute="dashboard" />
-
-      {/* 3. Scaled & Optimized Exam Countdown Timer Widget */}
+      {/* 2. Scaled & Optimized Exam Countdown Timer Widget */}
       <ExamCountdownWidget
         initialTargetDate={targetExamDate}
         onTargetDateChange={(newDate) => setTargetExamDate(newDate)}

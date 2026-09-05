@@ -757,4 +757,67 @@ export function subscribeToMockTests(onChange: (tests: MockTest[]) => void): () 
   };
 }
 
+/**
+ * Fetch Questions directly from Supabase public.questions table with zero stale cache
+ */
+export async function fetchQuestionsRemote(): Promise<Question[]> {
+  try {
+    const { data, error } = await supabase
+      .from('questions')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error || !data) {
+      console.warn('Supabase fetch questions notice:', error?.message);
+      return [];
+    }
+
+    return data.map((row: any) => ({
+      id: String(row.id),
+      sqbId: row.sqb_id || row.mock_id || undefined,
+      section: (row.section === 'reading_writing' || row.section === 'READING_AND_WRITING')
+        ? 'READING_AND_WRITING'
+        : 'MATH',
+      domain: row.domain || 'Algebra',
+      skill: row.skill || row.domain || 'Core',
+      difficulty: (row.difficulty?.toUpperCase() as any) || 'MEDIUM',
+      type: (row.question_type === 'grid_in' || row.type === 'GRID_IN') ? 'GRID_IN' : 'MULTIPLE_CHOICE',
+      passage: row.passage || undefined,
+      questionText: row.prompt || row.question_text || row.questionText || '',
+      options: row.options || undefined,
+      correctAnswer: row.correct_answer || row.correctAnswer || 'A',
+      explanation: row.explanation || '',
+      imageUrl: row.image_url || row.imageUrl || undefined,
+      globalAccuracy: row.global_accuracy || undefined,
+      createdAt: row.created_at || new Date().toISOString(),
+    }));
+  } catch (err) {
+    console.warn('fetchQuestionsRemote exception:', err);
+    return [];
+  }
+}
+
+/**
+ * Realtime subscription to public.questions table
+ */
+export function subscribeToQuestions(onChange: (questions: Question[]) => void): () => void {
+  const channel = supabase
+    .channel('public:questions:changes')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'questions' },
+      async () => {
+        const questions = await fetchQuestionsRemote();
+        if (questions.length > 0) {
+          onChange(questions);
+        }
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}
+
 

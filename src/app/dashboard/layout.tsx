@@ -24,6 +24,9 @@ import { Header } from '../../components/navigation/Header';
 import { BottomNav } from '../../components/navigation/BottomNav';
 import { GlobalSearchModal } from '../../components/chat/GlobalSearchModal';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export interface NavItem {
   id: string;
   label: string;

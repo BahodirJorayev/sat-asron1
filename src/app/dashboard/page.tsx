@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   FileText,
   Layers,
   BookOpen,
-  MessageSquare,
+  Users,
   AlertCircle,
   ArrowUpRight,
 } from 'lucide-react';
@@ -17,6 +18,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [targetExamDate, setTargetExamDate] = useState<string>('2026-10-03T08:00:00');
   const [stats, setStats] = useState({
     streakDays: 0,
@@ -163,28 +165,14 @@ export default function DashboardPage() {
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-4">
-          {/* Module 1: Savollar */}
-          <Link
-            href="/questions"
-            className="p-3.5 sm:p-4 md:p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 hover:border-[#E07A5F]/50 transition-all flex items-center justify-between group shadow-2xs cursor-pointer"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 sm:p-2.5 rounded-xl bg-orange-500/10 text-[#E07A5F]">
-                <Layers size={18} strokeWidth={2.2} />
-              </div>
-              <div>
-                <div className="font-bold text-xs sm:text-sm text-[#0F172A] dark:text-[#F8FAFC]">
-                  Savollar
-                </div>
-              </div>
-            </div>
-            <ArrowUpRight size={16} className="text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
-          </Link>
-
-          {/* Module 2: Testlar */}
+          {/* Module 1: Testlar */}
           <Link
             href="/mocks"
-            className="p-3.5 sm:p-4 md:p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 hover:border-blue-500/50 transition-all flex items-center justify-between group shadow-2xs cursor-pointer"
+            onClick={(e) => {
+              e.preventDefault();
+              router.push('/mocks');
+            }}
+            className="p-3.5 sm:p-4 md:p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 hover:border-[#E07A5F]/40 transition-all cursor-pointer group active:scale-[0.99] flex items-center justify-between shadow-2xs"
           >
             <div className="flex items-center gap-3">
               <div className="p-2 sm:p-2.5 rounded-xl bg-blue-500/10 text-blue-500">
@@ -196,13 +184,45 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-            <ArrowUpRight size={16} className="text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
+            <ArrowUpRight
+              size={16}
+              className="text-slate-400 group-hover:text-[#0F172A] dark:group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-150"
+            />
+          </Link>
+
+          {/* Module 2: Savollar */}
+          <Link
+            href="/questions"
+            onClick={(e) => {
+              e.preventDefault();
+              router.push('/questions');
+            }}
+            className="p-3.5 sm:p-4 md:p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 hover:border-[#E07A5F]/40 transition-all cursor-pointer group active:scale-[0.99] flex items-center justify-between shadow-2xs"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 sm:p-2.5 rounded-xl bg-orange-500/10 text-[#E07A5F]">
+                <Layers size={18} strokeWidth={2.2} />
+              </div>
+              <div>
+                <div className="font-bold text-xs sm:text-sm text-[#0F172A] dark:text-[#F8FAFC]">
+                  Savollar
+                </div>
+              </div>
+            </div>
+            <ArrowUpRight
+              size={16}
+              className="text-slate-400 group-hover:text-[#0F172A] dark:group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-150"
+            />
           </Link>
 
           {/* Module 3: Lug'at */}
           <Link
             href="/vocabulary"
-            className="p-3.5 sm:p-4 md:p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 hover:border-purple-500/50 transition-all flex items-center justify-between group shadow-2xs cursor-pointer"
+            onClick={(e) => {
+              e.preventDefault();
+              router.push('/vocabulary');
+            }}
+            className="p-3.5 sm:p-4 md:p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 hover:border-[#E07A5F]/40 transition-all cursor-pointer group active:scale-[0.99] flex items-center justify-between shadow-2xs"
           >
             <div className="flex items-center gap-3">
               <div className="p-2 sm:p-2.5 rounded-xl bg-purple-500/10 text-purple-500">
@@ -214,17 +234,24 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-            <ArrowUpRight size={16} className="text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
+            <ArrowUpRight
+              size={16}
+              className="text-slate-400 group-hover:text-[#0F172A] dark:group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-150"
+            />
           </Link>
 
           {/* Module 4: Hamjamiyat */}
           <Link
             href="/chat"
-            className="p-3.5 sm:p-4 md:p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 hover:border-emerald-500/50 transition-all flex items-center justify-between group shadow-2xs cursor-pointer"
+            onClick={(e) => {
+              e.preventDefault();
+              router.push('/chat');
+            }}
+            className="p-3.5 sm:p-4 md:p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 hover:border-[#E07A5F]/40 transition-all cursor-pointer group active:scale-[0.99] flex items-center justify-between shadow-2xs"
           >
             <div className="flex items-center gap-3">
-              <div className="p-2 sm:p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500">
-                <MessageSquare size={18} strokeWidth={2.2} />
+              <div className="p-2 sm:p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500 dark:text-emerald-400">
+                <Users size={18} strokeWidth={2.2} />
               </div>
               <div>
                 <div className="font-bold text-xs sm:text-sm text-[#0F172A] dark:text-[#F8FAFC]">
@@ -232,7 +259,10 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-            <ArrowUpRight size={16} className="text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
+            <ArrowUpRight
+              size={16}
+              className="text-slate-400 group-hover:text-[#0F172A] dark:group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-150"
+            />
           </Link>
         </div>
       </section>

@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   FileText,
   Database,
   BookOpen,
-  Swords,
+  Users,
   ArrowUpRight,
   ShieldCheck,
   CheckCircle2,
@@ -52,6 +54,7 @@ export const CleanDashboardView: React.FC<Props> = ({
   onOpenProfile,
   siteBranding,
 }) => {
+  const router = useRouter();
   const [isVocabModalOpen, setIsVocabModalOpen] = useState(false);
   const [isArenaModalOpen, setIsArenaModalOpen] = useState(false);
 
@@ -181,10 +184,13 @@ export const CleanDashboardView: React.FC<Props> = ({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Tile 1: Testlar */}
-          <button
-            type="button"
-            onClick={handleLaunchFirstBluebook}
-            className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] hover:border-slate-300 dark:hover:border-slate-700 transition-all flex items-center justify-between group cursor-pointer shadow-xs"
+          <Link
+            href="/mocks"
+            onClick={(e) => {
+              e.preventDefault();
+              router.push('/mocks');
+            }}
+            className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] hover:border-[#E07A5F]/40 transition-all cursor-pointer group active:scale-[0.99] flex items-center justify-between shadow-xs"
           >
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-500">
@@ -196,14 +202,21 @@ export const CleanDashboardView: React.FC<Props> = ({
                 </div>
               </div>
             </div>
-            <ArrowUpRight size={18} className="text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
-          </button>
+            <ArrowUpRight
+              size={18}
+              className="text-slate-400 group-hover:text-[#0F172A] dark:group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-150"
+            />
+          </Link>
 
           {/* Tile 2: Savollar */}
-          <button
-            type="button"
-            onClick={() => onOpenQuestionBank && onOpenQuestionBank()}
-            className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] hover:border-slate-300 dark:hover:border-slate-700 transition-all flex items-center justify-between group cursor-pointer shadow-xs"
+          <Link
+            href="/questions"
+            onClick={(e) => {
+              e.preventDefault();
+              if (onOpenQuestionBank) onOpenQuestionBank();
+              else router.push('/questions');
+            }}
+            className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] hover:border-[#E07A5F]/40 transition-all cursor-pointer group active:scale-[0.99] flex items-center justify-between shadow-xs"
           >
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-orange-500/10 text-[#E07A5F]">
@@ -215,14 +228,20 @@ export const CleanDashboardView: React.FC<Props> = ({
                 </div>
               </div>
             </div>
-            <ArrowUpRight size={18} className="text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
-          </button>
+            <ArrowUpRight
+              size={18}
+              className="text-slate-400 group-hover:text-[#0F172A] dark:group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-150"
+            />
+          </Link>
 
           {/* Tile 3: Lug'at */}
-          <button
-            type="button"
-            onClick={() => setIsVocabModalOpen(true)}
-            className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] hover:border-slate-300 dark:hover:border-slate-700 transition-all flex items-center justify-between group cursor-pointer shadow-xs"
+          <Link
+            href="/vocabulary"
+            onClick={(e) => {
+              e.preventDefault();
+              router.push('/vocabulary');
+            }}
+            className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] hover:border-[#E07A5F]/40 transition-all cursor-pointer group active:scale-[0.99] flex items-center justify-between shadow-xs"
           >
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-500">
@@ -234,18 +253,25 @@ export const CleanDashboardView: React.FC<Props> = ({
                 </div>
               </div>
             </div>
-            <ArrowUpRight size={18} className="text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
-          </button>
+            <ArrowUpRight
+              size={18}
+              className="text-slate-400 group-hover:text-[#0F172A] dark:group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-150"
+            />
+          </Link>
 
           {/* Tile 4: Hamjamiyat */}
-          <button
-            type="button"
-            onClick={() => onOpenCommunity ? onOpenCommunity() : setIsArenaModalOpen(true)}
-            className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] hover:border-slate-300 dark:hover:border-slate-700 transition-all flex items-center justify-between group cursor-pointer shadow-xs"
+          <Link
+            href="/chat"
+            onClick={(e) => {
+              e.preventDefault();
+              if (onOpenCommunity) onOpenCommunity();
+              else router.push('/chat');
+            }}
+            className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] hover:border-[#E07A5F]/40 transition-all cursor-pointer group active:scale-[0.99] flex items-center justify-between shadow-xs"
           >
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500">
-                <Swords size={20} strokeWidth={2} />
+              <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500 dark:text-emerald-400">
+                <Users size={20} strokeWidth={2} />
               </div>
               <div className="text-left">
                 <div className="font-bold text-sm text-[#0F172A] dark:text-[#F8FAFC]">
@@ -253,8 +279,11 @@ export const CleanDashboardView: React.FC<Props> = ({
                 </div>
               </div>
             </div>
-            <ArrowUpRight size={18} className="text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
-          </button>
+            <ArrowUpRight
+              size={18}
+              className="text-slate-400 group-hover:text-[#0F172A] dark:group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-150"
+            />
+          </Link>
         </div>
       </section>
 

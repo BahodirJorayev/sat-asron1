@@ -9,7 +9,7 @@ import {
   FileText,
   BookOpen,
   BookmarkCheck,
-  MessageSquare,
+  Users,
   PanelLeftClose,
   PanelLeftOpen,
   LogOut,
@@ -65,7 +65,7 @@ export const EXACT_SIDEBAR_ITEMS: NavItem[] = [
     label: 'Hamjamiyat',
     shortLabel: 'Hamjamiyat',
     href: '/chat',
-    icon: MessageSquare,
+    icon: Users,
   },
 ];
 

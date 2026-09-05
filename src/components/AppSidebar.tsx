@@ -5,7 +5,7 @@ import {
   FileText,
   BookOpen,
   BookmarkCheck,
-  MessageSquare,
+  Users,
   PanelLeftClose,
   PanelLeftOpen,
   ShieldAlert,
@@ -111,7 +111,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     {
       id: 'community',
       label: 'Hamjamiyat',
-      icon: MessageSquare,
+      icon: Users,
       onClick: () => setActiveTab('community'),
     },
     ...(user.role === 'ADMIN' || user.role === 'SUPER_ADMIN'

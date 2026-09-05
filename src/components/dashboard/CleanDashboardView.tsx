@@ -13,6 +13,7 @@ import { User, MistakeVaultItem, MockTest, Question } from '../../types';
 import { VocabTrainerModal } from '../VocabTrainerModal';
 import { MultiplayerArenaModal } from '../MultiplayerArenaModal';
 import { ExamCountdownWidget } from './ExamCountdownWidget';
+import { AnnouncementBanner } from './AnnouncementBanner';
 import { supabase } from '../../lib/supabase';
 
 
@@ -146,107 +147,53 @@ export const CleanDashboardView: React.FC<Props> = ({
         userId={user.id}
       />
 
-      {/* Dynamic Official Announcements from Supabase platform_content */}
-      {activeAnnouncements.length > 0 && (
-        <section aria-label="Rasmiy E'lonlar" className="space-y-3">
-          {activeAnnouncements.map((ann: any) => (
-            <div
-              key={ann.id}
-              className="p-4 rounded-2xl bg-white dark:bg-[#121A2F] border-l-4 border-l-[#E07A5F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors"
-            >
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#E07A5F]/15 text-[#E07A5F]">
-                    E'LON
-                  </span>
-                  {ann.date && (
-                    <span className="text-[11px] font-mono text-[#64748B] dark:text-[#94A3B8]">
-                      {ann.date}
-                    </span>
-                  )}
-                </div>
-                <h4 className="font-bold text-sm text-[#0F172A] dark:text-[#F8FAFC]">
-                  {ann.title}
-                </h4>
-                {ann.text && (
-                  <p className="text-xs text-[#64748B] dark:text-[#94A3B8] leading-relaxed max-w-3xl">
-                    {ann.text}
-                  </p>
-                )}
-              </div>
-              {ann.link && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (ann.link === 'mocks' && onStartBluebookTest && mockTests.length > 0) {
-                      onStartBluebookTest(mockTests[0]);
-                    } else if (onOpenQuestionBank) {
-                      onOpenQuestionBank();
-                    }
-                  }}
-                  className="px-3.5 py-1.5 rounded-xl bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] text-xs font-mono font-bold shrink-0 self-start sm:self-auto cursor-pointer hover:opacity-90 transition-opacity shadow-xs"
-                >
-                  O'tish →
-                </button>
-              )}
-            </div>
-          ))}
-        </section>
-      )}
+      {/* Dynamic Official Announcements from Supabase & Dismissible Banner */}
+      <AnnouncementBanner targetRoute="dashboard" />
 
       {/* 3. Core Metrics: Data-Dense Triad */}
-      <section aria-label="Asosiy Metrikalar" className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <section aria-label="Asosiy Metrikalar" className="grid grid-cols-3 gap-2 sm:gap-4">
         {/* Metric 1: Streak */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-xs flex flex-col justify-between transition-colors">
+        <div className="p-3 sm:p-4 md:p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col justify-between transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-mono uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8] font-semibold">
+            <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold truncate">
               Streak
             </span>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-[#0A0F1D] text-slate-500">
-              {streakDays > 0 ? 'Faol' : 'Nol holat'}
+            <span className="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#0A0F1D] text-slate-500">
+              {streakDays > 0 ? 'Faol' : 'Nol'}
             </span>
           </div>
-          <div className="my-2 text-3xl sm:text-4xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC] tracking-tight">
-            {streakDays} <span className="text-sm font-normal text-[#64748B] dark:text-[#94A3B8]">Kun</span>
-          </div>
-          <div className="text-[11px] font-mono text-[#64748B] dark:text-[#94A3B8]">
-            Kundalik maqsad: 1 mashq
+          <div className="mt-1.5 sm:mt-2 text-xl sm:text-2xl lg:text-3xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC]">
+            {streakDays} <span className="text-[10px] sm:text-xs font-normal text-slate-400">Kun</span>
           </div>
         </div>
 
         {/* Metric 2: Questions Done */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-xs flex flex-col justify-between transition-colors">
+        <div className="p-3 sm:p-4 md:p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col justify-between transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-mono uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8] font-semibold">
-              Ishlangan
+            <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold truncate">
+              Savollar
             </span>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-[#0A0F1D] text-slate-500">
-              3,000+ Baza
+            <span className="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#0A0F1D] text-slate-500">
+              3,000+
             </span>
           </div>
-          <div className="my-2 text-3xl sm:text-4xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC] tracking-tight">
-            {questionsDone} <span className="text-sm font-normal text-[#64748B] dark:text-[#94A3B8]">/ 3,000</span>
-          </div>
-          <div className="text-[11px] font-mono text-[#64748B] dark:text-[#94A3B8]">
-            College Board bazasi
+          <div className="mt-1.5 sm:mt-2 text-xl sm:text-2xl lg:text-3xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC] truncate">
+            {questionsDone} <span className="text-[10px] sm:text-xs font-normal text-slate-400">/ 3k</span>
           </div>
         </div>
 
         {/* Metric 3: Accuracy */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-xs flex flex-col justify-between transition-colors">
+        <div className="p-3 sm:p-4 md:p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col justify-between transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-mono uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8] font-semibold">
+            <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold truncate">
               Aniqlik
             </span>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-[#0A0F1D] text-slate-500">
+            <span className="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#0A0F1D] text-slate-500">
               MST
             </span>
           </div>
-          <div className="my-2 text-3xl sm:text-4xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC] tracking-tight">
+          <div className="mt-1.5 sm:mt-2 text-xl sm:text-2xl lg:text-3xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC]">
             {accuracy}%
-          </div>
-          <div className="text-[11px] font-mono text-[#64748B] dark:text-[#94A3B8]">
-            Diagnostik natija
           </div>
         </div>
       </section>

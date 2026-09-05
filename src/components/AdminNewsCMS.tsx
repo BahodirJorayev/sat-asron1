@@ -69,6 +69,7 @@ export const AdminNewsCMS: React.FC<AdminNewsCMSProps> = ({ onRefreshGlobal }) =
   const [targetRouteFilter, setTargetRouteFilter] = useState<'ALL' | 'landing' | 'dashboard' | 'popup'>('ALL');
   const [editingItem, setEditingItem] = useState<PlatformAnnouncement | null>(null);
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
+  const [deletingItem, setDeletingItem] = useState<PlatformAnnouncement | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Form state
@@ -283,19 +284,57 @@ export const AdminNewsCMS: React.FC<AdminNewsCMSProps> = ({ onRefreshGlobal }) =
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Haqiqatan ham bu e\'lonni o\'chirmoqchimisiz?')) return;
-
+  const confirmDelete = async (id: string) => {
+    // 1. Optimistic UI update
     setAnnouncements((prev) => prev.filter((a) => a.id !== id));
+    setDeletingItem(null);
 
     try {
+      // 2. Primary deletion from public.announcements table
       const { error } = await supabase.from('announcements').delete().eq('id', id);
-      if (error) console.warn('Supabase delete error:', error.message);
-      showToast('E\'lon o\'chirildi.');
+      if (error) {
+        console.warn('Supabase delete warning:', error.message);
+      }
+
+      // 3. Fallback cleanup from public.platform_content (dashboard_announcements key)
+      try {
+        const { data: pData } = await supabase
+          .from('platform_content')
+          .select('content')
+          .eq('key', 'dashboard_announcements')
+          .single();
+
+        if (pData && Array.isArray(pData.content)) {
+          const filtered = pData.content.filter((a: any) => a.id !== id);
+          await supabase
+            .from('platform_content')
+            .update({ content: filtered, updated_at: new Date().toISOString() })
+            .eq('key', 'dashboard_announcements');
+        }
+      } catch (cleanErr) {
+        // Silent catch for platform_content sync
+      }
+
+      // 4. Instant cache invalidation & broadcast for cross-tab & local student dashboard
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('asron_announcement_deleted', { detail: { id } }));
+        try {
+          const bc = new BroadcastChannel('asron_announcements');
+          bc.postMessage({ type: 'DELETE', id });
+          bc.close();
+        } catch (bcErr) {}
+      }
+
+      showToast("E'lon bazadan muvaffaqiyatli o'chirildi.");
       if (onRefreshGlobal) onRefreshGlobal();
     } catch (err) {
       console.error('Delete error:', err);
+      showToast("E'lonni o'chirishda xatolik yuz berdi.");
     }
+  };
+
+  const handleDelete = (item: PlatformAnnouncement) => {
+    setDeletingItem(item);
   };
 
   const filteredAnnouncements = useMemo(() => {
@@ -464,11 +503,12 @@ export const AdminNewsCMS: React.FC<AdminNewsCMSProps> = ({ onRefreshGlobal }) =
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleDelete(item.id)}
-                    className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 hover:text-rose-300 border border-rose-500/20 hover:border-rose-500/40 cursor-pointer transition-colors"
-                    title="O'chirish"
+                    onClick={() => handleDelete(item)}
+                    className="px-2.5 py-1.5 rounded-lg bg-rose-500/10 text-rose-400 hover:text-rose-300 hover:bg-rose-500/20 border border-rose-500/20 hover:border-rose-500/40 cursor-pointer transition-colors flex items-center gap-1.5 text-xs font-mono font-medium"
+                    title="E'lonni o'chirish"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
+                    <span>O‘chirish</span>
                   </button>
                 </div>
               </div>
@@ -482,6 +522,49 @@ export const AdminNewsCMS: React.FC<AdminNewsCMSProps> = ({ onRefreshGlobal }) =
           </div>
         )}
       </div>
+
+      {/* CONFIRM DELETE MODAL */}
+      {deletingItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-md bg-[#121A2F] border border-[#1E293B] rounded-2xl shadow-2xl p-6 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-[#F8FAFC]">
+                  E'lonni o'chirishni tasdiqlaysizmi?
+                </h3>
+                <p className="text-xs text-[#64748B] mt-0.5">
+                  Bu amal e'lonni barcha talabalar paneli va bazadan darhol o'chiradi.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-[#0A0F1D] border border-[#1E293B] text-xs text-[#94A3B8]">
+              <span className="font-semibold text-[#F8FAFC]">{deletingItem.title}</span>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeletingItem(null)}
+                className="px-4 py-2 rounded-lg border border-[#1E293B] text-xs font-mono text-[#94A3B8] hover:text-[#F8FAFC] transition-colors cursor-pointer"
+              >
+                Bekor qilish
+              </button>
+              <button
+                type="button"
+                onClick={() => confirmDelete(deletingItem.id)}
+                className="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-mono font-bold transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Ha, o'chirish</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* CREATE / EDIT MODAL */}
       {isFormOpen && (

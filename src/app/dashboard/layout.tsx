@@ -103,7 +103,7 @@ export default function DashboardLayout({
       {/* 1. DESKTOP SIDEBAR (Strict 6 Items, No Profile/Settings Clutter)           */}
       {/* ========================================================================= */}
       <aside
-        className={`hidden md:flex flex-col justify-between shrink-0 h-screen sticky top-0 z-30 bg-white dark:bg-[#121A2F] border-r border-[#E2E8F0] dark:border-[#1E293B] shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none transition-all duration-200 select-none ${
+        className={`hidden md:flex flex-col justify-between shrink-0 h-screen sticky top-0 z-30 bg-white dark:bg-[#121A2F] border-r border-slate-200 dark:border-[#1E293B] shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none transition-all duration-200 select-none ${
           isCollapsed ? 'w-20' : 'w-60'
         }`}
       >
@@ -211,7 +211,7 @@ export default function DashboardLayout({
       {/* ========================================================================= */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {/* Top Navbar with Zero Breadcrumb Noise */}
-        <header className="h-12 sm:h-14 px-4 sm:px-8 border-b border-[#E2E8F0] dark:border-[#1E293B] bg-white/95 dark:bg-[#121A2F]/95 backdrop-blur-md flex items-center justify-between sticky top-0 z-20 shrink-0 transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.03)] dark:shadow-none select-none">
+        <header className="h-12 sm:h-14 px-4 md:px-6 lg:px-8 border-b border-slate-200 dark:border-[#1E293B] bg-white/95 dark:bg-[#121A2F]/95 backdrop-blur-md flex items-center justify-between sticky top-0 z-20 shrink-0 transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.03)] dark:shadow-none select-none">
           <div className="flex items-center gap-2.5">
             <button
               type="button"
@@ -278,9 +278,11 @@ export default function DashboardLayout({
           </div>
         </header>
 
-        {/* Page Content with bottom padding for mobile navigation pill */}
-        <main className="flex-1 p-4 sm:p-8 pb-24 md:pb-8">
-          {children}
+        {/* Page Content with balanced sidebar breathing room and bottom padding for mobile nav */}
+        <main className="flex-1 w-full min-w-0 px-4 py-4 md:pl-6 lg:pl-8 md:pr-4 lg:pr-8 md:py-6 pb-24 md:pb-8">
+          <div className="max-w-6xl mx-auto w-full">
+            {children}
+          </div>
         </main>
       </div>
 

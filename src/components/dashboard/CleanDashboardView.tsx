@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import {
   FileText,
   Database,
+  Layers,
   BookOpen,
   Users,
   ArrowUpRight,

@@ -17,25 +17,37 @@ import {
   KeyRound,
   ArrowLeft,
   CheckCircle2,
+  Edit3,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { User } from '../../types';
 import { supabase, saveUserProfile } from '../../lib/supabase';
-import { ThemeToggle } from '../ThemeToggle';
+import { useTheme } from '../../context/ThemeContext';
+import { EditProfileModal } from './EditProfileModal';
 
 interface ProfileViewProps {
   initialUser?: User;
+  currentUser?: User;
   onSignOut?: () => void;
   onUpdateUser?: (updated: User) => void;
+  onOpenPaywall?: () => void;
+  onOpenAuthModal?: (mode?: 'signin' | 'signup') => void;
+  onOpenChat?: () => void;
+  onOpenArena?: () => void;
 }
 
 export const ProfileView: React.FC<ProfileViewProps> = ({
   initialUser,
+  currentUser,
   onSignOut,
   onUpdateUser,
 }) => {
+  const effectiveInitialUser = initialUser || currentUser;
+
   // 1. User State
   const [user, setUser] = useState<User>(() => {
-    if (initialUser) return initialUser;
+    if (effectiveInitialUser) return effectiveInitialUser;
     return {
       id: '',
       email: '',
@@ -70,6 +82,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
   const [mockTestsCompleted, setMockTestsCompleted] = useState<number>(0);
+  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+
+  // Apple-grade Theme state
+  const { resolvedTheme, setTheme } = useTheme();
 
   // Load active user profile from Supabase profiles table
   useEffect(() => {
@@ -138,6 +154,28 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                     fullName: newRow.full_name || prev.fullName,
                     username: newRow.username || prev.username,
                     targetScore: Number(newRow.target_score) || prev.targetScore,
+                  }));
+                }
+              }
+            )
+            .on(
+              'broadcast',
+              { event: 'profile-updated' },
+              (payload: any) => {
+                const data = payload?.payload;
+                if (data && isMounted) {
+                  if (data.fullName) setFullName(data.fullName);
+                  if (data.username) setUsername(data.username);
+                  if (data.phoneNumber !== undefined) setPhoneNumber(data.phoneNumber);
+                  if (data.targetScore) setTargetScore(Number(data.targetScore));
+                  if (data.targetExamDate) setTargetExamDate(data.targetExamDate);
+                  setUser((prev) => ({
+                    ...prev,
+                    fullName: data.fullName || prev.fullName,
+                    username: data.username || prev.username,
+                    phoneNumber: data.phoneNumber !== undefined ? data.phoneNumber : prev.phoneNumber,
+                    targetScore: Number(data.targetScore) || prev.targetScore,
+                    targetExamDate: data.targetExamDate || prev.targetExamDate,
                   }));
                 }
               }
@@ -302,8 +340,34 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           <span>Dashboardga qaytish</span>
         </Link>
 
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
+        {/* Apple-style Segmented Theme Controller: [ ☀️ Kunduzgi | 🌙 Tungi ] */}
+        <div className="inline-flex items-center p-1 rounded-xl bg-[#F1F5F9] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] shadow-2xs">
+          <button
+            type="button"
+            onClick={() => setTheme('light')}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+              resolvedTheme === 'light'
+                ? 'bg-white text-slate-900 shadow-xs font-semibold'
+                : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+            }`}
+            aria-label="Kunduzgi rejim"
+          >
+            <Sun size={13} className={resolvedTheme === 'light' ? 'text-amber-500' : ''} />
+            <span>Kunduzgi</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setTheme('dark')}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+              resolvedTheme === 'dark'
+                ? 'bg-[#1E293B] text-white shadow-xs font-semibold'
+                : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+            }`}
+            aria-label="Tungi rejim"
+          >
+            <Moon size={13} className={resolvedTheme === 'dark' ? 'text-blue-400' : ''} />
+            <span>Tungi</span>
+          </button>
         </div>
       </div>
 
@@ -318,9 +382,19 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
             {/* Clean User Credentials (Zero Badges) */}
             <div className="min-w-0 leading-snug space-y-0.5">
-              <h1 className="text-lg sm:text-xl font-bold tracking-tight text-[#0F172A] dark:text-[#F8FAFC] truncate">
-                {fullName || user.fullName || 'Foydalanuvchi'}
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg sm:text-xl font-bold tracking-tight text-[#0F172A] dark:text-[#F8FAFC] truncate">
+                  {fullName || user.fullName || 'Foydalanuvchi'}
+                </h1>
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(true)}
+                  title="Profilni tahrirlash"
+                  className="p-1 rounded-lg text-slate-400 hover:text-[#E07A5F] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  <Edit3 size={14} />
+                </button>
+              </div>
               <p className="text-xs font-mono text-[#64748B] dark:text-[#94A3B8] truncate">
                 @{username || user.username || 'user'}
               </p>
@@ -333,17 +407,28 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             </div>
           </div>
 
-          {/* Quick Target Indicator */}
-          <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] self-start sm:self-auto">
-            <Target size={15} className="text-[#E07A5F]" />
-            <div className="text-left">
-              <div className="text-[10px] font-mono uppercase text-[#64748B] dark:text-[#94A3B8] font-bold">
-                Maqsadli Ball
-              </div>
-              <div className="text-xs sm:text-sm font-extrabold font-mono text-[#0F172A] dark:text-[#F8FAFC]">
-                {targetScore} / 1600
+          {/* Quick Target Indicator & Edit Action */}
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B]">
+              <Target size={15} className="text-[#E07A5F]" />
+              <div className="text-left">
+                <div className="text-[10px] font-mono uppercase text-[#64748B] dark:text-[#94A3B8] font-bold">
+                  Maqsadli Ball
+                </div>
+                <div className="text-xs sm:text-sm font-extrabold font-mono text-[#0F172A] dark:text-[#F8FAFC]">
+                  {targetScore} / 1600
+                </div>
               </div>
             </div>
+
+            <button
+              type="button"
+              onClick={() => setIsEditModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#E07A5F]/10 hover:bg-[#E07A5F]/20 text-[#E07A5F] border border-[#E07A5F]/20 text-xs font-mono font-bold transition-colors cursor-pointer"
+            >
+              <Edit3 size={14} />
+              <span className="hidden sm:inline">Tahrirlash</span>
+            </button>
           </div>
         </div>
       </div>
@@ -642,6 +727,29 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           </button>
         </div>
       </section>
+
+      {/* Edit Profile Modal for instant Supabase cloud synchronization */}
+      <EditProfileModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        currentUser={{
+          ...user,
+          fullName,
+          username,
+          phoneNumber,
+          targetScore,
+          targetExamDate,
+        }}
+        onSaveSuccess={(updated) => {
+          setUser(updated);
+          setFullName(updated.fullName);
+          setUsername(updated.username);
+          setPhoneNumber(updated.phoneNumber || '');
+          setTargetScore(updated.targetScore || 1550);
+          setTargetExamDate(updated.targetExamDate?.slice(0, 10) || '2026-10-03');
+          onUpdateUser?.(updated);
+        }}
+      />
     </div>
   );
 };

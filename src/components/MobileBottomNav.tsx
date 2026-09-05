@@ -1,11 +1,12 @@
+'use client';
+
 import React from 'react';
 import {
-  LayoutDashboard,
+  Home,
   Layers,
   FileText,
   BookOpen,
   AlertCircle,
-  MessageSquare,
 } from 'lucide-react';
 import { User } from '../types';
 
@@ -19,15 +20,13 @@ interface MobileBottomNavProps {
 export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   activeTab,
   setActiveTab,
-  user,
-  unreadCount = 0,
 }) => {
-  // Exact 6-item Apple iOS minimal navigation array
+  // Exact 5-item Apple iOS minimal navigation array (Hamjamiyat moved to top-right header)
   const navItems = [
     {
       id: 'dashboard',
       label: 'Uy',
-      icon: LayoutDashboard,
+      icon: Home,
     },
     {
       id: 'qbank',
@@ -49,17 +48,12 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       label: 'Xatolar',
       icon: AlertCircle,
     },
-    {
-      id: 'community',
-      label: 'Hamjamiyat',
-      icon: MessageSquare,
-    },
   ];
 
   return (
     <nav
       aria-label="Mobil Navigatsiya"
-      className="md:hidden fixed bottom-3 left-3 right-3 z-50 mx-auto max-w-sm h-14 rounded-full bg-white/70 dark:bg-[#0D1527]/70 backdrop-blur-2xl border border-white/40 dark:border-white/10 shadow-[0_10px_35px_rgba(0,0,0,0.06)] dark:shadow-[0_10px_35px_rgba(0,0,0,0.35)] px-2.5 flex items-center justify-between select-none transition-all duration-200"
+      className="md:hidden fixed bottom-3 left-4 right-4 z-50 mx-auto max-w-sm rounded-full h-14 bg-white/75 dark:bg-[#0D1527]/75 backdrop-blur-2xl border border-white/40 dark:border-white/10 shadow-[0_10px_35px_rgba(0,0,0,0.08)] dark:shadow-[0_10px_35px_rgba(0,0,0,0.4)] flex items-center justify-around px-2 select-none transition-all duration-200"
     >
       {navItems.map((item) => {
         const Icon = item.icon;
@@ -76,19 +70,12 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               <Icon
                 size={19}
                 strokeWidth={isActive ? 2.4 : 1.7}
-                className={`transition-transform duration-150 ${
+                className={`transition-all duration-150 ${
                   isActive
-                    ? 'text-[#E07A5F] scale-105'
-                    : 'text-slate-500 dark:text-slate-400'
+                    ? 'text-[#E07A5F] scale-105 drop-shadow-[0_2px_8px_rgba(224,122,95,0.35)]'
+                    : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300'
                 }`}
               />
-
-              {/* Unread badge on Community */}
-              {item.id === 'community' && unreadCount > 0 && (
-                <span className="absolute -top-1.5 -right-2 px-1 py-0.2 rounded-full text-[8px] font-mono font-bold bg-[#E07A5F] text-white ring-2 ring-white dark:ring-[#0D1527]">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
 
               {/* Active Pip */}
               {isActive && (
@@ -97,9 +84,9 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             </div>
 
             <span
-              className={`text-[9px] font-medium tracking-tight mt-0.5 truncate transition-colors duration-150 ${
+              className={`text-[10px] font-medium tracking-tight mt-0.5 truncate transition-colors duration-150 ${
                 isActive
-                  ? 'text-slate-950 dark:text-white font-semibold'
+                  ? 'text-[#E07A5F] font-semibold'
                   : 'text-slate-500 dark:text-slate-400'
               }`}
             >
@@ -111,3 +98,5 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     </nav>
   );
 };
+
+export default MobileBottomNav;

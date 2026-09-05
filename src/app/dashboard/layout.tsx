@@ -20,6 +20,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import { ThemeToggle } from '../../components/ThemeToggle';
+import { Header } from '../../components/navigation/Header';
 import { BottomNav } from '../../components/navigation/BottomNav';
 import { GlobalSearchModal } from '../../components/chat/GlobalSearchModal';
 
@@ -84,9 +85,7 @@ export default function DashboardLayout({
   const pathname = usePathname() || '/dashboard';
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState<boolean>(false);
-  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState<boolean>(false);
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
-  const profileMenuRef = useRef<HTMLDivElement>(null);
 
   // Global search shortcut (Cmd+K / Ctrl+K)
   useEffect(() => {
@@ -99,19 +98,6 @@ export default function DashboardLayout({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
-
-  // Close profile dropdown on click outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
-        setIsProfileMenuOpen(false);
-      }
-    };
-    if (isProfileMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isProfileMenuOpen]);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#0F172A] dark:text-[#F8FAFC] font-sans flex overflow-hidden selection:bg-[#E07A5F] selection:text-white transition-colors duration-150">
@@ -234,118 +220,11 @@ export default function DashboardLayout({
           isCollapsed ? 'md:ml-20' : 'md:ml-64'
         }`}
       >
-        {/* Top Navbar with Zero Breadcrumb Noise */}
-        <header className="h-12 sm:h-14 px-4 md:px-6 lg:px-8 border-b border-slate-200 dark:border-[#1E293B] bg-white/95 dark:bg-[#121A2F]/95 backdrop-blur-md flex items-center justify-between sticky top-0 z-20 shrink-0 transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.03)] dark:shadow-none select-none">
-          <div className="flex items-center gap-2.5">
-            <button
-              type="button"
-              onClick={() => setIsMobileDrawerOpen(true)}
-              aria-label="Menyuni ochish"
-              className="md:hidden p-1.5 rounded-lg bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] border border-[#E2E8F0] dark:border-[#1E293B] transition-colors cursor-pointer"
-            >
-              <Menu size={16} />
-            </button>
-
-            {/* Clean Brand Title (Zero Breadcrumbs) */}
-            <Link href="/dashboard" className="flex items-center gap-2.5 group cursor-pointer select-none">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#0B1B3D] dark:bg-[#0F172A] border border-slate-800 dark:border-[#1E293B] flex items-center justify-center text-white shrink-0 group-hover:border-[#E07A5F]/60 transition-colors shadow-2xs">
-                <svg viewBox="0 0 100 100" className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#E07A5F] fill-current" fill="none">
-                  <rect x="32" y="21" width="11" height="40" rx="5.5" transform="rotate(-45 32 21)" />
-                  <rect x="55" y="36" width="11" height="26" rx="5.5" transform="rotate(-45 55 36)" />
-                  <path d="M38.5 56.5L49.5 45.5C50.3 44.7 51.7 44.7 52.5 45.5L63.5 56.5" stroke="currentColor" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-              <span className="font-bold tracking-tight text-base sm:text-lg text-slate-900 dark:text-white">
-                ASRON <span className="text-[#E07A5F]">SAT</span>
-              </span>
-            </Link>
-          </div>
-
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Contextual Search Icon - rendered ONLY when on 'Uy' (/dashboard) route */}
-            {pathname === '/dashboard' && (
-              <button
-                type="button"
-                onClick={() => setIsSearchOpen(true)}
-                aria-label="Qidiruv"
-                title="Qidiruv (Ctrl+K)"
-                className="p-1.5 sm:p-2 rounded-xl text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] bg-[#FAF8F5] dark:bg-[#181B26] hover:bg-[#F0EBE4] dark:hover:bg-[#202534] border border-[#E5E0D8] dark:border-[#262B3D] transition-colors cursor-pointer flex items-center gap-1.5"
-              >
-                <Search size={15} />
-                <span className="hidden sm:inline text-xs font-medium text-slate-500 dark:text-slate-400">
-                  Qidirish
-                </span>
-                <kbd className="hidden lg:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
-                  Ctrl+K
-                </kbd>
-              </button>
-            )}
-
-            <ThemeToggle />
-
-            {/* Profile Avatar */}
-            <div className="relative" ref={profileMenuRef}>
-              <button
-                type="button"
-                onClick={() => setIsProfileMenuOpen((prev) => !prev)}
-                className="flex items-center gap-1.5 sm:gap-2 p-1 rounded-xl hover:bg-[#FAF8F5] dark:hover:bg-[#1E293B] border border-transparent hover:border-slate-200 dark:hover:border-[#334155] transition-all cursor-pointer group"
-                aria-expanded={isProfileMenuOpen}
-                aria-haspopup="true"
-              >
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#E07A5F] text-white flex items-center justify-center font-mono text-xs font-bold shadow-2xs group-hover:scale-105 transition-transform">
-                  T
-                </div>
-                <ChevronDown
-                  size={13}
-                  className={`text-[#64748B] dark:text-[#94A3B8] transition-transform duration-150 hidden sm:block ${
-                    isProfileMenuOpen ? 'rotate-180' : ''
-                  }`}
-                />
-              </button>
-
-              {isProfileMenuOpen && (
-                <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150 text-xs">
-                  <div className="px-3.5 py-2 border-b border-slate-100 dark:border-slate-800/80">
-                    <div className="font-bold text-[#0F172A] dark:text-[#F8FAFC] truncate">
-                      Foydalanuvchi
-                    </div>
-                    <div className="text-[11px] font-mono text-slate-400 truncate">
-                      @talaba
-                    </div>
-                  </div>
-
-                  <div className="py-1">
-                    <Link
-                      href="/profile"
-                      onClick={() => setIsProfileMenuOpen(false)}
-                      className="flex items-center gap-2 px-3.5 py-2 text-[#0F172A] dark:text-[#F8FAFC] hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                    >
-                      <UserIcon size={14} className="text-[#E07A5F]" />
-                      <span>Profil & Sozlamalar</span>
-                    </Link>
-                  </div>
-
-                  <div className="pt-1 border-t border-slate-100 dark:border-slate-800/80">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsProfileMenuOpen(false);
-                        if (typeof window !== 'undefined') {
-                          localStorage.removeItem('sb-auth-token');
-                          window.location.href = '/';
-                        }
-                      }}
-                      className="w-full text-left flex items-center gap-2 px-3.5 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
-                    >
-                      <LogOut size={14} />
-                      <span>Chiqish</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </header>
+        {/* Top Header with Apple-grade Mobile Identity Capsule & Desktop Brand */}
+        <Header
+          onOpenMobileDrawer={() => setIsMobileDrawerOpen(true)}
+          onOpenSearch={() => setIsSearchOpen(true)}
+        />
 
         {/* Page Content with generous desktop padding and symmetric mobile breathing room */}
         <main className="flex-1 w-full min-w-0 px-4 py-4 md:px-8 md:py-8 pb-24 md:pb-8">

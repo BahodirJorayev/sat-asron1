@@ -91,20 +91,46 @@ export const Header: React.FC<Props> = ({
               </div>
             </div>
           ) : (
-            <div
-              onClick={() => setActiveTab('dashboard')}
-              className="flex items-center gap-2.5 cursor-pointer select-none group"
-            >
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#0B1B3D] dark:bg-[#0F172A] border border-slate-800 dark:border-[#1E293B] flex items-center justify-center text-white shrink-0 group-hover:border-[#E07A5F]/60 transition-colors shadow-2xs">
-                <svg viewBox="0 0 100 100" className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#E07A5F] fill-current" fill="none">
-                  <rect x="32" y="21" width="11" height="40" rx="5.5" transform="rotate(-45 32 21)" />
-                  <rect x="55" y="36" width="11" height="26" rx="5.5" transform="rotate(-45 55 36)" />
-                  <path d="M38.5 56.5L49.5 45.5C50.3 44.7 51.7 44.7 52.5 45.5L63.5 56.5" stroke="currentColor" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+            <div className="flex items-center gap-2.5">
+              {/* Mobile Viewport: Clickable User Identity Capsule (Navigates to Profile) */}
+              <button
+                type="button"
+                onClick={onOpenCurrentUserProfile}
+                aria-label="Profilga o'tish"
+                className="flex md:hidden items-center gap-2 p-1 pl-1 pr-2.5 rounded-full bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 hover:border-[#E07A5F]/40 active:scale-95 transition-all cursor-pointer text-left"
+              >
+                {user.avatarUrl && !user.avatarUrl.startsWith('data:image') ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt={user.fullName}
+                    className="w-7 h-7 rounded-full object-cover border border-slate-200 dark:border-slate-700 shrink-0"
+                  />
+                ) : (
+                  <div className="w-7 h-7 rounded-full bg-[#E07A5F] text-white flex items-center justify-center font-mono text-xs font-bold shadow-2xs shrink-0">
+                    {user.fullName ? user.fullName[0].toUpperCase() : 'T'}
+                  </div>
+                )}
+                <span className="text-sm font-semibold text-slate-900 dark:text-white truncate max-w-[120px]">
+                  {user.fullName?.split(' ')[0] || user.username || 'Talaba'}
+                </span>
+              </button>
+
+              {/* Desktop Viewport: Brand Logo & Mark (Hidden on Mobile) */}
+              <div
+                onClick={() => setActiveTab('dashboard')}
+                className="hidden md:flex items-center gap-2.5 cursor-pointer select-none group"
+              >
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#0B1B3D] dark:bg-[#0F172A] border border-slate-800 dark:border-[#1E293B] flex items-center justify-center text-white shrink-0 group-hover:border-[#E07A5F]/60 transition-colors shadow-2xs">
+                  <svg viewBox="0 0 100 100" className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#E07A5F] fill-current" fill="none">
+                    <rect x="32" y="21" width="11" height="40" rx="5.5" transform="rotate(-45 32 21)" />
+                    <rect x="55" y="36" width="11" height="26" rx="5.5" transform="rotate(-45 55 36)" />
+                    <path d="M38.5 56.5L49.5 45.5C50.3 44.7 51.7 44.7 52.5 45.5L63.5 56.5" stroke="currentColor" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <span className="font-bold tracking-tight text-base sm:text-lg text-slate-900 dark:text-white">
+                  ASRON <span className="text-[#E07A5F]">SAT</span>
+                </span>
               </div>
-              <span className="font-bold tracking-tight text-base sm:text-lg text-slate-900 dark:text-white">
-                ASRON <span className="text-[#E07A5F]">SAT</span>
-              </span>
             </div>
           )}
         </div>
@@ -144,22 +170,40 @@ export const Header: React.FC<Props> = ({
           </div>
         )}
 
-        {/* Right Section: Controls, Search, Theme Toggle, Profile */}
+        {/* Right Section: Controls, Search, Community, Desktop Theme & Profile */}
         <div className="flex items-center gap-2 sm:gap-2.5">
-          {/* Profile Search Button - Contextual: ONLY on 'dashboard' (Uy) */}
-          {!isLandingOrBlog && activeTab === 'dashboard' && onOpenProfileSearch && (
-            <button
-              onClick={onOpenProfileSearch}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg sm:rounded-xl bg-[#FAF7F2] dark:bg-[#181B26] hover:bg-[#F3EFE6] dark:hover:bg-[#202534] border border-[#E8E2D5] dark:border-[#262B3D] text-[#57534E] dark:text-[#94A3B8] hover:text-[#1C1917] dark:hover:text-[#EAEBED] text-xs font-semibold transition-colors cursor-pointer"
-              title="Qidiruv"
-            >
-              <Search className="w-3.5 h-3.5 text-[#2563EB] dark:text-[#4EA8DE]" />
-              <span className="hidden sm:inline">Search</span>
-            </button>
+          {!isLandingOrBlog && (
+            <>
+              {/* Dedicated Search Action Button */}
+              {onOpenProfileSearch && (
+                <button
+                  type="button"
+                  onClick={onOpenProfileSearch}
+                  aria-label="Qidiruv"
+                  title="Qidiruv"
+                  className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white border border-slate-200/50 dark:border-slate-700/50 active:scale-95 transition-transform cursor-pointer"
+                >
+                  <Search size={17} />
+                </button>
+              )}
+
+              {/* Dedicated Hamjamiyat (Community) Action Button (Navigates to /chat or community tab) */}
+              <button
+                type="button"
+                onClick={() => setActiveTab('community')}
+                aria-label="Hamjamiyat"
+                title="Hamjamiyat"
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white border border-slate-200/50 dark:border-slate-700/50 active:scale-95 transition-transform cursor-pointer"
+              >
+                <MessagesSquare size={17} />
+              </button>
+            </>
           )}
 
-          {/* Top Header Theme Toggle */}
-          <ThemeToggle />
+          {/* Desktop-only Theme Toggle (Mobile toggle moves to /profile) */}
+          <div className="hidden md:flex items-center">
+            <ThemeToggle />
+          </div>
 
           {isLandingOrBlog ? (
             <>
@@ -179,10 +223,10 @@ export const Header: React.FC<Props> = ({
             </>
           ) : (
             <>
-              {/* Current User Quick Profile Button */}
+              {/* Desktop Current User Quick Profile Capsule */}
               <div
                 onClick={onOpenCurrentUserProfile}
-                className="flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] border border-slate-200 dark:border-[#1E293B] hover:border-[#E07A5F]/50 transition-all cursor-pointer shadow-2xs"
+                className="hidden md:flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] border border-slate-200 dark:border-[#1E293B] hover:border-[#E07A5F]/50 transition-all cursor-pointer shadow-2xs"
                 title="Mening Profilim sahifasini ochish"
               >
                 {user.avatarUrl && !user.avatarUrl.startsWith('data:image') ? (
@@ -196,7 +240,7 @@ export const Header: React.FC<Props> = ({
                     {user.fullName ? user.fullName[0].toUpperCase() : 'T'}
                   </div>
                 )}
-                <div className="text-left hidden sm:block">
+                <div className="text-left">
                   <div className="text-[11px] font-bold text-[#0F172A] dark:text-[#F8FAFC] leading-tight">
                     <span>{user.fullName}</span>
                   </div>

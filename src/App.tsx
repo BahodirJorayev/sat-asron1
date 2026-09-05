@@ -1343,7 +1343,7 @@ export default function App() {
           )}
 
           {activeTab === 'profile' && (
-            <StudentProfileView
+            <ProfileView
               currentUser={currentUser}
               onUpdateUser={handleUpdateCurrentUser}
               onOpenPaywall={() => setIsPaywallOpen(true)}

@@ -18,6 +18,7 @@ import { TelegramNotificationSimulator } from './components/TelegramNotification
 import { SocraticTutorDrawer } from './components/SocraticTutorDrawer';
 import { BluebookTestEngine } from './components/BluebookTestEngine';
 import { UserProfileModal } from './components/UserProfileModal';
+import { GlobalSearchModal } from './components/chat/GlobalSearchModal';
 import { StudentProfileView } from './components/StudentProfileView';
 import { ProfileView } from './components/ProfileView';
 import { MilestoneCelebrationModal } from './components/MilestoneCelebrationModal';
@@ -156,6 +157,7 @@ export default function App() {
         pathname.startsWith('/community') ||
         search.includes('c=') ||
         search.includes('join=') ||
+        search.includes('dm=') ||
         hash === 'chat' ||
         hash.startsWith('chat?') ||
         hash === 'community' ||
@@ -663,6 +665,7 @@ export default function App() {
   const [activeBluebookTest, setActiveBluebookTest] = useState<MockTest | null>(null);
   const [isMilestoneModalOpen, setIsMilestoneModalOpen] = useState(false);
   const [celebrationMilestoneDay, setCelebrationMilestoneDay] = useState<number>(7);
+  const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
 
   const handleOpenMilestoneModal = (days?: number) => {
     if (days) {
@@ -1209,8 +1212,7 @@ export default function App() {
           onOpenAuthModal={handleOpenAuth}
           onOpenMilestoneModal={handleOpenMilestoneModal}
           onOpenProfileSearch={() => {
-            setInspectedUser(currentUser);
-            setIsProfileModalOpen(true);
+            setIsGlobalSearchOpen(true);
           }}
           onOpenCurrentUserProfile={() => {
             setActiveTab('profile');
@@ -1577,6 +1579,12 @@ export default function App() {
         isOpen={isArenaModalOpen}
         onClose={() => setIsArenaModalOpen(false)}
         currentUser={currentUser}
+      />
+
+      {/* Global Search Modal for Profiles & Channels */}
+      <GlobalSearchModal
+        isOpen={isGlobalSearchOpen}
+        onClose={() => setIsGlobalSearchOpen(false)}
       />
 
       {/* Persistent Floating Draggable Official Desmos Widget & Hacks Hub (Visible everywhere) */}

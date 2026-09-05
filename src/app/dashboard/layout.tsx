@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { BottomNav } from '../../components/navigation/BottomNav';
+import { GlobalSearchModal } from '../../components/chat/GlobalSearchModal';
 
 export interface NavItem {
   id: string;
@@ -42,35 +43,35 @@ export const OFFICIAL_SIDEBAR_ITEMS: NavItem[] = [
     id: 'practice',
     label: 'Savollar',
     shortLabel: 'Savollar',
-    href: '/dashboard/practice',
+    href: '/questions',
     icon: Layers,
   },
   {
     id: 'mocks',
     label: 'Testlar',
     shortLabel: 'Testlar',
-    href: '/dashboard/mocks',
+    href: '/mocks',
     icon: FileText,
   },
   {
     id: 'vocabulary',
     label: "Lug'at",
     shortLabel: "Lug'at",
-    href: '/dashboard/vocabulary',
+    href: '/vocabulary',
     icon: BookOpen,
   },
   {
     id: 'mistakes',
     label: 'Xatolar',
     shortLabel: 'Xatolar',
-    href: '/dashboard/mistakes',
+    href: '/mistakes',
     icon: AlertCircle,
   },
   {
     id: 'community',
     label: 'Hamjamiyat',
     shortLabel: 'Hamjamiyat',
-    href: '/dashboard/community',
+    href: '/chat',
     icon: MessageSquare,
   },
 ];
@@ -84,7 +85,20 @@ export default function DashboardLayout({
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState<boolean>(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState<boolean>(false);
+  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+
+  // Global search shortcut (Cmd+K / Ctrl+K)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsSearchOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Close profile dropdown on click outside
   useEffect(() => {
@@ -252,14 +266,18 @@ export default function DashboardLayout({
             {pathname === '/dashboard' && (
               <button
                 type="button"
+                onClick={() => setIsSearchOpen(true)}
                 aria-label="Qidiruv"
-                title="Qidiruv"
+                title="Qidiruv (Ctrl+K)"
                 className="p-1.5 sm:p-2 rounded-xl text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] bg-[#FAF8F5] dark:bg-[#181B26] hover:bg-[#F0EBE4] dark:hover:bg-[#202534] border border-[#E5E0D8] dark:border-[#262B3D] transition-colors cursor-pointer flex items-center gap-1.5"
               >
                 <Search size={15} />
                 <span className="hidden sm:inline text-xs font-medium text-slate-500 dark:text-slate-400">
                   Qidirish
                 </span>
+                <kbd className="hidden lg:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
+                  Ctrl+K
+                </kbd>
               </button>
             )}
 
@@ -409,6 +427,12 @@ export default function DashboardLayout({
       {/* 4. IPHONE-GRADE FLOATING GLASSMORPHISM MOBILE NAVIGATION PILL             */}
       {/* ========================================================================= */}
       <BottomNav />
+
+      {/* Global Search Modal for Profiles & Channels */}
+      <GlobalSearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+      />
     </div>
   );
 }

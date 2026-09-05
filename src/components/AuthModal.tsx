@@ -84,19 +84,19 @@ export const AuthModal: React.FC<Props> = ({
           onSuccess(res.data.user);
           onClose();
         } else if (res.error) {
-          setErrorMessage(res.error.message);
+          setErrorMessage(res.error.message || "Ro'yxatdan o'tishda xatolik yuz berdi.");
         }
       } else {
         const res = await signInWithEmail(email, password);
         if (res.data?.user) {
           onSuccess(res.data.user);
           onClose();
-        } else if (res.error) {
-          setErrorMessage(res.error.message);
+        } else {
+          setErrorMessage(res.error?.message || "Email yoki parol noto‘g‘ri kiritildi");
         }
       }
     } catch (err: any) {
-      setErrorMessage(err.message || 'Kirishda xatolik yuz berdi.');
+      setErrorMessage(err.message || 'Email yoki parol noto‘g‘ri kiritildi');
     } finally {
       setIsLoading(false);
     }

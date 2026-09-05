@@ -194,45 +194,24 @@ export async function signInWithEmail(
   pass: string
 ): Promise<{ data: { user?: User } | null; error: any }> {
   try {
+    if (!email?.trim() || !pass) {
+      return { data: null, error: { message: "Email yoki parol noto‘g‘ri kiritildi" } };
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
       password: pass,
     });
 
     if (error) {
-      console.warn('Supabase email login notice, using local account session:', error.message);
-      const isSuper = email.toLowerCase().includes('admin') || email.toLowerCase() === 'admin@asronsat.uz';
-      const fallbackUser: User = {
-        id: `usr-${Date.now()}`,
-        email: email.trim(),
-        username: email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_'),
-        fullName: email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
-        phoneNumber: '+998 90 000 00 00',
-        avatarUrl: `https://api.dicebear.com/7.x/bottts/svg?seed=${email}`,
-        bio: 'Digital SAT Student',
-        role: isSuper ? 'SUPER_ADMIN' : 'STUDENT',
-        planTier: isSuper ? 'VIP' : 'STANDARD',
-        targetScore: 1450,
-        highestScore: 0,
-        baselineScore: 0,
-        potentialScore: 0,
-        predictedScore: 0,
-        weakestSubSkills: [],
-        streakDays: 0,
-        streakFreezes: 0,
-        xpPoints: 0,
-        totalQuestionsDone: 0,
-        overallAccuracy: 0,
-        testsCompletedCount: 0,
-        createdAt: new Date().toISOString(),
+      console.warn('Supabase email login error:', error.message);
+      return {
+        data: null,
+        error: {
+          message: "Email yoki parol noto‘g‘ri kiritildi",
+          raw: error,
+        },
       };
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('aurasat_user_profile', JSON.stringify(fallbackUser));
-        localStorage.setItem('aura_sat_auth_user', JSON.stringify(fallbackUser));
-        saveUserToRegisteredIndex(fallbackUser);
-      }
-      setAuthCookie(fallbackUser);
-      return { data: { user: fallbackUser }, error: null };
     }
 
     if (data?.user) {
@@ -246,9 +225,9 @@ export async function signInWithEmail(
       return { data: { user: appUser }, error: null };
     }
 
-    return { data: null, error: null };
+    return { data: null, error: { message: "Email yoki parol noto‘g‘ri kiritildi" } };
   } catch (err: any) {
-    return { data: null, error: err };
+    return { data: null, error: { message: "Email yoki parol noto‘g‘ri kiritildi", raw: err } };
   }
 }
 
@@ -261,13 +240,18 @@ export async function signUpWithEmail(
   phone?: string
 ): Promise<{ data: { user?: User } | null; error: any }> {
   try {
+    if (!email?.trim() || !pass) {
+      return { data: null, error: { message: "Email va parolni kiriting." } };
+    }
     const cleanUsername = username?.trim() || email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_');
+    const cleanFullName = fullName?.trim() || cleanUsername;
+
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password: pass,
       options: {
         data: {
-          full_name: fullName.trim(),
+          full_name: cleanFullName,
           username: cleanUsername,
           phone: phone?.trim() || '',
         },
@@ -275,39 +259,53 @@ export async function signUpWithEmail(
     });
 
     if (error) {
-      console.warn('Supabase email signup notice:', error.message);
+      console.warn('Supabase email signup error:', error.message);
+      return { data: null, error };
     }
 
-    const createdUser: User = data?.user
-      ? mapSupabaseUserToAppUser(data.user, {
-          fullName: fullName.trim(),
-          username: cleanUsername,
-          phoneNumber: phone?.trim() || '',
-        })
-      : {
-          id: `usr-${Date.now()}`,
-          email: email.trim(),
-          username: cleanUsername,
-          fullName: fullName.trim() || email.split('@')[0],
-          phoneNumber: phone?.trim() || '',
-          avatarUrl: `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanUsername}`,
-          bio: 'Digital SAT Student',
-          role: 'STUDENT',
-          planTier: 'STANDARD',
-          targetScore: 1450,
-          highestScore: 0,
-          baselineScore: 0,
-          potentialScore: 0,
-          predictedScore: 0,
-          weakestSubSkills: [],
-          streakDays: 0,
-          streakFreezes: 0,
-          xpPoints: 0,
-          totalQuestionsDone: 0,
-          overallAccuracy: 0,
-          testsCompletedCount: 0,
-          createdAt: new Date().toISOString(),
-        };
+    if (!data?.user) {
+      return { data: null, error: { message: "Ro'yxatdan o'tishda xatolik yuz berdi." } };
+    }
+
+    // Explicitly ensure profile in public.profiles table
+    try {
+      await supabase.from('profiles').upsert({
+        id: data.user.id,
+        full_name: cleanFullName,
+        username: cleanUsername,
+        avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanUsername}`,
+        target_score: 1500,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'id' });
+    } catch (e) {
+      console.warn('Profiles table sync:', e);
+    }
+
+    // Also sync to public.users if present
+    try {
+      await supabase.from('users').upsert({
+        id: data.user.id,
+        email: email.trim(),
+        full_name: cleanFullName,
+        username: cleanUsername,
+        avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanUsername}`,
+        role: 'STUDENT',
+        plan_tier: 'STANDARD',
+        target_score: 1500,
+        streak_days: 0,
+        total_questions_done: 0,
+        created_at: new Date().toISOString(),
+      }, { onConflict: 'id' });
+    } catch (e) {
+      // ignore
+    }
+
+    const createdUser: User = mapSupabaseUserToAppUser(data.user, {
+      fullName: cleanFullName,
+      username: cleanUsername,
+      phoneNumber: phone?.trim() || '',
+    });
 
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('aurasat_user_profile', JSON.stringify(createdUser));

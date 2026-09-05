@@ -90,6 +90,7 @@ import {
   editChatMessage,
   deleteChatMessage
 } from '../../lib/chatRealtimeService';
+import { supabase } from '../../lib/supabase';
 
 interface Props {
   currentUser: User;
@@ -253,6 +254,7 @@ export const CommunityChatHub: React.FC<Props> = ({
       const urlParams = new URLSearchParams(window.location.search);
       let channelUsername = urlParams.get('c');
       let joinToken = urlParams.get('join');
+      let dmUserId = urlParams.get('dm');
 
       // Check pathname: /chat/join/[token] or /join/[token]
       const path = window.location.pathname;
@@ -264,15 +266,85 @@ export const CommunityChatHub: React.FC<Props> = ({
         if (parts[1]) joinToken = parts[1].split('/')[0].split('?')[0];
       }
 
-      // Check hash query params: #/community?c=@username or #/community?join=token
+      // Check hash query params: #/community?c=@username or #/community?join=token or ?dm=id
       if (window.location.hash.includes('?')) {
         const hashQuery = window.location.hash.split('?')[1];
         const hashParams = new URLSearchParams(hashQuery);
         if (!channelUsername) channelUsername = hashParams.get('c');
         if (!joinToken) joinToken = hashParams.get('join');
+        if (!dmUserId) dmUserId = hashParams.get('dm');
       }
 
-      if (joinToken) {
+      if (dmUserId) {
+        const existingDm = chats.find(
+          (c) =>
+            c.type === 'DIRECT' &&
+            (c.members?.includes(dmUserId!) ||
+              c.id === `dm_${currentUser.id}_${dmUserId}` ||
+              c.id === `dm_${dmUserId}_${currentUser.id}` ||
+              c.userId === dmUserId)
+        );
+
+        if (existingDm) {
+          setActiveChatId(existingDm.id);
+          setIsMobileChatViewOpen(true);
+        } else {
+          try {
+            let targetUser: { id: string; fullName: string; username: string; avatarUrl?: string } | null = null;
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('id, full_name, username, avatar_url')
+              .eq('id', dmUserId)
+              .maybeSingle();
+
+            if (profile) {
+              targetUser = {
+                id: profile.id,
+                fullName: profile.full_name || profile.username || 'Foydalanuvchi',
+                username: profile.username || 'user',
+                avatarUrl: profile.avatar_url,
+              };
+            } else {
+              const { data: dbUser } = await supabase
+                .from('users')
+                .select('id, full_name, username, avatar_url')
+                .eq('id', dmUserId)
+                .maybeSingle();
+              if (dbUser) {
+                targetUser = {
+                  id: dbUser.id,
+                  fullName: dbUser.full_name || dbUser.username || 'Foydalanuvchi',
+                  username: dbUser.username || 'user',
+                  avatarUrl: dbUser.avatar_url,
+                };
+              }
+            }
+
+            if (targetUser) {
+              const newDmChat: Chat = {
+                id: `dm_${currentUser.id}_${targetUser.id}`,
+                name: targetUser.fullName,
+                title: targetUser.fullName,
+                type: 'DIRECT',
+                username: targetUser.username,
+                members: [currentUser.id, targetUser.id],
+                isPublic: false,
+                avatarUrl: targetUser.avatarUrl,
+                createdAt: new Date().toISOString(),
+              };
+              setChats((prev) => {
+                if (prev.some((c) => c.id === newDmChat.id)) return prev;
+                return [newDmChat, ...prev];
+              });
+              persistChatsList([newDmChat, ...chats]);
+              setActiveChatId(newDmChat.id);
+              setIsMobileChatViewOpen(true);
+            }
+          } catch (err) {
+            console.warn('Failed to resolve DM user from url:', err);
+          }
+        }
+      } else if (joinToken) {
         const res = await joinChannelByToken(joinToken, currentUser, chats);
         if (res.success && res.channel) {
           setChats((prev) => {
@@ -325,6 +397,14 @@ export const CommunityChatHub: React.FC<Props> = ({
       if (detail.chatId) {
         setActiveChatId(detail.chatId);
         setIsMobileChatViewOpen(true);
+      }
+      if (detail.dmUserId) {
+        handleSelectUserFromSearch({
+          id: detail.dmUserId,
+          fullName: detail.fullName || 'Foydalanuvchi',
+          username: detail.username || 'user',
+          avatarUrl: detail.avatarUrl,
+        });
       }
     };
 

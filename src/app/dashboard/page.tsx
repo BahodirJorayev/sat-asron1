@@ -31,27 +31,62 @@ export default function DashboardPage() {
         const { data: authData } = await supabase.auth.getUser();
         const activeUser = authData?.user;
 
-        if (activeUser) {
-          const { data: profile } = await supabase
-            .from('users')
-            .select('streak_days, total_questions_done, overall_accuracy, target_exam_date')
-            .eq('id', activeUser.id)
-            .single();
+        if (activeUser && isMounted) {
+          let streak = 0;
+          let done = 0;
+          let acc = 0;
 
-          if (profile && isMounted) {
+          // 1. Try public.profiles for exam date
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('target_exam_date')
+            .eq('id', activeUser.id)
+            .maybeSingle();
+
+          if (profile?.target_exam_date && isMounted) {
+            setTargetExamDate(profile.target_exam_date);
+          }
+
+          // 2. Try public.user_progress for real student metrics
+          const { data: progress } = await supabase
+            .from('user_progress')
+            .select('streak_days, total_questions_done, overall_accuracy')
+            .eq('user_id', activeUser.id)
+            .maybeSingle();
+
+          if (progress) {
+            streak = progress.streak_days || 0;
+            done = progress.total_questions_done || 0;
+            acc = progress.overall_accuracy || 0;
+          } else {
+            // 3. Fallback to public.users table if used
+            const { data: dbUser } = await supabase
+              .from('users')
+              .select('streak_days, total_questions_done, overall_accuracy, target_exam_date')
+              .eq('id', activeUser.id)
+              .maybeSingle();
+
+            if (dbUser) {
+              streak = dbUser.streak_days || 0;
+              done = dbUser.total_questions_done || 0;
+              acc = dbUser.overall_accuracy || 0;
+              if (dbUser.target_exam_date && isMounted) {
+                setTargetExamDate(dbUser.target_exam_date);
+              }
+            }
+          }
+
+          if (isMounted) {
             setStats({
-              streakDays: profile.streak_days || 0,
-              questionsDone: profile.total_questions_done || 0,
-              overallAccuracy: profile.overall_accuracy || 0,
+              streakDays: streak,
+              questionsDone: done,
+              overallAccuracy: acc,
               mistakesCount: 0,
             });
-            if (profile.target_exam_date) {
-              setTargetExamDate(profile.target_exam_date);
-            }
           }
         }
       } catch (err) {
-        // Fallback to defaults
+        // Fallback to strict 0 defaults
       }
     };
 

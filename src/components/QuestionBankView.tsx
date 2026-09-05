@@ -223,26 +223,28 @@ export const QuestionBankView: React.FC<Props> = ({
 
   // Aggregate Metrics Analytics
   const metrics = useMemo(() => {
-    const totalCount = 3420; // Official SAT Question Bank repository scale
-    const loadedCount = questions.length;
+    const totalCount = questions.length > 0 ? questions.length : 3420; // Official SAT Question Bank repository scale
     const attemptedList = (Object.values(userPractices) as UserQuestionPractice[]).filter(Boolean);
     const attemptedCount = attemptedList.length;
     const correctCount = attemptedList.filter((a) => a.isCorrect).length;
     const accuracyRate = attemptedCount > 0 ? Math.round((correctCount / attemptedCount) * 100) : 0;
 
     const totalSecondsSpent = attemptedList.reduce((acc: number, a) => acc + (a.timeSpentSecs || 0), 0);
-    const avgSeconds = attemptedCount > 0 ? Math.round(totalSecondsSpent / attemptedCount) : 74;
+    const avgSeconds = attemptedCount > 0 ? Math.round(totalSecondsSpent / attemptedCount) : 0;
 
     const avgMinutes = Math.floor(avgSeconds / 60);
     const avgSecsRem = avgSeconds % 60;
-    const formattedAvgTime = `${avgMinutes}m ${avgSecsRem}s`;
+    const formattedAvgTime =
+      avgSeconds > 0
+        ? `${avgMinutes > 0 ? `${avgMinutes}m ` : ''}${avgSecsRem}s`
+        : '0s';
 
     return {
       totalQuestions: totalCount,
       completedCount: attemptedCount,
       completionRate: ((attemptedCount / totalCount) * 100).toFixed(1),
-      accuracyRate: attemptedCount > 0 ? `${accuracyRate}%` : '81.4%',
-      avgTime: attemptedCount > 0 ? formattedAvgTime : '1m 14s',
+      accuracyRate: attemptedCount > 0 ? `${accuracyRate}%` : '0%',
+      avgTime: attemptedCount > 0 ? formattedAvgTime : '0s',
     };
   }, [questions, userPractices]);
 

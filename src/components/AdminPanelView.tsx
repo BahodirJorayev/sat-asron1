@@ -362,6 +362,7 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
                     questions={questions}
                     onUpdateQuestion={(q) => onUpdateQuestion && onUpdateQuestion(q)}
                     onAddQuestion={(q) => onAddQuestion && onAddQuestion(q)}
+                    onDeleteQuestion={(id) => onDeleteQuestion && onDeleteQuestion(id)}
                   />
                 ) : (
                   <AdminPDFIngestion

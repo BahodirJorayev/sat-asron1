@@ -21,6 +21,7 @@ interface AdminQuestionFixerProps {
   questions: Question[];
   onUpdateQuestion: (updatedQ: Question) => void;
   onAddQuestion?: (newQ: Question) => void;
+  onDeleteQuestion?: (questionId: string) => void;
 }
 
 const DEFAULT_FALLBACK_QUESTION: Question = {
@@ -39,6 +40,7 @@ export const AdminQuestionFixer: React.FC<AdminQuestionFixerProps> = ({
   questions = [],
   onUpdateQuestion,
   onAddQuestion,
+  onDeleteQuestion,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sectionFilter, setSectionFilter] = useState<'ALL' | SectionType>('ALL');
@@ -189,6 +191,23 @@ export const AdminQuestionFixer: React.FC<AdminQuestionFixerProps> = ({
             <Save className="w-4 h-4 stroke-[2]" />
             <span>SAQLASH</span>
           </button>
+
+          {onDeleteQuestion && (
+            <button
+              id="btn-delete-question-hotfix"
+              type="button"
+              onClick={() => {
+                if (window.confirm(`Haqiqatan ham #${editForm?.id} savolini butunlay o'chirmoqchimisiz?`)) {
+                  onDeleteQuestion(editForm.id);
+                }
+              }}
+              className="px-3.5 py-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-mono font-bold flex items-center gap-1.5 transition-colors shrink-0 cursor-pointer shadow-xs"
+              title="Savolni butunlay o'chirish"
+            >
+              <Trash2 className="w-4 h-4 text-rose-400" />
+              <span>O'CHIRISH</span>
+            </button>
+          )}
         </div>
       </div>
 

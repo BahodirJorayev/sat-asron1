@@ -39,15 +39,7 @@ export default function MocksPage() {
     return DEFAULT_GUEST_USER;
   });
 
-  const [mockTests, setMockTests] = useState<MockTest[]>(() => {
-    if (typeof localStorage !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('aurasat_mock_tests');
-        if (saved) return JSON.parse(saved);
-      } catch {}
-    }
-    return INITIAL_MOCK_TESTS;
-  });
+  const [mockTests, setMockTests] = useState<MockTest[]>(INITIAL_MOCK_TESTS);
 
   const [mockCategories, setMockCategories] = useState<MockCategory[]>(() => {
     if (typeof localStorage !== 'undefined') {
@@ -64,14 +56,12 @@ export default function MocksPage() {
   useEffect(() => {
     let isMounted = true;
 
-    // 1. Live zero-stale remote fetch from Supabase
+    // 1. Live zero-stale remote fetch directly from Supabase
     fetchMockTestsRemote().then((remoteTests) => {
       if (isMounted && remoteTests && remoteTests.length > 0) {
-        setMockTests((prev) => {
-          const remoteIds = new Set(remoteTests.map((t) => t.id));
-          const localOnly = prev.filter((t) => !remoteIds.has(t.id));
-          return [...remoteTests, ...localOnly];
-        });
+        const remoteIds = new Set(remoteTests.map((t) => t.id));
+        const fallbackRemaining = INITIAL_MOCK_TESTS.filter((t) => !remoteIds.has(t.id));
+        setMockTests([...remoteTests, ...fallbackRemaining]);
       }
     });
 
@@ -81,14 +71,12 @@ export default function MocksPage() {
       }
     });
 
-    // 2. Realtime subscription to public.mock_tests table
+    // 2. Realtime subscription to public.mock_tests table for instant global sync
     const unsubscribe = subscribeToMockTests((updatedTests) => {
       if (isMounted && updatedTests && updatedTests.length > 0) {
-        setMockTests((prev) => {
-          const remoteIds = new Set(updatedTests.map((t) => t.id));
-          const localOnly = prev.filter((t) => !remoteIds.has(t.id));
-          return [...updatedTests, ...localOnly];
-        });
+        const remoteIds = new Set(updatedTests.map((t) => t.id));
+        const fallbackRemaining = INITIAL_MOCK_TESTS.filter((t) => !remoteIds.has(t.id));
+        setMockTests([...updatedTests, ...fallbackRemaining]);
       }
     });
 

@@ -86,6 +86,11 @@ import {
   saveMockTestRemote,
   deleteMockTestRemote,
   subscribeToMockTests,
+  fetchQuestionsRemote,
+  saveQuestionRemote,
+  deleteQuestionRemote,
+  bulkImportQuestionsRemote,
+  subscribeToQuestions,
 } from './lib/adminApi';
 
 export default function App() {
@@ -260,9 +265,30 @@ export default function App() {
       }
     });
 
+    fetchQuestionsRemote().then((remoteQuestions) => {
+      if (remoteQuestions && remoteQuestions.length > 0) {
+        setQuestions((prev) => {
+          const remoteIds = new Set(remoteQuestions.map((q) => q.id));
+          const localOnly = prev.filter((q) => !remoteIds.has(q.id));
+          return [...remoteQuestions, ...localOnly];
+        });
+      }
+    });
+
+    const unsubQuestions = subscribeToQuestions((remoteQuestions) => {
+      if (remoteQuestions && remoteQuestions.length > 0) {
+        setQuestions((prev) => {
+          const remoteIds = new Set(remoteQuestions.map((q) => q.id));
+          const localOnly = prev.filter((q) => !remoteIds.has(q.id));
+          return [...remoteQuestions, ...localOnly];
+        });
+      }
+    });
+
     return () => {
       unsubPlatform();
       unsubMocks();
+      unsubQuestions();
     };
   }, []);
 
@@ -657,39 +683,47 @@ export default function App() {
     });
   };
 
-  // Question CRUD Handlers
-  const handleAddQuestion = (newQ: Question) => {
-    setQuestions((prev) => {
-      const next = [newQ, ...prev];
-      localStorage.setItem('aurasat_questions_bank', JSON.stringify(next));
-      return next;
-    });
+  // Question CRUD Handlers (Direct Supabase Cloud DB Persistence)
+  const handleAddQuestion = async (newQ: Question) => {
+    try {
+      const saved = await saveQuestionRemote(newQ);
+      setQuestions((prev) => [saved, ...prev.filter((q) => q.id !== saved.id)]);
+    } catch (e) {
+      console.error('Failed to save question to Supabase:', e);
+      setQuestions((prev) => [newQ, ...prev]);
+    }
   };
 
-  const handleUpdateQuestion = (updatedQ: Question) => {
-    setQuestions((prev) => {
-      const next = prev.map((q) => (q.id === updatedQ.id ? updatedQ : q));
-      localStorage.setItem('aurasat_questions_bank', JSON.stringify(next));
-      return next;
-    });
+  const handleUpdateQuestion = async (updatedQ: Question) => {
+    try {
+      const saved = await saveQuestionRemote(updatedQ);
+      setQuestions((prev) => prev.map((q) => (q.id === saved.id || q.id === updatedQ.id ? saved : q)));
+    } catch (e) {
+      console.error('Failed to update question in Supabase:', e);
+      setQuestions((prev) => prev.map((q) => (q.id === updatedQ.id ? updatedQ : q)));
+    }
   };
 
-  const handleDeleteQuestion = (questionId: string) => {
-    setQuestions((prev) => {
-      const next = prev.filter((q) => q.id !== questionId);
-      localStorage.setItem('aurasat_questions_bank', JSON.stringify(next));
-      return next;
-    });
+  const handleDeleteQuestion = async (questionId: string) => {
+    try {
+      await deleteQuestionRemote(questionId);
+      setQuestions((prev) => prev.filter((q) => q.id !== questionId));
+    } catch (e) {
+      console.error('Failed to delete question from Supabase:', e);
+      setQuestions((prev) => prev.filter((q) => q.id !== questionId));
+    }
   };
 
-  const handleIngestQuestions = (incoming: Question[]) => {
-    setQuestions((prev) => {
-      const existingIds = new Set(prev.map((q) => q.id));
-      const filteredIncoming = incoming.filter((q) => !existingIds.has(q.id));
-      const next = [...filteredIncoming, ...prev];
-      localStorage.setItem('aurasat_questions_bank', JSON.stringify(next));
-      return next;
-    });
+  const handleIngestQuestions = async (incoming: Question[]) => {
+    try {
+      const saved = await bulkImportQuestionsRemote(incoming);
+      setQuestions((prev) => {
+        const existingIds = new Set(saved.map((q) => q.id));
+        return [...saved, ...prev.filter((q) => !existingIds.has(q.id))];
+      });
+    } catch (e) {
+      console.error('Failed to bulk ingest questions to Supabase:', e);
+    }
   };
 
   // Blog Article CRUD Handlers
@@ -751,13 +785,9 @@ export default function App() {
     setReceipts((prev) => prev.filter((r) => r.id !== receiptId));
   };
 
-  // Mock Tests CRUD Handlers (with Supabase PostgreSQL Persistence)
+  // Mock Tests CRUD Handlers (with Direct Supabase PostgreSQL Cloud Persistence)
   const handleAddMockTest = async (newTest: MockTest) => {
-    setMockTests((prev) => {
-      const next = [newTest, ...prev];
-      localStorage.setItem('aurasat_mock_tests', JSON.stringify(next));
-      return next;
-    });
+    setMockTests((prev) => [newTest, ...prev]);
     try {
       await saveMockTestRemote(newTest);
     } catch (e) {
@@ -766,11 +796,7 @@ export default function App() {
   };
 
   const handleUpdateMockTest = async (updatedTest: MockTest) => {
-    setMockTests((prev) => {
-      const next = prev.map((t) => (t.id === updatedTest.id ? updatedTest : t));
-      localStorage.setItem('aurasat_mock_tests', JSON.stringify(next));
-      return next;
-    });
+    setMockTests((prev) => prev.map((t) => (t.id === updatedTest.id ? updatedTest : t)));
     try {
       await saveMockTestRemote(updatedTest);
     } catch (e) {
@@ -779,11 +805,7 @@ export default function App() {
   };
 
   const handleDeleteMockTest = async (testId: string) => {
-    setMockTests((prev) => {
-      const next = prev.filter((t) => t.id !== testId);
-      localStorage.setItem('aurasat_mock_tests', JSON.stringify(next));
-      return next;
-    });
+    setMockTests((prev) => prev.filter((t) => t.id !== testId));
     try {
       await deleteMockTestRemote(testId);
     } catch (e) {

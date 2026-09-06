@@ -668,24 +668,28 @@ export async function fetchMockTestsRemote(): Promise<MockTest[]> {
       .order('created_at', { ascending: false });
 
     if (!error && data && data.length > 0) {
-      return data.map((d: any) => ({
-        id: d.id,
-        title: d.title,
-        description: d.description || '',
-        category: d.category || 'OFFICIAL_MOCK',
-        isPublished: d.is_published ?? true,
-        isPrivate: d.is_private ?? false,
-        accessCode: d.access_code || undefined,
-        totalTimeMinutes: d.total_time_minutes ?? 134,
-        timeLimitSecs: d.time_limit_secs ?? 8040,
-        attemptsCount: d.attempts_count ?? 0,
-        averageScore: d.average_score ?? 0,
-        highestScore: d.highest_score ?? 0,
-        tags: d.tags || [],
-        createdAt: d.created_at,
-        updatedAt: d.updated_at,
-        questions: [],
-      }));
+      return data.map((d: any) => {
+        const totalMins = d.total_time_minutes ?? d.duration_minutes ?? 134;
+        return {
+          id: String(d.id),
+          title: d.title,
+          description: d.description || '',
+          category: d.category || 'OFFICIAL_MOCK',
+          isPublished: d.is_published ?? d.is_active ?? true,
+          isProOnly: false,
+          isPrivate: d.is_private ?? false,
+          accessCode: d.access_code || undefined,
+          totalTimeMinutes: totalMins,
+          timeLimitSecs: (d.time_limit_secs ?? (totalMins * 60)),
+          attemptsCount: d.attempts_count ?? 0,
+          averageScore: d.average_score ?? 0,
+          highestScore: d.highest_score ?? 0,
+          tags: d.tags || ['Bluebook', 'Adaptive'],
+          createdAt: d.created_at,
+          updatedAt: d.updated_at,
+          questions: [],
+        };
+      });
     }
   } catch (err) {
     console.warn('Supabase fetch mock_tests notice:', err);
@@ -698,28 +702,23 @@ export async function fetchMockTestsRemote(): Promise<MockTest[]> {
  */
 export async function saveMockTestRemote(test: MockTest): Promise<void> {
   try {
-    await supabase.from('mock_tests').upsert(
-      {
-        id: test.id,
-        title: test.title,
-        description: test.description || '',
-        category: test.category || 'OFFICIAL_MOCK',
-        is_published: test.isPublished ?? true,
-        is_private: test.isPrivate ?? false,
-        access_code: test.accessCode || null,
-        total_time_minutes: test.totalTimeMinutes || 134,
-        time_limit_secs: test.timeLimitSecs || 8040,
-        attempts_count: test.attemptsCount || 0,
-        average_score: test.averageScore || 0,
-        highest_score: test.highestScore || 0,
-        tags: test.tags || [],
-        created_at: test.createdAt || new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'id' }
-    );
+    const isUUID = test.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(test.id);
+    const payload: any = {
+      title: test.title,
+      description: test.description || '',
+    };
+    if (isUUID) {
+      payload.id = test.id;
+    }
+
+    const { error } = await supabase.from('mock_tests').upsert(payload);
+    if (error) {
+      console.warn('Supabase upsert mock_test error:', error.message);
+      throw error;
+    }
   } catch (err) {
     console.warn('Supabase upsert mock_test notice:', err);
+    throw err;
   }
 }
 
@@ -728,9 +727,135 @@ export async function saveMockTestRemote(test: MockTest): Promise<void> {
  */
 export async function deleteMockTestRemote(testId: string): Promise<void> {
   try {
-    await supabase.from('mock_tests').delete().eq('id', testId);
+    const { error } = await supabase.from('mock_tests').delete().eq('id', testId);
+    if (error) {
+      console.warn('Supabase delete mock_test error:', error.message);
+      throw error;
+    }
   } catch (err) {
     console.warn('Supabase delete mock_test notice:', err);
+    throw err;
+  }
+}
+
+/**
+ * Upsert Question to Supabase with direct persistence
+ */
+export async function saveQuestionRemote(q: Question): Promise<Question> {
+  try {
+    const isUUID = q.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(q.id);
+    const payload: any = {
+      section: (q.section === 'READING_AND_WRITING' || (q as any).section === 'reading_writing') ? 'READING_AND_WRITING' : 'MATH',
+      domain: q.domain || 'Algebra',
+      skill: q.skill || 'General',
+      difficulty: (q.difficulty || 'medium').toLowerCase(),
+      question_text: q.questionText || (q as any).question_text || '',
+      options: q.options || [],
+      correct_answer: q.correctAnswer || (q as any).correct_answer || 'A',
+      explanation: q.explanation || '',
+    };
+    if (isUUID) {
+      payload.id = q.id;
+    }
+
+    const { data, error } = await supabase
+      .from('questions')
+      .upsert(payload)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase upsert question error:', error.message);
+      throw error;
+    }
+
+    return {
+      id: String(data.id),
+      sqbId: q.sqbId,
+      section: data.section as any,
+      domain: data.domain || q.domain,
+      skill: data.skill || q.skill,
+      difficulty: (data.difficulty?.toUpperCase() as any) || q.difficulty || 'MEDIUM',
+      type: q.type || 'MULTIPLE_CHOICE',
+      passage: q.passage,
+      questionText: data.question_text || q.questionText,
+      options: data.options || q.options,
+      correctAnswer: data.correct_answer || q.correctAnswer,
+      explanation: data.explanation || q.explanation,
+      imageUrl: q.imageUrl,
+      createdAt: data.created_at,
+    };
+  } catch (err) {
+    console.error('saveQuestionRemote error:', err);
+    throw err;
+  }
+}
+
+/**
+ * Delete Question from Supabase
+ */
+export async function deleteQuestionRemote(questionId: string): Promise<void> {
+  try {
+    const { error } = await supabase.from('questions').delete().eq('id', questionId);
+    if (error) {
+      console.error('Supabase delete question error:', error.message);
+      throw error;
+    }
+  } catch (err) {
+    console.error('deleteQuestionRemote error:', err);
+    throw err;
+  }
+}
+
+/**
+ * Bulk Import Questions into Supabase
+ */
+export async function bulkImportQuestionsRemote(questions: Question[]): Promise<Question[]> {
+  try {
+    const payloads = questions.map((q) => {
+      const isUUID = q.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(q.id);
+      const row: any = {
+        section: (q.section === 'READING_AND_WRITING' || (q as any).section === 'reading_writing') ? 'READING_AND_WRITING' : 'MATH',
+        domain: q.domain || 'Algebra',
+        skill: q.skill || 'General',
+        difficulty: (q.difficulty || 'medium').toLowerCase(),
+        question_text: q.questionText || (q as any).question_text || '',
+        options: q.options || [],
+        correct_answer: q.correctAnswer || (q as any).correct_answer || 'A',
+        explanation: q.explanation || '',
+      };
+      if (isUUID) {
+        row.id = q.id;
+      }
+      return row;
+    });
+
+    const { data, error } = await supabase
+      .from('questions')
+      .upsert(payloads)
+      .select();
+
+    if (error) {
+      console.error('Supabase bulkImportQuestionsRemote error:', error.message);
+      throw error;
+    }
+
+    return (data || []).map((row: any) => ({
+      id: String(row.id),
+      section: row.section as any,
+      domain: row.domain || 'Algebra',
+      skill: row.skill || 'General',
+      difficulty: (row.difficulty?.toUpperCase() as any) || 'MEDIUM',
+      type: 'MULTIPLE_CHOICE',
+      questionText: row.question_text || '',
+      options: row.options || undefined,
+      correctAnswer: row.correct_answer || 'A',
+      explanation: row.explanation || '',
+      createdAt: row.created_at,
+    }));
+  } catch (err) {
+    console.error('bulkImportQuestionsRemote error:', err);
+    throw err;
   }
 }
 

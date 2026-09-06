@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import React from 'react';
 import '../index.css';
+import '../lib/supabase';
 
 export const metadata: Metadata = {
   title: 'ASRON SAT • Digital SAT Intelligence Platform',

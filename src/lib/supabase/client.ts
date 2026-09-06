@@ -1,5 +1,7 @@
 import { createClient as createSupabaseClient, SupabaseClient } from '@supabase/supabase-js';
 
+declare const process: any;
+
 // Environment variable extraction with cross-platform fallback for Vite & Next.js
 const supabaseUrl: string =
   (typeof process !== 'undefined' && (process.env?.NEXT_PUBLIC_SUPABASE_URL || process.env?.VITE_SUPABASE_URL)) ||

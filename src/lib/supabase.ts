@@ -1,6 +1,8 @@
 import { createClient, SupabaseClient, User as SupabaseAuthUser } from '@supabase/supabase-js';
 import { User, Role, PlanTier } from '../types';
 
+declare const process: any;
+
 // Environment variable extraction with cross-platform fallback for Vite & Next.js
 const envUrl: string =
   (typeof process !== 'undefined' && (process.env?.NEXT_PUBLIC_SUPABASE_URL || process.env?.VITE_SUPABASE_URL)) ||
@@ -30,6 +32,14 @@ export const supabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON
     storage: typeof window !== 'undefined' ? window.localStorage : undefined,
   },
 });
+
+// Attach to globalThis / window to guarantee zero "supabase is not defined" runtime exceptions
+if (typeof window !== 'undefined') {
+  (window as any).supabase = supabase;
+}
+if (typeof globalThis !== 'undefined') {
+  (globalThis as any).supabase = supabase;
+}
 
 export function getSupabaseClient(): SupabaseClient {
   return supabase;
@@ -386,3 +396,5 @@ export async function signOutUser(): Promise<void> {
     localStorage.removeItem('aura_sat_auth_user');
   }
 }
+
+export default supabase;

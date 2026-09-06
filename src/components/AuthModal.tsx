@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { X, Sparkles, Shield, Mail, Lock, User as UserIcon, ArrowRight, CheckCircle2, AlertCircle, Phone, AtSign, Loader2 } from 'lucide-react';
-import { signInWithGoogle, signInWithEmail, signUpWithEmail } from '../lib/supabase';
+import { signInWithGoogle, signInWithEmail, signUpWithEmail, supabase } from '../lib/supabase';
 import { User } from '../types';
+import { usePlatformSettings } from '../hooks/usePlatformSettings';
+import { AsronLogo } from './AsronLogo';
 
 interface Props {
   isOpen: boolean;
@@ -18,6 +20,7 @@ export const AuthModal: React.FC<Props> = ({
   initialMode = 'signup',
   onOpenAdminLogin,
 }) => {
+  const { settings } = usePlatformSettings();
   const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -147,9 +150,15 @@ export const AuthModal: React.FC<Props> = ({
         {/* Sticky Header with Close Button */}
         <div className="px-5 py-4 bg-[#FFFFFF] border-b border-[#E8E2D5] flex items-center justify-between shrink-0 sticky top-0 z-20">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#2563EB] text-white flex items-center justify-center font-bold text-lg shadow-sm shadow-blue-500/20 shrink-0">
-              Σ
-            </div>
+            {settings.logo_url ? (
+              <img
+                src={settings.logo_url}
+                alt="Logo"
+                className="w-9 h-9 rounded-xl object-cover border border-slate-200 shrink-0 shadow-xs"
+              />
+            ) : (
+              <AsronLogo size={36} variant="mark-only" />
+            )}
             <div>
               <h2 className="text-base font-bold tracking-tight text-[#1C1917] leading-tight">
                 {mode === 'signup' ? 'Yangi SAT Akkaunt Ochish' : 'Tizimga Kirish (Log In)'}

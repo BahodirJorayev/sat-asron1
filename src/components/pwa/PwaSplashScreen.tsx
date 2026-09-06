@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, ArrowRight } from 'lucide-react';
+import { usePlatformSettings } from '../../hooks/usePlatformSettings';
+import { AsronLogo } from '../AsronLogo';
 
 interface PwaSplashScreenProps {
   forceShow?: boolean;
@@ -15,6 +17,7 @@ export const PwaSplashScreen: React.FC<PwaSplashScreenProps> = ({
   videoSrc,
   onFinish,
 }) => {
+  const { settings } = usePlatformSettings();
   const [isVisible, setIsVisible] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -186,12 +189,16 @@ export const PwaSplashScreen: React.FC<PwaSplashScreenProps> = ({
               {/* Pulsing Aura */}
               <div className="absolute -inset-4 rounded-3xl bg-[#E07A5F]/20 blur-xl animate-pulse" />
 
-              <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-[#001744] border-2 border-[#E07A5F]/60 flex items-center justify-center shadow-2xl shadow-orange-500/20">
-                <svg viewBox="0 0 100 100" className="w-14 h-14 sm:w-16 sm:h-16 text-[#E07A5F] fill-current" fill="none">
-                  <rect x="32" y="21" width="11" height="40" rx="5.5" transform="rotate(-45 32 21)" />
-                  <rect x="55" y="36" width="11" height="26" rx="5.5" transform="rotate(-45 55 36)" />
-                  <path d="M38.5 56.5L49.5 45.5C50.3 44.7 51.7 44.7 52.5 45.5L63.5 56.5" stroke="currentColor" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+              <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-[#001744] border-2 border-[#E07A5F]/60 flex items-center justify-center shadow-2xl shadow-orange-500/20 overflow-hidden p-2">
+                {settings.logo_url ? (
+                  <img
+                    src={settings.logo_url}
+                    alt="Logo"
+                    className="w-full h-full object-cover rounded-2xl"
+                  />
+                ) : (
+                  <AsronLogo size={64} variant="mark-only" />
+                )}
               </div>
             </motion.div>
 
@@ -203,10 +210,10 @@ export const PwaSplashScreen: React.FC<PwaSplashScreenProps> = ({
               className="space-y-1.5"
             >
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-sans">
-                ASRON <span className="text-[#E07A5F]">SAT</span>
+                {settings.platform_title || 'ASRON SAT'}
               </h1>
               <p className="text-[10px] sm:text-xs font-mono uppercase tracking-[0.25em] text-slate-400">
-                Digital SAT Intelligence Platform
+                {settings.tagline || 'Digital SAT Intelligence Platform'}
               </p>
             </motion.div>
 

@@ -5,9 +5,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import { supabase, setAuthCookie, mapSupabaseUserToAppUser } from '../../lib/supabase';
+import { usePlatformSettings } from '../../hooks/usePlatformSettings';
+import { AsronLogo } from '../../components/AsronLogo';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { settings } = usePlatformSettings();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -98,15 +101,17 @@ export default function LoginPage() {
         {/* Brand Header */}
         <div className="text-center space-y-2">
           <Link href="/" className="inline-flex items-center gap-2.5 group">
-            <div className="w-10 h-10 rounded-2xl bg-[#0B1B3D] dark:bg-[#0F172A] border border-slate-800 dark:border-[#1E293B] flex items-center justify-center text-white shrink-0 shadow-2xs group-hover:border-[#E07A5F]/60 transition-colors">
-              <svg viewBox="0 0 100 100" className="w-5 h-5 text-[#E07A5F] fill-current" fill="none">
-                <rect x="32" y="21" width="11" height="40" rx="5.5" transform="rotate(-45 32 21)" />
-                <rect x="55" y="36" width="11" height="26" rx="5.5" transform="rotate(-45 55 36)" />
-                <path d="M38.5 56.5L49.5 45.5C50.3 44.7 51.7 44.7 52.5 45.5L63.5 56.5" stroke="currentColor" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
+            {settings.logo_url ? (
+              <img
+                src={settings.logo_url}
+                alt="Logo"
+                className="w-10 h-10 rounded-2xl object-cover border border-slate-200 dark:border-slate-800 shrink-0 shadow-2xs"
+              />
+            ) : (
+              <AsronLogo size={40} variant="mark-only" />
+            )}
             <span className="font-extrabold tracking-tight text-xl text-slate-900 dark:text-white">
-              ASRON <span className="text-[#E07A5F]">SAT</span>
+              {settings.platform_title || 'ASRON SAT'}
             </span>
           </Link>
           <h1 className="text-2xl font-bold tracking-tight text-[#0F172A] dark:text-[#F8FAFC]">

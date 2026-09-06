@@ -15,6 +15,7 @@ import { User } from '../types';
 import { SiteBrandingConfig } from '../data/blogAndBrandingData';
 import { SidebarFooter } from './SidebarFooter';
 import { usePlatformSettings } from '../hooks/usePlatformSettings';
+import { AsronLogo } from './AsronLogo';
 
 export interface AppSidebarProps {
   user: User;
@@ -200,8 +201,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 className="w-full h-full object-cover rounded-lg transition-all duration-200 group-hover:opacity-0 group-hover:scale-75"
               />
             ) : (
-              <span className="transition-all duration-200 group-hover:opacity-0 group-hover:scale-75 w-full h-full flex items-center justify-center font-mono text-[#E07A5F]">
-                Σ
+              <span className="transition-all duration-200 group-hover:opacity-0 group-hover:scale-75 w-full h-full flex items-center justify-center">
+                <AsronLogo size={24} variant="mark-only" />
               </span>
             )}
             <span className="absolute inset-0 flex items-center justify-center opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100 transition-all text-[#0F172A] dark:text-[#F8FAFC]">
@@ -227,9 +228,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 className="w-9 h-9 rounded-xl object-cover border border-[#E2E8F0] dark:border-[#1E293B] shrink-0 shadow-2xs"
               />
             ) : (
-              <div className="w-9 h-9 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#E07A5F] border border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-center font-mono font-bold text-base group-hover:border-[#E07A5F]/60 transition-colors shrink-0 shadow-2xs">
-                Σ
-              </div>
+              <AsronLogo size={36} variant="mark-only" />
             )}
 
             <div className="min-w-0 leading-tight">

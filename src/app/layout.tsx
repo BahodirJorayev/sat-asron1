@@ -12,7 +12,10 @@ export const metadata: Metadata = {
     title: 'ASRON SAT',
   },
   icons: {
-    icon: '/icon-192.png',
+    icon: [
+      { url: '/logo.svg', type: 'image/svg+xml' },
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
     apple: '/icon-192.png',
   },
 };
@@ -37,6 +40,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#001744" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <link rel="icon" type="image/svg+xml" href="/logo.svg" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
       <body className="bg-[#0A0F1D] text-[#F8FAFC] antialiased min-h-screen">

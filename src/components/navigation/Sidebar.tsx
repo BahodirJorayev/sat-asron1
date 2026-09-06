@@ -17,6 +17,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { usePlatformSettings } from '../../hooks/usePlatformSettings';
+import { AsronLogo } from '../AsronLogo';
 
 export interface NavItem {
   id: string;
@@ -142,9 +143,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               className="w-9 h-9 rounded-xl object-cover border border-[#E2E8F0] dark:border-[#1E293B] shrink-0 shadow-2xs"
             />
           ) : (
-            <div className="w-9 h-9 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-center font-mono font-bold text-[#E07A5F] text-base shrink-0 group-hover:border-[#E07A5F]/60 transition-colors shadow-2xs">
-              Σ
-            </div>
+            <AsronLogo size={36} variant="mark-only" />
           )}
           {!isCollapsed && (
             <div className="min-w-0 leading-tight">

@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, X, Share, PlusSquare, Sparkles, Smartphone, Check } from 'lucide-react';
+import { usePlatformSettings } from '../../hooks/usePlatformSettings';
+import { AsronLogo } from '../AsronLogo';
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -14,6 +16,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export const PwaInstallPrompt: React.FC = () => {
+  const { settings } = usePlatformSettings();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isStandalone, setIsStandalone] = useState<boolean>(true);
   const [isVisible, setIsVisible] = useState<boolean>(false);
@@ -133,7 +136,7 @@ export const PwaInstallPrompt: React.FC = () => {
             className="fixed top-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-[#001744] border border-emerald-500/40 text-white text-xs font-semibold shadow-2xl flex items-center gap-2"
           >
             <Check className="w-4 h-4 text-emerald-400" />
-            <span>ASRON SAT ilovasi muvaffaqiyatli o'rnatildi!</span>
+            <span>{settings.platform_title || 'ASRON SAT'} ilovasi muvaffaqiyatli o'rnatildi!</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -154,18 +157,22 @@ export const PwaInstallPrompt: React.FC = () => {
 
               {/* Left: App Icon & Info */}
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-[#001744] border border-[#0B2B6F] flex items-center justify-center p-1 shrink-0 shadow-xs">
-                  <svg viewBox="0 0 100 100" className="w-6 h-6 text-[#E07A5F] fill-current" fill="none">
-                    <rect x="32" y="21" width="11" height="40" rx="5.5" transform="rotate(-45 32 21)" />
-                    <rect x="55" y="36" width="11" height="26" rx="5.5" transform="rotate(-45 55 36)" />
-                    <path d="M38.5 56.5L49.5 45.5C50.3 44.7 51.7 44.7 52.5 45.5L63.5 56.5" stroke="currentColor" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                <div className="w-10 h-10 rounded-xl bg-[#001744] border border-[#0B2B6F] flex items-center justify-center p-1 shrink-0 shadow-xs overflow-hidden">
+                  {settings.logo_url ? (
+                    <img
+                      src={settings.logo_url}
+                      alt="Logo"
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                  ) : (
+                    <AsronLogo size={28} variant="mark-only" />
+                  )}
                 </div>
 
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs font-bold text-white tracking-tight truncate">
-                      ASRON SAT
+                      {settings.platform_title || 'ASRON SAT'}
                     </span>
                     <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-md bg-[#E07A5F]/20 text-[#E07A5F] font-semibold">
                       PWA

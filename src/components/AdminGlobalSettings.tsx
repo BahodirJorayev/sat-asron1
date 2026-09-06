@@ -432,7 +432,21 @@ export const AdminGlobalSettings: React.FC<AdminGlobalSettingsProps> = ({
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-mono text-[#64748B] uppercase">Direct Logo URL</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-mono text-[#64748B] uppercase">Direct Logo URL</label>
+                  {logoUrl && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLogoUrl('');
+                        setForm({ ...form, logoUrl: undefined });
+                      }}
+                      className="text-[10px] font-mono text-[#E07A5F] hover:underline cursor-pointer"
+                    >
+                      Standart logoga qaytarish
+                    </button>
+                  )}
+                </div>
                 <input
                   type="text"
                   value={logoUrl}

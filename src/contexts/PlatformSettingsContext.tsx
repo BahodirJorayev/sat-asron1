@@ -39,6 +39,46 @@ export const DEFAULT_PLATFORM_SETTINGS: PlatformSettings = {
 
 const STORAGE_KEY = 'asron_platform_settings';
 const EVENT_NAME = 'asron_platform_settings_changed';
+const BROADCAST_CHANNEL_NAME = 'asron_platform_settings_channel';
+
+// Dynamic DOM Brand Asset (Favicon, Apple Touch Icon, Document Title) Updater
+const updateDomBrandAssets = (title?: string, logoUrl?: string | null) => {
+  if (typeof document === 'undefined') return;
+  try {
+    const activeIconUrl = logoUrl && logoUrl.trim() ? logoUrl.trim() : '/logo.svg';
+
+    // 1. Favicon / Icon link
+    let iconLink = document.querySelector("link[rel*='icon']") as HTMLLinkElement | null;
+    if (!iconLink) {
+      iconLink = document.createElement('link');
+      iconLink.rel = 'shortcut icon';
+      document.head.appendChild(iconLink);
+    }
+    iconLink.href = activeIconUrl;
+    if (activeIconUrl.endsWith('.svg')) {
+      iconLink.type = 'image/svg+xml';
+    }
+
+    // 2. Apple Touch Icon link
+    let appleLink = document.querySelector("link[rel='apple-touch-icon']") as HTMLLinkElement | null;
+    if (!appleLink) {
+      appleLink = document.createElement('link');
+      appleLink.rel = 'apple-touch-icon';
+      document.head.appendChild(appleLink);
+    }
+    appleLink.href = activeIconUrl;
+
+    // 3. Dynamic Title
+    if (title && title.trim()) {
+      const currentTitle = document.title;
+      if (!currentTitle || currentTitle.startsWith('ASRON SAT') || currentTitle.includes('Digital SAT')) {
+        document.title = `${title.trim()} • Digital SAT Platform`;
+      }
+    }
+  } catch (err) {
+    console.warn('Failed to update DOM brand assets:', err);
+  }
+};
 
 interface PlatformSettingsContextValue {
   settings: PlatformSettings;
@@ -61,7 +101,7 @@ export const PlatformSettingsProvider: React.FC<{ children: ReactNode }> = ({ ch
         const cached = localStorage.getItem(STORAGE_KEY);
         if (cached) {
           const parsed = JSON.parse(cached);
-          return {
+          const initial = {
             ...DEFAULT_PLATFORM_SETTINGS,
             ...parsed,
             modules_status: {
@@ -69,10 +109,13 @@ export const PlatformSettingsProvider: React.FC<{ children: ReactNode }> = ({ ch
               ...(parsed.modules_status || {}),
             },
           };
+          updateDomBrandAssets(initial.platform_title, initial.logo_url);
+          return initial;
         }
       } catch (e) {
         console.warn('Failed to parse cached platform settings:', e);
       }
+      updateDomBrandAssets(DEFAULT_PLATFORM_SETTINGS.platform_title, DEFAULT_PLATFORM_SETTINGS.logo_url);
     }
     return DEFAULT_PLATFORM_SETTINGS;
   });
@@ -86,9 +129,17 @@ export const PlatformSettingsProvider: React.FC<{ children: ReactNode }> = ({ ch
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
         window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: fresh }));
+
+        // BroadcastChannel for instant inter-tab zero-latency sync
+        if ('BroadcastChannel' in window) {
+          const bc = new BroadcastChannel(BROADCAST_CHANNEL_NAME);
+          bc.postMessage(fresh);
+          bc.close();
+        }
       } catch (e) {
         console.warn('Failed to cache platform settings:', e);
       }
+      updateDomBrandAssets(fresh.platform_title, fresh.logo_url);
     }
   }, []);
 
@@ -154,13 +205,33 @@ export const PlatformSettingsProvider: React.FC<{ children: ReactNode }> = ({ ch
     const handleLocalChange = (e: any) => {
       if (e.detail) {
         setSettings(e.detail);
+        updateDomBrandAssets(e.detail.platform_title, e.detail.logo_url);
       }
     };
     window.addEventListener(EVENT_NAME, handleLocalChange);
 
+    // 3. BroadcastChannel listener for zero-latency cross-tab synchronization
+    let broadcastChannel: BroadcastChannel | null = null;
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        broadcastChannel = new BroadcastChannel(BROADCAST_CHANNEL_NAME);
+        broadcastChannel.onmessage = (event) => {
+          if (event.data && typeof event.data === 'object') {
+            setSettings(event.data);
+            updateDomBrandAssets(event.data.platform_title, event.data.logo_url);
+          }
+        };
+      } catch (e) {
+        console.warn('Failed to initialize BroadcastChannel:', e);
+      }
+    }
+
     return () => {
       supabase.removeChannel(channel);
       window.removeEventListener(EVENT_NAME, handleLocalChange);
+      if (broadcastChannel) {
+        broadcastChannel.close();
+      }
     };
   }, [refreshSettings, applySettingsLocally]);
 

@@ -23,6 +23,8 @@ import { StudentProfileView } from './components/StudentProfileView';
 import { ProfileView } from './components/ProfileView';
 import { MilestoneCelebrationModal } from './components/MilestoneCelebrationModal';
 import { FloatingDesmosWidget } from './components/FloatingDesmosWidget';
+import { PwaInstallPrompt } from './components/pwa/PwaInstallPrompt';
+import { PwaSplashScreen } from './components/pwa/PwaSplashScreen';
 import { VocabTrainerModal } from './components/VocabTrainerModal';
 import { VocabFlashcards } from './components/VocabFlashcards';
 import { VocabularyHub } from './components/vocabulary/VocabularyHub';
@@ -1837,6 +1839,12 @@ export default function App() {
           globalSettings={globalSettings}
         />
       )}
+
+      {/* PWA Standalone Launch Splash Screen */}
+      <PwaSplashScreen />
+
+      {/* PWA Automatic Install Prompt */}
+      <PwaInstallPrompt />
     </div>
   );
 }

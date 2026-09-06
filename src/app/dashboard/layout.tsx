@@ -8,6 +8,8 @@ import { Header } from '../../components/navigation/Header';
 import { BottomNav } from '../../components/navigation/BottomNav';
 import { Sidebar, SIDEBAR_ITEMS, type NavItem } from '../../components/navigation/Sidebar';
 import { GlobalSearchModal } from '../../components/chat/GlobalSearchModal';
+import { PwaInstallPrompt } from '../../components/pwa/PwaInstallPrompt';
+import { PwaSplashScreen } from '../../components/pwa/PwaSplashScreen';
 import { supabase } from '../../lib/supabase';
 import { PlatformSettingsProvider, usePlatformSettings } from '../../contexts/PlatformSettingsContext';
 
@@ -278,6 +280,12 @@ function DashboardLayoutContent({
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
       />
+
+      {/* 6. PWA Standalone Launch Splash Screen */}
+      <PwaSplashScreen />
+
+      {/* 7. PWA Automatic Install Prompt */}
+      <PwaInstallPrompt />
     </div>
   );
 }

@@ -56,8 +56,9 @@ export default function LoginPage() {
         localStorage.setItem('aura_sat_auth_user', JSON.stringify(appUser));
       }
 
-      // Success -> redirect
+      // Force client navigation to dashboard
       router.push('/dashboard');
+      router.refresh();
       if (typeof window !== 'undefined') {
         window.location.href = '/dashboard';
       }
@@ -72,11 +73,15 @@ export default function LoginPage() {
     setIsGoogleLoading(true);
     setErrorMessage(null);
     try {
-      const redirectUrl = typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : '';
+      const redirectUrl = typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : '';
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: redirectUrl,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         },
       });
 

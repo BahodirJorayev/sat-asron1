@@ -5,12 +5,51 @@ import {
   Check, Radio, AlertTriangle, Image as ImageIcon,
   Plus, Trash2, Eye, ExternalLink, Sliders, ToggleLeft, ToggleRight,
   HelpCircle, MessageSquare, Flame, CheckCircle, ArrowUpDown, ChevronDown, ChevronUp,
-  Lock, KeyRound, ShieldCheck
+  Lock, KeyRound, ShieldCheck, Layers, FileText, BookOpen, AlertCircle, Users
 } from 'lucide-react';
 import { GlobalPlatformSettings, UserTestimonial } from '../types';
 import { uploadBrandAsset, saveGlobalPlatformSettings, DEFAULT_GLOBAL_SETTINGS } from '../lib/adminApi';
 import { AsronLogo } from './AsronLogo';
 import { AdminCredentials } from '../data/blogAndBrandingData';
+import { usePlatformSettings, ModuleStatuses, ModuleVisibility } from '../hooks/usePlatformSettings';
+
+const MODULE_CONFIGS: {
+  key: keyof ModuleStatuses;
+  title: string;
+  description: string;
+  icon: any;
+}[] = [
+  {
+    key: 'questions',
+    title: "Savollar Banki (Question Bank)",
+    description: "Mashq savollari, SQB bazasi va Sokratik repetitor",
+    icon: Layers,
+  },
+  {
+    key: 'mocks',
+    title: "Mock Testlar (Adaptive Bluebook)",
+    description: "Rasmiy formatdagi to'liq adaptiv testlar va avtomatik ball hisoblash",
+    icon: FileText,
+  },
+  {
+    key: 'vocabulary',
+    title: "SAT Lug'at (Vocab Trainer)",
+    description: "1200+ SAT so'zlar bazasi, kitoblar va talaffuzli fleshkartalar",
+    icon: BookOpen,
+  },
+  {
+    key: 'mistakes',
+    title: "Xatolar Ombori (Mistake Vault)",
+    description: "3 bosqichli oraliqli takrorlash (Leitner) va xatolar tahlili",
+    icon: AlertCircle,
+  },
+  {
+    key: 'community',
+    title: "Hamjamiyat (Community Hub & Chat)",
+    description: "Jonli o'quvchilar chati, umumiy kanallar va muhokamalar",
+    icon: Users,
+  },
+];
 
 interface AdminGlobalSettingsProps {
   globalSettings: GlobalPlatformSettings;
@@ -29,10 +68,23 @@ export const AdminGlobalSettings: React.FC<AdminGlobalSettingsProps> = ({
   adminCredentials,
   onUpdateAdminCredentials,
 }) => {
+  const { settings: liveSettings, updateSettings } = usePlatformSettings();
   const [form, setForm] = useState<GlobalPlatformSettings>(globalSettings || DEFAULT_GLOBAL_SETTINGS);
+  const [platformTitle, setPlatformTitle] = useState<string>(liveSettings.platform_title || globalSettings?.platformName || 'ASRON SAT');
+  const [logoUrl, setLogoUrl] = useState<string>(liveSettings.logo_url || globalSettings?.logoUrl || '');
+  const [modulesStatus, setModulesStatus] = useState<ModuleStatuses>(
+    liveSettings.modules_status || {
+      questions: 'active',
+      mocks: 'active',
+      vocabulary: 'active',
+      mistakes: 'active',
+      community: 'active',
+    }
+  );
+
   const [saveStatus, setSaveStatus] = useState<'IDLE' | 'SAVING' | 'SAVED' | 'ERROR'>('IDLE');
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
-  const [activeSubSection, setActiveSubSection] = useState<'brand' | 'landing' | 'faqs' | 'testimonials' | 'killswitches' | 'security'>('brand');
+  const [activeSubSection, setActiveSubSection] = useState<'brand' | 'modules' | 'landing' | 'faqs' | 'testimonials' | 'killswitches' | 'security'>('brand');
 
   // Admin Credentials State
   const [currentPassword, setCurrentPassword] = useState('');
@@ -46,6 +98,14 @@ export const AdminGlobalSettings: React.FC<AdminGlobalSettingsProps> = ({
       setNewAdminLogin(adminCredentials.adminUser);
     }
   }, [adminCredentials]);
+
+  useEffect(() => {
+    if (liveSettings) {
+      if (liveSettings.platform_title) setPlatformTitle(liveSettings.platform_title);
+      if (liveSettings.logo_url !== undefined) setLogoUrl(liveSettings.logo_url || '');
+      if (liveSettings.modules_status) setModulesStatus(liveSettings.modules_status);
+    }
+  }, [liveSettings]);
 
   // FAQ CRUD State
   const [newFaqQ, setNewFaqQ] = useState('');
@@ -69,8 +129,22 @@ export const AdminGlobalSettings: React.FC<AdminGlobalSettingsProps> = ({
   const handleSave = async () => {
     setSaveStatus('SAVING');
     try {
-      const updated = await saveGlobalPlatformSettings(form);
+      // 1. Direct Supabase mutation to public.platform_settings and instant realtime broadcast across all tabs/devices
+      await updateSettings({
+        platform_title: platformTitle.trim() || 'ASRON SAT',
+        logo_url: logoUrl.trim() || null,
+        modules_status: modulesStatus,
+      });
+
+      // 2. Persist legacy GlobalPlatformSettings for compatibility
+      const updatedForm: GlobalPlatformSettings = {
+        ...form,
+        platformName: platformTitle.trim() || 'ASRON SAT',
+        logoUrl: logoUrl.trim() || undefined,
+      };
+      const updated = await saveGlobalPlatformSettings(updatedForm);
       onSaveSettings(updated);
+
       setSaveStatus('SAVED');
       setTimeout(() => setSaveStatus('IDLE'), 2800);
     } catch (e) {
@@ -88,6 +162,7 @@ export const AdminGlobalSettings: React.FC<AdminGlobalSettingsProps> = ({
     try {
       const { url } = await uploadBrandAsset(file);
       if (url) {
+        setLogoUrl(url);
         setForm((prev) => ({ ...prev, logoUrl: url }));
       }
     } catch (err) {
@@ -237,11 +312,12 @@ export const AdminGlobalSettings: React.FC<AdminGlobalSettingsProps> = ({
       <div className="flex items-center gap-1.5 overflow-x-auto p-1 rounded-xl bg-[#121A2F] border border-[#1E293B]">
         {[
           { id: 'brand', label: '1. Brand Identity & Header' },
-          { id: 'landing', label: '2. Landing Copy & Announcement' },
-          { id: 'faqs', label: `3. FAQ Matrix (${form.faqs?.length || 0})` },
-          { id: 'testimonials', label: `4. Testimonials (${form.testimonials?.length || 0})` },
-          { id: 'killswitches', label: '5. Emergency Kill-Switches' },
-          { id: 'security', label: '6. Xavfsizlik & Parollar' },
+          { id: 'modules', label: "2. Bo'limlar Boshqaruvi (Visibility)" },
+          { id: 'landing', label: '3. Landing Copy & Announcement' },
+          { id: 'faqs', label: `4. FAQ Matrix (${form.faqs?.length || 0})` },
+          { id: 'testimonials', label: `5. Testimonials (${form.testimonials?.length || 0})` },
+          { id: 'killswitches', label: '6. Emergency Kill-Switches' },
+          { id: 'security', label: '7. Xavfsizlik & Parollar' },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -273,8 +349,11 @@ export const AdminGlobalSettings: React.FC<AdminGlobalSettingsProps> = ({
                 <label className="text-[11px] font-mono text-[#64748B] uppercase">Platform Title</label>
                 <input
                   type="text"
-                  value={form.platformName}
-                  onChange={(e) => setForm({ ...form, platformName: e.target.value })}
+                  value={platformTitle}
+                  onChange={(e) => {
+                    setPlatformTitle(e.target.value);
+                    setForm({ ...form, platformName: e.target.value });
+                  }}
                   placeholder="ASRON SAT"
                   className="w-full px-3 py-2 rounded-lg bg-[#0A0F1D] border border-[#1E293B] text-xs font-mono text-[#F8FAFC] focus:outline-hidden focus:border-[#E07A5F]"
                 />
@@ -322,15 +401,15 @@ export const AdminGlobalSettings: React.FC<AdminGlobalSettingsProps> = ({
             <div className="space-y-3">
               <div className="flex items-center gap-4 p-4 rounded-xl bg-[#0A0F1D] border border-[#1E293B]">
                 <div className="w-16 h-16 rounded-lg bg-[#121A2F] border border-[#1E293B] flex items-center justify-center p-2 shrink-0">
-                  {form.logoUrl && form.logoUrl !== '/brand/logo.svg' ? (
-                    <img src={form.logoUrl} alt="Logo" className="w-full h-full object-contain" />
+                  {logoUrl && logoUrl !== '/brand/logo.svg' ? (
+                    <img src={logoUrl} alt="Logo" className="w-full h-full object-contain" />
                   ) : (
                     <AsronLogo size={40} showText={false} />
                   )}
                 </div>
                 <div className="space-y-1.5 flex-1 min-w-0">
                   <div className="text-xs font-mono font-bold text-[#F8FAFC] truncate">
-                    {form.platformName || 'ASRON SAT'}
+                    {platformTitle || 'ASRON SAT'}
                   </div>
                   <div className="text-[10px] font-mono text-[#64748B] truncate">
                     Live Navbar & Header Preview
@@ -356,11 +435,139 @@ export const AdminGlobalSettings: React.FC<AdminGlobalSettingsProps> = ({
                 <label className="text-[11px] font-mono text-[#64748B] uppercase">Direct Logo URL</label>
                 <input
                   type="text"
-                  value={form.logoUrl || ''}
-                  onChange={(e) => setForm({ ...form, logoUrl: e.target.value })}
+                  value={logoUrl}
+                  onChange={(e) => {
+                    setLogoUrl(e.target.value);
+                    setForm({ ...form, logoUrl: e.target.value });
+                  }}
                   placeholder="https://.../brand-logo.svg"
                   className="w-full px-3 py-2 rounded-lg bg-[#0A0F1D] border border-[#1E293B] text-xs font-mono text-[#F8FAFC] focus:outline-hidden focus:border-[#E07A5F]"
                 />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SUB-SECTION 2: MODULES VISIBILITY GOVERNANCE */}
+      {activeSubSection === 'modules' && (
+        <div className="space-y-6">
+          <div className="p-6 rounded-2xl bg-[#121A2F] border border-[#1E293B] space-y-6">
+            <div className="border-b border-[#1E293B] pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-mono font-bold text-[#F8FAFC] uppercase tracking-wider flex items-center gap-2">
+                  <Sliders className="w-4 h-4 text-[#E07A5F]" />
+                  <span>Bo'limlar Boshqaruvi (Module Governance)</span>
+                </h3>
+                <p className="text-xs text-[#94A3B8] mt-1">
+                  Har bir bo'limning ko'rinishi va kirish holatini boshqaring. O'zgarishlar barcha foydalanuvchilarda darhol aks etadi.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-[11px] font-mono text-[#64748B]">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span>Real-time Sync Active</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              {MODULE_CONFIGS.map((cfg) => {
+                const IconComponent = cfg.icon;
+                const currentStatus: ModuleVisibility = modulesStatus[cfg.key] || 'active';
+
+                return (
+                  <div
+                    key={cfg.key}
+                    className="p-4 rounded-xl bg-[#0A0F1D] border border-[#1E293B] hover:border-[#334155] transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
+                  >
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <div className="w-10 h-10 rounded-lg bg-[#121A2F] border border-[#1E293B] flex items-center justify-center shrink-0 text-[#E07A5F]">
+                        <IconComponent className="w-5 h-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-xs font-mono font-bold text-[#F8FAFC] truncate">
+                            {cfg.title}
+                          </h4>
+                          {currentStatus === 'locked' && (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1">
+                              <Lock className="w-2.5 h-2.5" />
+                              Qulflangan
+                            </span>
+                          )}
+                          {currentStatus === 'hidden' && (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-slate-500/10 text-slate-400 border border-slate-500/20">
+                              O'chirilgan
+                            </span>
+                          )}
+                          {currentStatus === 'active' && (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                              Faol
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-[#64748B] truncate mt-0.5">
+                          {cfg.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* 3-Way Segmented Control */}
+                    <div className="flex items-center p-1 rounded-lg bg-[#121A2F] border border-[#1E293B] shrink-0 self-start md:self-center">
+                      <button
+                        type="button"
+                        onClick={() => setModulesStatus(prev => ({ ...prev, [cfg.key]: 'active' }))}
+                        className={`px-3 py-1.5 rounded-md text-xs font-mono font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+                          currentStatus === 'active'
+                            ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-xs'
+                            : 'text-[#64748B] hover:text-[#94A3B8]'
+                        }`}
+                      >
+                        <CheckCircle className="w-3.5 h-3.5" />
+                        <span>Faol</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setModulesStatus(prev => ({ ...prev, [cfg.key]: 'locked' }))}
+                        className={`px-3 py-1.5 rounded-md text-xs font-mono font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+                          currentStatus === 'locked'
+                            ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30 shadow-xs'
+                            : 'text-[#64748B] hover:text-[#94A3B8]'
+                        }`}
+                      >
+                        <Lock className="w-3.5 h-3.5" />
+                        <span>Qulflangan</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setModulesStatus(prev => ({ ...prev, [cfg.key]: 'hidden' }))}
+                        className={`px-3 py-1.5 rounded-md text-xs font-mono font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+                          currentStatus === 'hidden'
+                            ? 'bg-slate-500/15 text-slate-300 border border-slate-500/30 shadow-xs'
+                            : 'text-[#64748B] hover:text-[#94A3B8]'
+                        }`}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>O'chirilgan</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Governance Guide Note */}
+            <div className="p-3.5 rounded-xl bg-[#0A0F1D] border border-[#1E293B] text-[11px] font-mono text-[#64748B] space-y-1">
+              <div className="text-slate-400 font-semibold">Ko'rsatma:</div>
+              <div className="flex items-center gap-2">
+                <span className="text-emerald-400 font-bold">• Faol (Active):</span> Bo'lim menyularda to'liq ko'rinadi va foydalanuvchilar undan foydalana oladi.
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-amber-400 font-bold">• Qulflangan (Locked):</span> Menyuda qulf belgisi bilan ko'rinadi, bosilganda "Ushbu bo'limda yangilanish ishlari olib borilmoqda. Tez orada qayta ishga tushadi." xabari chiqadi.
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-slate-400 font-bold">• O'chirilgan (Hidden):</span> Desktop Sidebar, Mobile Header va Mobile BottomNav menyularidan to'liq yashiriladi.
               </div>
             </div>
           </div>

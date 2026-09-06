@@ -14,7 +14,9 @@ import {
   PanelLeftOpen,
   LogOut,
   ShieldAlert,
+  Lock,
 } from 'lucide-react';
+import { usePlatformSettings } from '../../hooks/usePlatformSettings';
 
 export interface NavItem {
   id: string;
@@ -97,6 +99,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   user,
 }) => {
   const pathname = usePathname() || currentPath || '/dashboard';
+  const { settings, isModuleHidden, isModuleLocked, showLockedNotice } = usePlatformSettings();
   const [internalCollapsed, setInternalCollapsed] = useState(false);
 
   const isCollapsed = controlledCollapsed !== undefined ? controlledCollapsed : internalCollapsed;
@@ -132,13 +135,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
           href="/dashboard"
           className="flex items-center gap-3 min-w-0 group cursor-pointer"
         >
-          <div className="w-9 h-9 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-center font-mono font-bold text-[#E07A5F] text-base shrink-0 group-hover:border-[#E07A5F]/60 transition-colors shadow-2xs">
-            Σ
-          </div>
+          {settings.logo_url ? (
+            <img
+              src={settings.logo_url}
+              alt="Logo"
+              className="w-9 h-9 rounded-xl object-cover border border-[#E2E8F0] dark:border-[#1E293B] shrink-0 shadow-2xs"
+            />
+          ) : (
+            <div className="w-9 h-9 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-center font-mono font-bold text-[#E07A5F] text-base shrink-0 group-hover:border-[#E07A5F]/60 transition-colors shadow-2xs">
+              Σ
+            </div>
+          )}
           {!isCollapsed && (
             <div className="min-w-0 leading-tight">
               <div className="text-sm font-bold tracking-tight text-[#0F172A] dark:text-[#F8FAFC] truncate">
-                ASRON SAT
+                {settings.platform_title || 'ASRON SAT'}
+              </div>
+              <div className="text-[10px] text-[#64748B] dark:text-[#94A3B8] truncate font-mono">
+                {settings.tagline || 'Digital SAT Platform'}
               </div>
             </div>
           )}
@@ -162,8 +176,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         )}
 
-        {EXACT_SIDEBAR_ITEMS.map((item) => {
+        {EXACT_SIDEBAR_ITEMS.filter(
+          (item) => item.id === 'dashboard' || !isModuleHidden(item.id as any)
+        ).map((item) => {
           const Icon = item.icon;
+          const isLocked = item.id !== 'dashboard' && isModuleLocked(item.id as any);
           const isCurrentActive = () => {
             if (activeTab) {
               if (activeTab === item.id) return true;
@@ -185,13 +202,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
           return (
             <div key={item.id} className="relative group">
               <Link
-                href={item.href}
-                onClick={() => {
+                href={isLocked ? '#' : item.href}
+                onClick={(e) => {
+                  if (isLocked) {
+                    e.preventDefault();
+                    showLockedNotice(item.label);
+                    return;
+                  }
                   if (setActiveTab) {
                     setActiveTab(item.id);
                   }
                 }}
-                title={isCollapsed ? item.label : undefined}
+                title={isCollapsed ? (isLocked ? `${item.label} (Qulflangan)` : item.label) : undefined}
                 className={`relative flex items-center gap-3 ${
                   isCollapsed ? 'justify-center h-10 w-10 mx-auto' : 'px-3 py-2.5'
                 } rounded-xl text-xs font-medium transition-all duration-150 cursor-pointer ${
@@ -214,7 +236,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 />
 
                 {!isCollapsed && (
-                  <span className="truncate tracking-tight">{item.label}</span>
+                  <span className="truncate tracking-tight flex-1">{item.label}</span>
+                )}
+
+                {/* Lock Badge */}
+                {isLocked && (
+                  isCollapsed ? (
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white dark:ring-[#121A2F]" />
+                  ) : (
+                    <Lock size={12} className="text-amber-500 shrink-0" />
+                  )
                 )}
               </Link>
 

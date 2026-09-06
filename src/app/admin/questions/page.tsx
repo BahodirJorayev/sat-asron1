@@ -124,8 +124,8 @@ export default function AdminQuestionsPage() {
             </Link>
           </div>
 
-          <div className="flex items-center gap-2 text-xs font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-lg">
-            <Database className="w-3.5 h-3.5" />
+          <div className="flex items-center gap-2 text-xs font-mono text-slate-400 bg-[#121A2F] border border-slate-700/50 px-2.5 py-1 rounded-lg">
+            <Database className="w-3.5 h-3.5 text-slate-400" />
             <span>{syncStatus}</span>
           </div>
         </div>

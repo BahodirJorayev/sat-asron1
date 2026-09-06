@@ -234,8 +234,8 @@ export default function AdminPage() {
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Dashboardga qaytish</span>
           </Link>
-          <div className="flex items-center gap-2 text-xs font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-lg">
-            <Radio className="w-3.5 h-3.5 animate-pulse text-emerald-500" />
+          <div className="flex items-center gap-2 text-xs font-mono text-slate-400 bg-[#121A2F] border border-slate-700/50 px-2.5 py-1 rounded-lg">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             <span>Supabase Cloud Sync: Faol</span>
           </div>
         </div>

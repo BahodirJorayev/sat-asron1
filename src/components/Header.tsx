@@ -28,6 +28,7 @@ import { User, PlanTier } from '../types';
 import { SiteBrandingConfig } from '../data/blogAndBrandingData';
 import { ThemeToggle } from './ThemeToggle';
 import { AsronLogo } from './AsronLogo';
+import { usePlatformSettings } from '../hooks/usePlatformSettings';
 
 interface Props {
   user: User;
@@ -63,9 +64,10 @@ export const Header: React.FC<Props> = ({
   unreadAlertCount,
 }) => {
   const isPro = user.planTier === 'PRO';
+  const { settings } = usePlatformSettings();
 
-  const brandName = siteBranding?.brandName || 'ASRON SAT';
-  const brandTagline = siteBranding?.brandTagline || 'Digital SAT Platform';
+  const brandName = settings.platform_title || siteBranding?.brandName || 'ASRON SAT';
+  const brandTagline = settings.tagline || siteBranding?.brandTagline || 'Digital SAT Platform';
   const logoIcon = siteBranding?.logoIcon || 'Σ';
   const isLandingOrBlog = activeTab === 'landing' || activeTab === 'blog';
 
@@ -91,7 +93,15 @@ export const Header: React.FC<Props> = ({
               onClick={() => setActiveTab('landing')}
               className="flex items-center gap-2.5 cursor-pointer select-none"
             >
-              <AsronLogo size={32} variant="mark-only" />
+              {settings.logo_url ? (
+                <img
+                  src={settings.logo_url}
+                  alt="Logo"
+                  className="w-8 h-8 rounded-lg object-cover border border-slate-200 dark:border-slate-800 shrink-0 shadow-2xs"
+                />
+              ) : (
+                <AsronLogo size={32} variant="mark-only" />
+              )}
               <div>
                 <div className="text-sm sm:text-base font-extrabold text-[#0F172A] dark:text-[#F8FAFC] tracking-tight leading-none flex items-center gap-1.5">
                   <span>{brandName}</span>

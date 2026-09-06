@@ -9,7 +9,9 @@ import {
   FileText,
   BookOpen,
   AlertCircle,
+  Lock,
 } from 'lucide-react';
+import { usePlatformSettings } from '../../hooks/usePlatformSettings';
 
 export interface BottomNavProps {
   activeTab?: string;
@@ -57,6 +59,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   setActiveTab,
 }) => {
   const pathname = usePathname() || '';
+  const { isModuleHidden, isModuleLocked, showLockedNotice } = usePlatformSettings();
   const [isChatOpen, setIsChatOpen] = React.useState(false);
 
   React.useEffect(() => {
@@ -95,15 +98,21 @@ export const BottomNav: React.FC<BottomNavProps> = ({
       aria-label="Mobil Navigatsiya"
       className="md:hidden fixed bottom-3 left-4 right-4 z-50 mx-auto max-w-sm rounded-full h-14 bg-white/75 dark:bg-[#0D1527]/75 backdrop-blur-2xl border border-white/40 dark:border-white/10 shadow-[0_10px_35px_rgba(0,0,0,0.08)] dark:shadow-[0_10px_35px_rgba(0,0,0,0.4)] flex items-center justify-around px-2 select-none transition-all duration-200"
     >
-      {navItems.map((item) => {
+      {navItems.filter(item => item.id === 'dashboard' || !isModuleHidden(item.id as any)).map((item) => {
         const Icon = item.icon;
         const isActive = isCurrentActive(item);
+        const isLocked = item.id !== 'dashboard' && isModuleLocked(item.id as any);
 
         return (
           <Link
             key={item.href}
-            href={item.href}
-            onClick={() => {
+            href={isLocked ? '#' : item.href}
+            onClick={(e) => {
+              if (isLocked) {
+                e.preventDefault();
+                showLockedNotice(item.label);
+                return;
+              }
               if (setActiveTab) {
                 setActiveTab(item.id);
               }
@@ -125,6 +134,13 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                 {/* Active pip */}
                 {isActive && (
                   <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#E07A5F]" />
+                )}
+
+                {/* Lock indicator */}
+                {isLocked && (
+                  <span className="absolute -top-1 -right-1.5 w-2.5 h-2.5 rounded-full bg-amber-500 ring-2 ring-white dark:ring-[#0D1527] flex items-center justify-center text-[7px] text-white">
+                    <Lock size={6} />
+                  </span>
                 )}
               </div>
 

@@ -38,6 +38,7 @@ import { AdminPlatformCMS } from './AdminPlatformCMS';
 import { AdminNewsCMS } from './AdminNewsCMS';
 import { AdminErrorBoundary } from './AdminErrorBoundary';
 import AdminVocabularyPage from '../app/admin/vocabulary/page';
+import { usePlatformSettings } from '../hooks/usePlatformSettings';
 
 import { INITIAL_SAT_DESMOS_HACKS } from '../data/desmosHacksData';
 import { SiteBrandingConfig, AdminCredentials, BlogArticle, UserTestimonial } from '../data/blogAndBrandingData';
@@ -132,6 +133,9 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
   onNavigateToStudentView,
   onRefreshGlobal,
 }) => {
+  const { settings: platformSettings } = usePlatformSettings();
+  const displayTitle = platformSettings?.platform_title || globalSettings?.platformName || 'ASRON SAT';
+
   // Main Navigation: Core Admin Sections
   const [activeAdminTab, setActiveAdminTab] = useState<string>('dashboard');
 
@@ -159,14 +163,14 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
     },
     {
       id: 'questions',
-      label: 'Savollar banki',
+      label: 'Savollar banki (CMS)',
       icon: <Terminal className="w-4 h-4" />,
       count: questions.length,
     },
     {
       id: 'mocks',
-      label: 'Mock testlar & Kategoriyalar',
-      icon: <BookOpen className="w-4 h-4" />,
+      label: 'Mock Testlar (CMS)',
+      icon: <FileText className="w-4 h-4" />,
       count: mockTests.length,
     },
     {
@@ -176,7 +180,7 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
       count: usersList.length,
     },
     {
-      id: 'vocabulary',
+      id: 'vocab',
       label: 'Lug\'at CMS',
       icon: <Sparkles className="w-4 h-4" />,
     },
@@ -192,30 +196,22 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
   return (
     <div
       id="admin-panel-view"
-      className="flex flex-col lg:flex-row min-h-[calc(100vh-6rem)] bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#0F172A] dark:text-[#F8FAFC] rounded-2xl overflow-hidden border border-[#E2E8F0] dark:border-[#1E293B] shadow-xs font-sans"
+      className="flex flex-col lg:flex-row min-h-[calc(100vh-6rem)] bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#0F172A] dark:text-[#F8FAFC] rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-xs font-sans"
     >
       {/* LEFT ADMIN SIDEBAR PANEL */}
-      <aside className="w-full lg:w-64 bg-white dark:bg-[#121A2F] border-b lg:border-b-0 lg:border-r border-[#E2E8F0] dark:border-[#1E293B] flex flex-col justify-between shrink-0 p-4 space-y-4">
+      <aside className="w-full lg:w-64 bg-white dark:bg-[#121A2F] border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between shrink-0 p-4 space-y-4">
         {/* Admin Header */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-[#0F172A] text-white shadow-xs">
-            <div className="p-1.5 rounded-lg bg-[#E07A5F]/20 border border-[#E07A5F]/40 text-[#E07A5F] shrink-0">
-              <ShieldCheck className="w-5 h-5" />
+        <div className="space-y-2 pb-3 border-b border-slate-200 dark:border-slate-800">
+          <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg">
+            <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 flex items-center justify-center shrink-0 text-slate-700 dark:text-slate-300">
+              <ShieldCheck className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <div className="text-xs font-extrabold tracking-wider text-[#E07A5F] uppercase truncate">
-                {globalSettings.platformName || 'ASRON SAT'}
+              <div className="text-xs font-semibold tracking-tight text-slate-900 dark:text-slate-100 truncate">
+                {displayTitle}
               </div>
-              <div className="text-[11px] text-slate-300 font-mono truncate">Admin Boshqaruv Markazi</div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate">Admin Console</div>
             </div>
-          </div>
-
-          <div className="px-3 py-1.5 flex items-center justify-between text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-            <span className="flex items-center gap-1.5">
-              <Radio className="w-3.5 h-3.5 animate-pulse text-emerald-500" />
-              <span>Jonli Tizim</span>
-            </span>
-            <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold">SUPER ADMIN</span>
           </div>
         </div>
 
@@ -258,12 +254,12 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
         </nav>
 
         {/* Bottom Action: Return to Student View */}
-        <div className="pt-2 border-t border-[#E2E8F0] dark:border-[#1E293B]">
+        <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
           {onNavigateToStudentView && (
             <button
               id="btn-switch-to-student-view"
               onClick={onNavigateToStudentView}
-              className="w-full py-2.5 px-3 rounded-xl bg-[#F1F5F9] dark:bg-[#1E293B] hover:bg-[#E2E8F0] dark:hover:bg-[#334155] text-[#0F172A] dark:text-[#F8FAFC] text-xs font-mono font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-xs"
+              className="w-full py-2.5 px-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100 text-xs font-mono font-medium flex items-center justify-center gap-2 transition-colors cursor-pointer"
             >
               <Eye className="w-3.5 h-3.5 text-[#E07A5F]" />
               <span>O'quvchi Rejimiga O'tish</span>
@@ -275,25 +271,25 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
       {/* RIGHT MAIN WORKSPACE AREA */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Workspace Top Bar */}
-        <header className="h-16 px-6 bg-white dark:bg-[#121A2F] border-b border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-between shrink-0">
+        <header className="h-14 px-6 bg-white dark:bg-[#121A2F] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] text-[#E07A5F]">
+            <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[#E07A5F]">
               {currentTabInfo.icon}
             </div>
             <div>
-              <h1 className="text-sm sm:text-base font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+              <h1 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                 {currentTabInfo.label}
               </h1>
-              <p className="text-[11px] font-mono text-[#64748B] dark:text-[#94A3B8]">
-                ASRON SAT Boshqaruv Portali
+              <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                {displayTitle} Boshqaruv Portali
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3 text-xs font-mono">
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] text-[#64748B] dark:text-[#94A3B8]">
-              <span>Admin:</span>
-              <span className="font-bold text-[#0F172A] dark:text-[#F8FAFC]">{currentUser.fullName || 'Bahodir'}</span>
+            <div className="hidden sm:flex items-center gap-2.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">
+              <span className="text-slate-400">Admin:</span>
+              <span className="font-medium text-slate-900 dark:text-slate-100">{currentUser.fullName || 'Bahodir'}</span>
             </div>
           </div>
         </header>

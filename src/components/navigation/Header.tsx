@@ -10,9 +10,11 @@ import {
   ChevronDown,
   LogOut,
   Menu,
+  Lock,
 } from 'lucide-react';
 import { GlobalSearchModal } from '../chat/GlobalSearchModal';
 import { supabase } from '../../lib/supabase';
+import { usePlatformSettings } from '../../hooks/usePlatformSettings';
 
 export interface HeaderProps {
   onOpenMobileDrawer?: () => void;
@@ -38,6 +40,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const router = useRouter();
   const pathname = usePathname() || '';
+  const { settings, isModuleHidden, isModuleLocked, showLockedNotice } = usePlatformSettings();
   const [currentUser, setCurrentUser] = useState<{
     fullName?: string;
     username?: string;
@@ -209,32 +212,40 @@ export const Header: React.FC<HeaderProps> = ({
             </span>
           </Link>
 
-          {/* DESKTOP VIEWPORT: Clean Brand Logo & Mark (Hidden on Mobile) */}
+          {/* DESKTOP VIEWPORT: Dynamic Brand Logo & Mark (Hidden on Mobile) */}
           <Link
             href="/dashboard"
             onClick={() => setActiveTab?.('dashboard')}
             className="hidden md:flex items-center gap-2.5 group cursor-pointer"
           >
-            <div className="w-8 h-8 rounded-xl bg-[#0B1B3D] dark:bg-[#0F172A] border border-slate-800 dark:border-[#1E293B] flex items-center justify-center text-white shrink-0 group-hover:border-[#E07A5F]/60 transition-colors shadow-2xs">
-              <svg
-                viewBox="0 0 100 100"
-                className="w-4 h-4 text-[#E07A5F] fill-current"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <rect x="32" y="21" width="11" height="40" rx="5.5" transform="rotate(-45 32 21)" />
-                <rect x="55" y="36" width="11" height="26" rx="5.5" transform="rotate(-45 55 36)" />
-                <path
-                  d="M38.5 56.5L49.5 45.5C50.3 44.7 51.7 44.7 52.5 45.5L63.5 56.5"
-                  stroke="currentColor"
-                  strokeWidth="11"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
+            {settings.logo_url ? (
+              <img
+                src={settings.logo_url}
+                alt="Logo"
+                className="w-8 h-8 rounded-lg object-cover border border-slate-200 dark:border-slate-800 shrink-0 shadow-2xs"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-xl bg-[#0B1B3D] dark:bg-[#0F172A] border border-slate-800 dark:border-[#1E293B] flex items-center justify-center text-white shrink-0 group-hover:border-[#E07A5F]/60 transition-colors shadow-2xs">
+                <svg
+                  viewBox="0 0 100 100"
+                  className="w-4 h-4 text-[#E07A5F] fill-current"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <rect x="32" y="21" width="11" height="40" rx="5.5" transform="rotate(-45 32 21)" />
+                  <rect x="55" y="36" width="11" height="26" rx="5.5" transform="rotate(-45 55 36)" />
+                  <path
+                    d="M38.5 56.5L49.5 45.5C50.3 44.7 51.7 44.7 52.5 45.5L63.5 56.5"
+                    stroke="currentColor"
+                    strokeWidth="11"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+            )}
             <span className="font-bold tracking-tight text-lg text-slate-900 dark:text-white">
-              ASRON <span className="text-[#E07A5F]">SAT</span>
+              {settings.platform_title || 'ASRON SAT'}
             </span>
           </Link>
         </div>
@@ -254,18 +265,30 @@ export const Header: React.FC<HeaderProps> = ({
             <Search size={17} />
           </button>
 
-          {/* Dedicated Mobile-only Hamjamiyat (Community) Action Button (Navigates to /chat) */}
-          <Link
-            href="/chat"
-            onClick={() => {
-              if (setActiveTab) setActiveTab('community');
-            }}
-            aria-label="Hamjamiyat"
-            title="Hamjamiyat"
-            className="flex md:hidden w-9 h-9 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white border border-slate-200/50 dark:border-slate-700/50 active:scale-95 transition-transform cursor-pointer"
-          >
-            <Users size={17} />
-          </Link>
+          {/* Dedicated Mobile-only Hamjamiyat (Community) Action Button */}
+          {!isModuleHidden('community') && (
+            <button
+              type="button"
+              onClick={() => {
+                if (isModuleLocked('community')) {
+                  showLockedNotice('Hamjamiyat');
+                  return;
+                }
+                if (setActiveTab) setActiveTab('community');
+                else router.push('/chat');
+              }}
+              aria-label="Hamjamiyat"
+              title="Hamjamiyat"
+              className="relative flex md:hidden w-9 h-9 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white border border-slate-200/50 dark:border-slate-700/50 active:scale-95 transition-transform cursor-pointer"
+            >
+              <Users size={17} />
+              {isModuleLocked('community') && (
+                <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-amber-500 rounded-full flex items-center justify-center text-white text-[8px] shadow-xs">
+                  <Lock size={8} />
+                </span>
+              )}
+            </button>
+          )}
 
           {/* Desktop-only Profile Menu */}
           <div className="relative hidden md:block" ref={profileMenuRef}>

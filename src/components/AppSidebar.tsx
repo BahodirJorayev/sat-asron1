@@ -9,10 +9,12 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   ShieldAlert,
+  Lock,
 } from 'lucide-react';
 import { User } from '../types';
 import { SiteBrandingConfig } from '../data/blogAndBrandingData';
 import { SidebarFooter } from './SidebarFooter';
+import { usePlatformSettings } from '../hooks/usePlatformSettings';
 
 export interface AppSidebarProps {
   user: User;
@@ -74,10 +76,19 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     }
   };
 
-  const brandName = siteBranding?.brandName || 'ASRON SAT';
+  const { settings, isModuleHidden, isModuleLocked, showLockedNotice } = usePlatformSettings();
+  const brandName = settings.platform_title || siteBranding?.brandName || 'ASRON SAT';
 
-  // EXACT 6 NAVIGATION ITEMS (Profile & Settings removed from sidebar; accessed via Header)
-  const navigationItems = [
+  const moduleMap: Record<string, 'questions' | 'mocks' | 'vocabulary' | 'mistakes' | 'community'> = {
+    qbank: 'questions',
+    bluebook: 'mocks',
+    vocab: 'vocabulary',
+    vault: 'mistakes',
+    community: 'community',
+  };
+
+  // EXACT 6 NAVIGATION ITEMS with Module Governance
+  const allNavItems = [
     {
       id: 'dashboard',
       label: 'Bosh sahifa',
@@ -88,31 +99,66 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       id: 'qbank',
       label: 'Savollar Banki',
       icon: Database,
-      onClick: () => setActiveTab('qbank'),
+      onClick: () => {
+        if (isModuleLocked('questions')) {
+          showLockedNotice('Savollar Banki');
+          return;
+        }
+        setActiveTab('qbank');
+      },
+      isLocked: isModuleLocked('questions'),
     },
     {
       id: 'bluebook',
       label: 'Mock Testlar',
       icon: FileText,
-      onClick: () => setActiveTab('bluebook'),
+      onClick: () => {
+        if (isModuleLocked('mocks')) {
+          showLockedNotice('Mock Testlar');
+          return;
+        }
+        setActiveTab('bluebook');
+      },
+      isLocked: isModuleLocked('mocks'),
     },
     {
       id: 'vocab',
       label: 'SAT Lug\'at',
       icon: BookOpen,
-      onClick: () => setActiveTab('vocab'),
+      onClick: () => {
+        if (isModuleLocked('vocabulary')) {
+          showLockedNotice('SAT Lug\'at');
+          return;
+        }
+        setActiveTab('vocab');
+      },
+      isLocked: isModuleLocked('vocabulary'),
     },
     {
       id: 'vault',
       label: 'Xatolar Ombori',
       icon: BookmarkCheck,
-      onClick: () => setActiveTab('vault'),
+      onClick: () => {
+        if (isModuleLocked('mistakes')) {
+          showLockedNotice('Xatolar Ombori');
+          return;
+        }
+        setActiveTab('vault');
+      },
+      isLocked: isModuleLocked('mistakes'),
     },
     {
       id: 'community',
       label: 'Hamjamiyat',
       icon: Users,
-      onClick: () => setActiveTab('community'),
+      onClick: () => {
+        if (isModuleLocked('community')) {
+          showLockedNotice('Hamjamiyat');
+          return;
+        }
+        setActiveTab('community');
+      },
+      isLocked: isModuleLocked('community'),
     },
     ...(user.role === 'ADMIN' || user.role === 'SUPER_ADMIN'
       ? [
@@ -121,10 +167,16 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             label: 'Admin Panel',
             icon: ShieldAlert,
             onClick: () => setActiveTab('admin'),
+            isLocked: false,
           },
         ]
       : []),
   ];
+
+  const navigationItems = allNavItems.filter((item) => {
+    const mod = moduleMap[item.id];
+    return !mod || !isModuleHidden(mod);
+  });
 
   return (
     <aside
@@ -141,9 +193,17 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             aria-label="Kengaytirish (Expand sidebar)"
             className="w-10 h-10 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#0F172A] dark:text-white flex items-center justify-center font-extrabold text-sm shadow-xs border border-[#E2E8F0] dark:border-[#1E293B] hover:border-[#E07A5F]/60 transition-all cursor-pointer relative overflow-hidden p-1.5"
           >
-            <span className="transition-all duration-200 group-hover:opacity-0 group-hover:scale-75 w-full h-full flex items-center justify-center font-mono text-[#E07A5F]">
-              Σ
-            </span>
+            {settings.logo_url ? (
+              <img
+                src={settings.logo_url}
+                alt="Logo"
+                className="w-full h-full object-cover rounded-lg transition-all duration-200 group-hover:opacity-0 group-hover:scale-75"
+              />
+            ) : (
+              <span className="transition-all duration-200 group-hover:opacity-0 group-hover:scale-75 w-full h-full flex items-center justify-center font-mono text-[#E07A5F]">
+                Σ
+              </span>
+            )}
             <span className="absolute inset-0 flex items-center justify-center opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100 transition-all text-[#0F172A] dark:text-[#F8FAFC]">
               <PanelLeftOpen size={18} />
             </span>
@@ -160,9 +220,17 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             className="flex items-center gap-3 cursor-pointer group min-w-0"
             title={`${brandName} - Bosh Sahifa`}
           >
-            <div className="w-9 h-9 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#E07A5F] border border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-center font-mono font-bold text-base group-hover:border-[#E07A5F]/60 transition-colors shrink-0 shadow-2xs">
-              Σ
-            </div>
+            {settings.logo_url ? (
+              <img
+                src={settings.logo_url}
+                alt="Logo"
+                className="w-9 h-9 rounded-xl object-cover border border-[#E2E8F0] dark:border-[#1E293B] shrink-0 shadow-2xs"
+              />
+            ) : (
+              <div className="w-9 h-9 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#E07A5F] border border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-center font-mono font-bold text-base group-hover:border-[#E07A5F]/60 transition-colors shrink-0 shadow-2xs">
+                Σ
+              </div>
+            )}
 
             <div className="min-w-0 leading-tight">
               <div className="font-bold text-sm tracking-tight text-[#0F172A] dark:text-[#F8FAFC] truncate">
@@ -201,7 +269,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 onClick={item.onClick}
                 aria-label={item.label}
                 className={`w-full flex items-center ${
-                  isCollapsed ? 'justify-center h-10 w-10 mx-auto' : 'justify-start px-3 py-2.5'
+                  isCollapsed ? 'justify-center h-10 w-10 mx-auto' : 'justify-between px-3 py-2.5'
                 } rounded-xl text-xs font-medium transition-all duration-150 cursor-pointer ${
                   isActive
                     ? 'bg-[#F1F5F9] dark:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] font-semibold border border-[#E2E8F0] dark:border-[#334155]/60 shadow-2xs'
@@ -223,6 +291,14 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                   />
                   {!isCollapsed && <span className="truncate tracking-tight">{item.label}</span>}
                 </div>
+
+                {item.isLocked && (
+                  isCollapsed ? (
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500" />
+                  ) : (
+                    <Lock size={12} className="text-amber-500 shrink-0" />
+                  )
+                )}
               </button>
 
               {/* Collapsed Tooltip */}

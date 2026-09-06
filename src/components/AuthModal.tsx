@@ -50,19 +50,24 @@ export const AuthModal: React.FC<Props> = ({
   if (!isOpen) return null;
 
   const handleGoogleLogin = async () => {
-    setIsLoading(true);
-    setErrorMessage(null);
     try {
-      const res = await signInWithGoogle();
-      if (res.data?.user) {
-        onSuccess(res.data.user);
-        onClose();
-      } else if (res.data?.url) {
-        window.location.href = res.data.url;
-      }
+      setIsLoading(true);
+      setErrorMessage(null);
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+      if (error) throw error;
     } catch (err: any) {
-      setErrorMessage(err.message || 'Google sign-in failed. Please try again.');
-    } finally {
+      console.error('Google OAuth Error:', err);
+      setErrorMessage(err.message || 'Google orqali kirishda xatolik yuz berdi.');
       setIsLoading(false);
     }
   };

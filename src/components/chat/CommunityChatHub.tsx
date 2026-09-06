@@ -282,7 +282,7 @@ export const CommunityChatHub: React.FC<Props> = ({
       if (typeof window === 'undefined') return;
 
       const urlParams = new URLSearchParams(window.location.search);
-      let channelUsername = urlParams.get('c');
+      let channelUsername = urlParams.get('c') || urlParams.get('channel') || urlParams.get('id');
       let joinToken = urlParams.get('join');
       let dmUserId = urlParams.get('dm');
 
@@ -300,7 +300,7 @@ export const CommunityChatHub: React.FC<Props> = ({
       if (window.location.hash.includes('?')) {
         const hashQuery = window.location.hash.split('?')[1];
         const hashParams = new URLSearchParams(hashQuery);
-        if (!channelUsername) channelUsername = hashParams.get('c');
+        if (!channelUsername) channelUsername = hashParams.get('c') || hashParams.get('channel') || hashParams.get('id');
         if (!joinToken) joinToken = hashParams.get('join');
         if (!dmUserId) dmUserId = hashParams.get('dm');
       }
@@ -335,17 +335,13 @@ export const CommunityChatHub: React.FC<Props> = ({
                 avatarUrl: profile.avatar_url,
               };
             } else {
-              const { data: dbUser } = await supabase
-                .from('users')
-                .select('id, full_name, username, avatar_url')
-                .eq('id', dmUserId)
-                .maybeSingle();
-              if (dbUser) {
+              const localMatch = usersList.find((u) => u.id === dmUserId);
+              if (localMatch) {
                 targetUser = {
-                  id: dbUser.id,
-                  fullName: dbUser.full_name || dbUser.username || 'Foydalanuvchi',
-                  username: dbUser.username || 'user',
-                  avatarUrl: dbUser.avatar_url,
+                  id: localMatch.id,
+                  fullName: localMatch.fullName,
+                  username: localMatch.username,
+                  avatarUrl: localMatch.avatarUrl,
                 };
               }
             }
@@ -362,11 +358,9 @@ export const CommunityChatHub: React.FC<Props> = ({
                 avatarUrl: targetUser.avatarUrl,
                 createdAt: new Date().toISOString(),
               };
-              setChats((prev) => {
-                if (prev.some((c) => c.id === newDmChat.id)) return prev;
-                return [newDmChat, ...prev];
-              });
-              persistChatsList([newDmChat, ...chats]);
+              const updatedChats = [newDmChat, ...chats];
+              setChats(updatedChats);
+              persistChatsList(updatedChats);
               setActiveChatId(newDmChat.id);
               setIsMobileChatViewOpen(true);
             }
@@ -390,15 +384,40 @@ export const CommunityChatHub: React.FC<Props> = ({
       } else if (channelUsername) {
         const cleanUser = channelUsername.replace(/^@/, '').toLowerCase();
         const localMatch = chats.find(
-          (c) => c.username?.toLowerCase() === cleanUser || c.slug?.toLowerCase() === cleanUser
+          (c) =>
+            c.id === channelUsername ||
+            c.username?.toLowerCase() === cleanUser ||
+            c.slug?.toLowerCase() === cleanUser
         );
         if (localMatch) {
           setActiveChatId(localMatch.id);
           setIsMobileChatViewOpen(true);
         } else {
-          const remote = await fetchChannelByUsername(cleanUser);
+          let remote = await fetchChannelByUsername(cleanUser);
+          if (!remote && channelUsername.length > 20) {
+            const { data } = await supabase
+              .from('community_channels')
+              .select('*')
+              .eq('id', channelUsername)
+              .maybeSingle();
+            if (data) {
+              const isGroup = data.type?.toUpperCase().includes('GROUP');
+              remote = {
+                id: data.id,
+                name: data.name || data.title || 'Kanal',
+                username: data.username,
+                description: data.description,
+                type: (isGroup ? 'PUBLIC_GROUP' : 'PUBLIC_CHANNEL') as ChatType,
+                avatarUrl: data.avatar_url,
+                inviteToken: data.invite_token,
+                isPublic: data.is_public !== false,
+                members: [],
+                createdAt: data.created_at || new Date().toISOString(),
+              };
+            }
+          }
           if (remote) {
-            setChats((prev) => [remote, ...prev]);
+            setChats((prev) => [remote!, ...prev]);
             persistChatsList([remote, ...chats]);
             setActiveChatId(remote.id);
             setIsMobileChatViewOpen(true);

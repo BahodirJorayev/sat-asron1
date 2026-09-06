@@ -53,31 +53,23 @@ export default function RegisterPage() {
   };
 
   const handleGoogleSignUp = async () => {
-    setIsGoogleLoading(true);
-    setErrorMessage(null);
     try {
-      const redirectUrl = typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : '';
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      setIsGoogleLoading(true);
+      setErrorMessage('');
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: redirectUrl,
+          redirectTo: `${origin}/auth/callback`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
           },
         },
       });
-
-      if (error) {
-        setErrorMessage(error.message || "Google orqali ro'yxatdan o'tishda xatolik yuz berdi.");
-        setIsGoogleLoading(false);
-        return;
-      }
-
-      if (data?.url && typeof window !== 'undefined') {
-        window.location.href = data.url;
-      }
+      if (error) throw error;
     } catch (err: any) {
+      console.error('Google OAuth Error:', err);
       setErrorMessage(err.message || "Google orqali ro'yxatdan o'tishda xatolik yuz berdi.");
       setIsGoogleLoading(false);
     }

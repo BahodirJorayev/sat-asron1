@@ -69,33 +69,25 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    setIsGoogleLoading(true);
-    setErrorMessage(null);
+  const handleGoogleLogin = async () => {
     try {
-      const redirectUrl = typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : '';
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      setIsGoogleLoading(true);
+      setErrorMessage('');
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: redirectUrl,
+          redirectTo: `${origin}/auth/callback`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
           },
         },
       });
-
-      if (error) {
-        setErrorMessage(error.message || "Google orqali kirishda xatolik yuz berdi.");
-        setIsGoogleLoading(false);
-        return;
-      }
-
-      if (data?.url && typeof window !== 'undefined') {
-        window.location.href = data.url;
-      }
+      if (error) throw error;
     } catch (err: any) {
-      setErrorMessage(err.message || "Google orqali kirishda xatolik yuz berdi.");
+      console.error('Google OAuth Error:', err);
+      setErrorMessage(err.message || 'Google orqali kirishda xatolik yuz berdi.');
       setIsGoogleLoading(false);
     }
   };
@@ -204,7 +196,7 @@ export default function LoginPage() {
             {/* Google OAuth Button */}
             <button
               type="button"
-              onClick={handleGoogleSignIn}
+              onClick={handleGoogleLogin}
               disabled={isGoogleLoading || isLoading}
               className="w-full py-2.5 px-4 rounded-xl bg-slate-50 dark:bg-[#0A0F1D] hover:bg-slate-100 dark:hover:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center justify-center gap-2.5 transition-all cursor-pointer disabled:opacity-50"
             >

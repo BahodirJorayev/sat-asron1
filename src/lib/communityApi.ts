@@ -119,30 +119,34 @@ export async function searchGlobalCommunity(
 
   // 2. Query Remote Supabase for Public Groups & Channels
   try {
-    const { data: channelData, error: channelErr } = await supabase
-      .from('community_channels')
-      .select('id, name, username, description, avatar_url, type, is_public')
-      .eq('is_public', true)
-      .or(`name.ilike.%${query}%,username.ilike.%${query}%`)
-      .limit(10);
+    const cleanQuery = query.replace(/^@/, '').replace(/[%(),]/g, '').trim();
+    if (cleanQuery) {
+      const { data: channelData, error: channelErr } = await supabase
+        .from('community_channels')
+        .select('id, name, username, description, avatar_url, type, is_public, invite_token')
+        .eq('is_public', true)
+        .or(`name.ilike.%${cleanQuery}%,username.ilike.%${cleanQuery}%,description.ilike.%${cleanQuery}%`)
+        .limit(10);
 
-    if (!channelErr && Array.isArray(channelData)) {
-      channelData.forEach((ch) => {
-        // Exclude private channels from global search unless the user is member
-        const isPublicEntity = ch.is_public !== false && ch.type !== 'private_group' && ch.type !== 'PRIVATE_GROUP';
-        if (isPublicEntity && !foundChannelIds.has(ch.id)) {
-          foundChannelIds.add(ch.id);
-          channelResults.push({
-            id: ch.id,
-            name: ch.name || 'Kanal',
-            username: ch.username,
-            description: ch.description,
-            type: (ch.type?.toUpperCase() as ChatType) || 'PUBLIC_CHANNEL',
-            avatarUrl: ch.avatar_url,
-            isPublic: true,
-          });
-        }
-      });
+      if (!channelErr && Array.isArray(channelData)) {
+        channelData.forEach((ch) => {
+          // Exclude private channels from global search unless the user is member
+          const isPublicEntity = ch.is_public !== false && ch.type !== 'private_group' && ch.type !== 'PRIVATE_GROUP';
+          if (isPublicEntity && !foundChannelIds.has(ch.id)) {
+            foundChannelIds.add(ch.id);
+            channelResults.push({
+              id: ch.id,
+              name: ch.name || 'Kanal',
+              username: ch.username,
+              description: ch.description,
+              type: (ch.type?.toUpperCase() as ChatType) || 'PUBLIC_CHANNEL',
+              avatarUrl: ch.avatar_url,
+              inviteToken: ch.invite_token,
+              isPublic: true,
+            });
+          }
+        });
+      }
     }
   } catch (err) {
     console.warn('Supabase community_channels search notice:', err);
@@ -265,8 +269,8 @@ export async function joinChannelByToken(
     const { data: ch } = await supabase
       .from('community_channels')
       .select('*')
-      .or(`invite_token.eq.${cleanToken},invite_code.eq.${cleanToken},username.eq.${cleanToken}`)
-      .single();
+      .or(`invite_token.eq.${cleanToken},username.eq.${cleanToken}`)
+      .maybeSingle();
 
     if (ch) {
       // Add member to community_members
@@ -286,7 +290,6 @@ export async function joinChannelByToken(
         type: (ch.type?.toUpperCase() as ChatType) || 'PRIVATE_GROUP',
         avatarUrl: ch.avatar_url,
         inviteToken: ch.invite_token,
-        inviteCode: ch.invite_code,
         isPublic: ch.is_public,
         members: [currentUser.id],
         channelAdmins: ch.created_by ? [ch.created_by] : [],
@@ -331,8 +334,8 @@ export async function fetchChannelByInviteToken(token: string): Promise<Chat | n
     const { data } = await supabase
       .from('community_channels')
       .select('*')
-      .or(`invite_token.eq.${clean},invite_code.eq.${clean}`)
-      .single();
+      .eq('invite_token', clean)
+      .maybeSingle();
 
     if (data) {
       return {
@@ -343,8 +346,7 @@ export async function fetchChannelByInviteToken(token: string): Promise<Chat | n
         type: (data.type?.toUpperCase() as ChatType) || 'PRIVATE_GROUP',
         avatarUrl: data.avatar_url,
         inviteToken: data.invite_token,
-        inviteCode: data.invite_code,
-        isPublic: data.is_public,
+        isPublic: data.is_public !== false,
         members: [],
         createdAt: data.created_at || new Date().toISOString(),
       };
@@ -366,7 +368,7 @@ export async function fetchChannelByUsername(username: string): Promise<Chat | n
       .from('community_channels')
       .select('*')
       .ilike('username', clean)
-      .single();
+      .maybeSingle();
 
     if (data) {
       return {
@@ -377,7 +379,6 @@ export async function fetchChannelByUsername(username: string): Promise<Chat | n
         type: (data.type?.toUpperCase() as ChatType) || 'PUBLIC_CHANNEL',
         avatarUrl: data.avatar_url,
         inviteToken: data.invite_token,
-        inviteCode: data.invite_code,
         isPublic: data.is_public !== false,
         members: [],
         createdAt: data.created_at || new Date().toISOString(),

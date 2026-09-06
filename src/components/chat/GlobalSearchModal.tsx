@@ -41,6 +41,7 @@ export interface ChannelSearchResult {
   avatarUrl?: string;
   membersCount?: number;
   isPublic?: boolean;
+  inviteToken?: string;
 }
 
 export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
@@ -83,12 +84,46 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
+  // Load public channels when modal opens or when switching to CHANNELS tab with empty query
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!query.trim() && (activeTab === 'CHANNELS' || activeTab === 'ALL')) {
+      (async () => {
+        try {
+          const { data: channels } = await supabase
+            .from('community_channels')
+            .select('id, name, username, description, avatar_url, type, is_public, invite_token')
+            .eq('is_public', true)
+            .order('created_at', { ascending: true })
+            .limit(10);
+
+          if (channels && Array.isArray(channels)) {
+            const mappedChannels: ChannelSearchResult[] = channels.map((c: any) => ({
+              id: c.id,
+              name: c.name || 'Kanal',
+              username: c.username,
+              description: c.description || '',
+              type: c.type || 'PUBLIC_CHANNEL',
+              avatarUrl: c.avatar_url,
+              inviteToken: c.invite_token,
+              isPublic: true,
+            }));
+            setChannelResults(mappedChannels);
+          }
+        } catch (err) {
+          console.warn('Load initial public channels notice:', err);
+        }
+      })();
+    }
+  }, [isOpen, activeTab, query]);
+
   // Debounced search querying Supabase profiles and community_channels
   useEffect(() => {
-    const term = query.replace('@', '').trim();
-    if (!term) {
-      setUserResults([]);
-      setChannelResults([]);
+    const cleanTerm = query.replace('@', '').replace(/[%(),]/g, '').trim();
+    if (!cleanTerm) {
+      if (activeTab !== 'CHANNELS') {
+        setUserResults([]);
+      }
       setLoading(false);
       setHasSearched(false);
       return;
@@ -102,7 +137,6 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
     debounceTimerRef.current = setTimeout(async () => {
       try {
         // 1. Search Users from live public.profiles
-        const cleanTerm = query.replace('@', '').trim();
         const { data: users } = await supabase
           .from('profiles')
           .select('id, full_name, username, avatar_url')
@@ -112,10 +146,10 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
         // 2. Search Public Channels & Groups from live public.community_channels
         const { data: channels } = await supabase
           .from('community_channels')
-          .select('id, name, username, description, avatar_url, type, is_public')
+          .select('id, name, username, description, avatar_url, type, is_public, invite_token')
           .eq('is_public', true)
-          .or(`name.ilike.%${cleanTerm}%,username.ilike.%${cleanTerm}%`)
-          .limit(10);
+          .or(`name.ilike.%${cleanTerm}%,username.ilike.%${cleanTerm}%,description.ilike.%${cleanTerm}%`)
+          .limit(15);
 
         const mappedUsers: ProfileSearchResult[] = [];
         if (users && Array.isArray(users)) {
@@ -140,6 +174,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
               description: c.description || '',
               type: c.type || 'PUBLIC_CHANNEL',
               avatarUrl: c.avatar_url,
+              inviteToken: c.invite_token,
               isPublic: true,
             });
           });
@@ -160,7 +195,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [query]);
+  }, [query, activeTab]);
 
   if (!isOpen) return null;
 
@@ -181,8 +216,9 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
         })
       );
     }
-    // Deep-link to Direct Message with this user
-    router.push(`/chat?dm=${targetUser.id}`);
+    if (!onSelectUser) {
+      router.push(`/chat?dm=${targetUser.id}`);
+    }
   };
 
   const handleOpenChannel = (targetChannel: ChannelSearchResult) => {
@@ -190,18 +226,37 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
     if (onSelectChannel) {
       onSelectChannel(targetChannel);
     }
+    const isGroup = targetChannel.type?.toUpperCase().includes('GROUP');
+    const chatType = isGroup ? 'PUBLIC_GROUP' : 'PUBLIC_CHANNEL';
+    const chatPayload = {
+      id: targetChannel.id,
+      name: targetChannel.name,
+      title: targetChannel.name,
+      username: targetChannel.username,
+      description: targetChannel.description,
+      type: chatType,
+      avatarUrl: targetChannel.avatarUrl,
+      inviteToken: targetChannel.inviteToken,
+      isPublic: true,
+      members: [],
+      createdAt: new Date().toISOString(),
+    };
+
     if (typeof window !== 'undefined') {
       window.dispatchEvent(
         new CustomEvent('asron_open_chat', {
           detail: {
             chatId: targetChannel.id,
             channelUsername: targetChannel.username,
+            chat: chatPayload,
           },
         })
       );
     }
-    const identifier = targetChannel.username ? `@${targetChannel.username.replace(/^@/, '')}` : targetChannel.id;
-    router.push(`/chat?c=${encodeURIComponent(identifier)}`);
+    if (!onSelectChannel) {
+      const identifier = targetChannel.username ? `@${targetChannel.username.replace(/^@/, '')}` : targetChannel.id;
+      router.push(`/chat?c=${encodeURIComponent(identifier)}`);
+    }
   };
 
   const showUsers = activeTab === 'ALL' || activeTab === 'USERS';

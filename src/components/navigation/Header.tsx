@@ -410,7 +410,8 @@ export const Header: React.FC<HeaderProps> = ({
         }}
         onSelectChannel={(ch) => {
           setIsSearchModalOpen(false);
-          router.push(`/chat?channel=${ch.id}`);
+          const identifier = ch.username ? `@${ch.username.replace(/^@/, '')}` : ch.id;
+          router.push(`/chat?c=${encodeURIComponent(identifier)}`);
         }}
       />
     </>

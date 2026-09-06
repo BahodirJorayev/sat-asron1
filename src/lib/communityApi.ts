@@ -121,8 +121,9 @@ export async function searchGlobalCommunity(
   try {
     const { data: channelData, error: channelErr } = await supabase
       .from('community_channels')
-      .select('id, name, username, description, type, avatar_url, is_public')
-      .or(`name.ilike.%${query}%,username.ilike.%${query}%,description.ilike.%${query}%`)
+      .select('id, name, username, description, avatar_url, type, is_public')
+      .eq('is_public', true)
+      .or(`name.ilike.%${query}%,username.ilike.%${query}%`)
       .limit(10);
 
     if (!channelErr && Array.isArray(channelData)) {

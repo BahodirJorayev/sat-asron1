@@ -30,6 +30,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 }) => {
   const [fullName, setFullName] = useState(currentUser.fullName || '');
   const [username, setUsername] = useState(currentUser.username || '');
+  const [avatarUrl, setAvatarUrl] = useState(currentUser.avatarUrl || '');
   const [phoneNumber, setPhoneNumber] = useState(currentUser.phoneNumber || '');
   const [targetScore, setTargetScore] = useState<number>(currentUser.targetScore || 1550);
   const [targetExamDate, setTargetExamDate] = useState<string>(
@@ -45,6 +46,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     if (isOpen) {
       setFullName(currentUser.fullName || '');
       setUsername(currentUser.username || '');
+      setAvatarUrl(currentUser.avatarUrl || '');
       setPhoneNumber(currentUser.phoneNumber || '');
       setTargetScore(currentUser.targetScore || 1550);
       setTargetExamDate(currentUser.targetExamDate?.slice(0, 10) || '2026-10-03');
@@ -74,6 +76,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     const cleanFullName = fullName.trim();
     const cleanUsername = username.trim().toLowerCase().replace(/^@/, '').replace(/[^a-z0-9_]/g, '');
     const cleanPhone = phoneNumber.trim();
+    const cleanAvatarUrl = avatarUrl.trim() || currentUser.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanUsername}`;
 
     if (!cleanFullName) {
       setErrorMessage("Ism va familiyani kiritish majburiy.");
@@ -96,19 +99,27 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
       }
 
       // 1. Direct Cloud Persistence: Upsert directly into Supabase public.profiles
-      const { error: profileError } = await supabase
+      const profileData: any = {
+        id: activeId,
+        full_name: cleanFullName,
+        username: cleanUsername,
+        avatar_url: cleanAvatarUrl,
+        target_score: Number(targetScore) || 1500,
+        updated_at: new Date().toISOString(),
+      };
+
+      let { error: profileError } = await supabase
         .from('profiles')
-        .upsert(
-          {
-            id: activeId,
-            full_name: cleanFullName,
-            username: cleanUsername,
-            avatar_url: currentUser.avatarUrl || null,
-            target_score: targetScore,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'id' }
-        );
+        .upsert(profileData, { onConflict: 'id' });
+
+      // If updated_at column is missing on profiles in DB, retry without it
+      if (profileError && profileError.message?.includes('updated_at')) {
+        delete profileData.updated_at;
+        const retry = await supabase
+          .from('profiles')
+          .upsert(profileData, { onConflict: 'id' });
+        profileError = retry.error;
+      }
 
       if (profileError) {
         throw new Error(profileError.message);
@@ -120,8 +131,9 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
           data: {
             full_name: cleanFullName,
             username: cleanUsername,
+            avatar_url: cleanAvatarUrl,
             phone: cleanPhone,
-            target_score: targetScore,
+            target_score: Number(targetScore) || 1500,
             target_exam_date: targetExamDate,
           },
         });
@@ -133,13 +145,25 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
         ...currentUser,
         fullName: cleanFullName,
         username: cleanUsername,
+        avatarUrl: cleanAvatarUrl,
         phoneNumber: cleanPhone,
-        targetScore: targetScore,
+        targetScore: Number(targetScore) || 1500,
         targetExamDate: targetExamDate,
       };
 
       // 3. Update application cache & local cookies
       await saveUserProfile(updatedUser);
+
+      // Invalidate client-side cache and broadcast cross-device/cross-tab
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('aurasat_user_profile', JSON.stringify(updatedUser));
+        window.dispatchEvent(new CustomEvent('profile_updated', { detail: updatedUser }));
+        try {
+          const bc = new BroadcastChannel('asron_profile_channel');
+          bc.postMessage({ type: 'profile_updated', user: updatedUser });
+          bc.close();
+        } catch {}
+      }
 
       // 4. Broadcast via Supabase Realtime channel so other open tabs / devices reflect immediately
       try {
@@ -216,6 +240,29 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
               <span>{errorMessage}</span>
             </div>
           )}
+
+          {/* Avatar Preview & URL */}
+          <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-slate-50 dark:bg-[#0A0F1D] border border-slate-200 dark:border-slate-800">
+            <div className="w-12 h-12 rounded-xl bg-slate-200 dark:bg-slate-800 overflow-hidden border border-slate-300 dark:border-slate-700 shrink-0 flex items-center justify-center">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <UserIcon className="w-6 h-6 text-slate-400" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0 space-y-1">
+              <label className="text-[11px] font-mono text-slate-500 dark:text-slate-400 font-medium">
+                Avatar URL (yoki DiceBear)
+              </label>
+              <input
+                type="text"
+                value={avatarUrl}
+                onChange={(e) => setAvatarUrl(e.target.value)}
+                placeholder="https://... avatar rasm havolasi"
+                className="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-700 text-xs font-mono text-slate-900 dark:text-white focus:outline-hidden focus:border-[#E07A5F]"
+              />
+            </div>
+          </div>
 
           {/* Full Name */}
           <div className="space-y-1">

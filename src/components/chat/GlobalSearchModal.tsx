@@ -102,18 +102,19 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
     debounceTimerRef.current = setTimeout(async () => {
       try {
         // 1. Search Users from live public.profiles
+        const cleanTerm = query.replace('@', '').trim();
         const { data: users } = await supabase
           .from('profiles')
           .select('id, full_name, username, avatar_url')
-          .or(`full_name.ilike.%${term}%,username.ilike.%${term}%`)
+          .or(`full_name.ilike.%${cleanTerm}%,username.ilike.%${cleanTerm}%`)
           .limit(10);
 
         // 2. Search Public Channels & Groups from live public.community_channels
         const { data: channels } = await supabase
           .from('community_channels')
-          .select('id, name, username, avatar_url, type, is_public')
+          .select('id, name, username, description, avatar_url, type, is_public')
           .eq('is_public', true)
-          .or(`name.ilike.%${term}%,username.ilike.%${term}%`)
+          .or(`name.ilike.%${cleanTerm}%,username.ilike.%${cleanTerm}%`)
           .limit(10);
 
         const mappedUsers: ProfileSearchResult[] = [];
@@ -168,6 +169,18 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
     if (onSelectUser) {
       onSelectUser(targetUser);
     }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('asron_open_chat', {
+          detail: {
+            dmUserId: targetUser.id,
+            fullName: targetUser.fullName,
+            username: targetUser.username,
+            avatarUrl: targetUser.avatarUrl,
+          },
+        })
+      );
+    }
     // Deep-link to Direct Message with this user
     router.push(`/chat?dm=${targetUser.id}`);
   };
@@ -176,6 +189,16 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
     onClose();
     if (onSelectChannel) {
       onSelectChannel(targetChannel);
+    }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('asron_open_chat', {
+          detail: {
+            chatId: targetChannel.id,
+            channelUsername: targetChannel.username,
+          },
+        })
+      );
     }
     const identifier = targetChannel.username ? `@${targetChannel.username.replace(/^@/, '')}` : targetChannel.id;
     router.push(`/chat?c=${encodeURIComponent(identifier)}`);

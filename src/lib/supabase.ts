@@ -114,39 +114,8 @@ export async function signInWithGoogle(): Promise<{ data: { user?: User; url?: s
     });
 
     if (error) {
-      console.warn('Supabase Google OAuth direct error, setting up session fallback:', error);
-      const fallbackUser: User = {
-        id: `usr-google-${Date.now()}`,
-        email: 'student@asronsat.uz',
-        username: 'asron_scholar',
-        fullName: 'ASRON Scholar',
-        phoneNumber: '+998 90 000 00 00',
-        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-        bio: 'Digital SAT Aspirant',
-        role: 'STUDENT',
-        planTier: 'STANDARD',
-        targetScore: 1450,
-        highestScore: 0,
-        baselineScore: 0,
-        potentialScore: 0,
-        predictedScore: 0,
-        weakestSubSkills: [],
-        targetExamDate: '2026-10-04',
-        streakDays: 0,
-        streakFreezes: 0,
-        xpPoints: 0,
-        totalQuestionsDone: 0,
-        overallAccuracy: 0,
-        testsCompletedCount: 0,
-        createdAt: new Date().toISOString(),
-      };
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('aurasat_user_profile', JSON.stringify(fallbackUser));
-        localStorage.setItem('aura_sat_auth_user', JSON.stringify(fallbackUser));
-        saveUserToRegisteredIndex(fallbackUser);
-      }
-      setAuthCookie(fallbackUser);
-      return { data: { user: fallbackUser }, error: null };
+      console.error('Supabase Google OAuth error:', error);
+      return { data: null, error };
     }
 
     if (data?.url && typeof window !== 'undefined') {

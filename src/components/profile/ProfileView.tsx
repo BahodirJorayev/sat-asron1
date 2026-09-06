@@ -240,6 +240,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               id: activeUserId,
               full_name: cleanFullName,
               username: cleanUsername,
+              avatar_url: user.avatarUrl || null,
               target_score: targetScore,
             },
             { onConflict: 'id' }

@@ -112,9 +112,42 @@ export const Header: React.FC<HeaderProps> = ({
       fetchAuthUser();
     });
 
+    const handleProfileUpdated = (e: any) => {
+      if (e.detail && isMounted) {
+        setCurrentUser({
+          fullName: e.detail.fullName || e.detail.full_name,
+          username: e.detail.username,
+          avatarUrl: e.detail.avatarUrl || e.detail.avatar_url,
+        });
+      }
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('profile_updated', handleProfileUpdated);
+    }
+
+    let bc: BroadcastChannel | null = null;
+    try {
+      bc = new BroadcastChannel('asron_profile_channel');
+      bc.onmessage = (msg) => {
+        if (msg.data?.type === 'profile_updated' && msg.data.user && isMounted) {
+          setCurrentUser({
+            fullName: msg.data.user.fullName || msg.data.user.full_name,
+            username: msg.data.user.username,
+            avatarUrl: msg.data.user.avatarUrl || msg.data.user.avatar_url,
+          });
+        }
+      };
+    } catch {}
+
     return () => {
       isMounted = false;
       authSub?.subscription?.unsubscribe?.();
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('profile_updated', handleProfileUpdated);
+      }
+      try {
+        bc?.close();
+      } catch {}
     };
   }, [propUser]);
 

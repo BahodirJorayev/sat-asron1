@@ -213,7 +213,7 @@ export const PwaInstallPrompt: React.FC = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 30 }}
-              className="w-full max-w-sm bg-[#001744] border border-[#0B2B6F] rounded-3xl p-5 text-white shadow-2xl relative space-y-4"
+              className="w-full max-w-sm bg-[#03165a] border border-[#0B2B6F] rounded-3xl p-5 text-white shadow-2xl relative space-y-4"
             >
               <div className="flex items-center justify-between border-b border-[#0B2B6F]/80 pb-3">
                 <div className="flex items-center gap-2">

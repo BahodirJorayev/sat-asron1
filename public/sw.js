@@ -1,12 +1,19 @@
 // ASRON SAT Progressive Web App Service Worker
-const CACHE_NAME = 'asron-sat-pwa-v1';
+const CACHE_NAME = 'asron-sat-pwa-v2';
 const PRECACHE_URLS = [
   '/',
   '/dashboard',
   '/manifest.json',
+  '/logo.png',
+  '/logo.svg',
+  '/icon.png',
+  '/icon.svg',
   '/icon-192.png',
   '/icon-512.png',
-  '/icon.svg'
+  '/apple-touch-icon.png',
+  '/favicon.ico',
+  '/favicon.png',
+  '/og-image.png'
 ];
 
 self.addEventListener('install', (event) => {

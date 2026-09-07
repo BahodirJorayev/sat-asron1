@@ -13,215 +13,390 @@ export const SUPPORTED_LANGUAGES: LanguageOption[] = [
   { code: 'ru', label: 'Русский', nativeLabel: 'Русский', flag: '🇷🇺' },
 ];
 
+/**
+ * STRICT STANDARDIZED SAT TERMINOLOGY SHIELD (DO NOT TRANSLATE)
+ * The following official exam terms MUST always remain verbatim in English across all 3 languages (UZ, EN, RU):
+ * - SAT, Digital SAT, Reading & Writing, Math, Desmos, College Board, Bluebook,
+ *   Module 1, Module 2, Hard Module, Easy Module, Domains & Skills, Erica Meltzer, Score (1500+).
+ */
+export const SAT_TERMINOLOGY_SHIELD = [
+  'SAT',
+  'Digital SAT',
+  'Reading & Writing',
+  'Math',
+  'Desmos',
+  'College Board',
+  'Bluebook',
+  'Module 1',
+  'Module 2',
+  'Hard Module',
+  'Easy Module',
+  'Domains & Skills',
+  'Erica Meltzer',
+  'Score (1500+)',
+] as const;
+
 export const translations = {
-  // Navigation
-  home: {
-    uz: 'Uy',
-    en: 'Home',
-    ru: 'Главная',
+  uz: {
+    // Navigation & Shell
+    nav: {
+      home: "Bosh sahifa",
+      questions: "Savollar Banki",
+      mocks: "Mock Testlar",
+      vocabulary: "SAT Lug'at",
+      mistakes: "Xatolar Ombori",
+      community: "Hamjamiyat",
+      admin: "Admin Panel",
+      searchPlaceholder: "Qidirish (odamlar, guruhlar, savollar)...",
+      login: "Kirish",
+      register: "Ro'yxatdan o'tish",
+      logout: "Chiqish",
+      profile: "Mening Profilim",
+      settings: "Sozlamalar",
+    },
+    // Landing Page
+    landing: {
+      badge: "ASRON SAT • 2026 Yangi Format",
+      heroTitle: "Adaptive Mastery bilan Digital SAT imtihonida 1500+ ball oling",
+      heroSubtitle: "SAT imtihoniga professional, tizimli va xolis tayyorgarlik platformasi.",
+      startFree: "Ro'yxatdan o'tish (Bepul)",
+      takeDiagnostic: "Bepul 7-daqiqalik diagnostika testi",
+      featuresTitle: "Nega aynan ASRON SAT?",
+      featuresSubtitle: "Har bir talabaning zaif tomonlarini aniqlab, yuqori natijaga eltuvchi tizim.",
+      statStudents: "Faol o'quvchilar",
+      statAvgIncrease: "O'rtacha ball o'sishi",
+      statAccuracy: "Savollar aniqligi",
+      statTests: "Haqiqiy Bluebook formatidagi testlar",
+      faqTitle: "Ko'p beriladigan savollar",
+      ctaTitle: "O'z SAT ballingizni bugunoq oshirishni boshlang",
+      ctaButton: "Boshlash",
+    },
+    // Dashboard & Practice
+    dashboard: {
+      welcome: "Xush kelibsiz",
+      targetScore: "Maqsadli ball",
+      studyStreak: "Ketma-ketlik",
+      dailyGoal: "Kunlik reja",
+      startPractice: "Mashqni boshlash",
+      continueMock: "Testni davom ettirish",
+      recentActivity: "So'nggi faollik",
+      viewAll: "Barchasini ko'rish",
+      rwProgress: "Reading & Writing natijasi",
+      mathProgress: "Math natijasi",
+      desmosMastery: "Desmos ko'nikmalari",
+      days: "kun",
+      questionsCount: "ta savol",
+    },
+    // Community & Chat Hub
+    community: {
+      searchPlaceholder: "Guruhlar, kanallar yoki do'stlarni qidirish...",
+      publicChannels: "Ommaviy Kanallar",
+      directMessages: "Shaxsiy Xabarlar",
+      createChannel: "Yangi kanal ochish",
+      membersCount: "ta a'zo",
+      online: "onlayn",
+      typeMessage: "Xabar yozing...",
+      send: "Yuborish",
+      join: "Qo'shilish",
+      leave: "Chiqish",
+      noResults: "Hech narsa topilmadi",
+      startConversation: "Suhbatni boshlang",
+    },
+    // Common Actions & Errors
+    common: {
+      save: "Saqlash",
+      cancel: "Bekor qilish",
+      delete: "O'chirish",
+      edit: "Tahrirlash",
+      loading: "Yuklanmoqda...",
+      success: "Muvaffaqiyatli saqlandi",
+      errorOccurred: "Xatolik yuz berdi",
+      installApp: "Ilovani o'rnatish",
+      installAppDesc: "Qulay va tezkor kirish uchun telefoningizga o'rnating.",
+      later: "Keyinroq",
+    },
   },
-  dashboard: {
-    uz: 'Uy',
-    en: 'Home',
-    ru: 'Главная',
+  en: {
+    nav: {
+      home: "Home",
+      questions: "Question Bank",
+      mocks: "Mock Tests",
+      vocabulary: "SAT Vocabulary",
+      mistakes: "Mistake Bank",
+      community: "Community",
+      admin: "Admin Panel",
+      searchPlaceholder: "Search (people, groups, questions)...",
+      login: "Log In",
+      register: "Sign Up",
+      logout: "Log Out",
+      profile: "My Profile",
+      settings: "Settings",
+    },
+    landing: {
+      badge: "ASRON SAT • 2026 New Format",
+      heroTitle: "Score 1500+ on the Digital SAT with Adaptive Mastery",
+      heroSubtitle: "A professional, systematic, and unbiased preparation platform for the SAT exam.",
+      startFree: "Sign Up Free",
+      takeDiagnostic: "Take Free 7-Min Diagnostic Test",
+      featuresTitle: "Why Choose ASRON SAT?",
+      featuresSubtitle: "A system designed to pinpoint weaknesses and guide you to top percentiles.",
+      statStudents: "Active Students",
+      statAvgIncrease: "Average Score Increase",
+      statAccuracy: "Question Accuracy",
+      statTests: "Real Bluebook-standard Mocks",
+      faqTitle: "Frequently Asked Questions",
+      ctaTitle: "Start maximizing your SAT score today",
+      ctaButton: "Get Started",
+    },
+    dashboard: {
+      welcome: "Welcome back",
+      targetScore: "Target Score",
+      studyStreak: "Study Streak",
+      dailyGoal: "Daily Goal",
+      startPractice: "Start Practice",
+      continueMock: "Continue Mock",
+      recentActivity: "Recent Activity",
+      viewAll: "View All",
+      rwProgress: "Reading & Writing Progress",
+      mathProgress: "Math Progress",
+      desmosMastery: "Desmos Mastery",
+      days: "days",
+      questionsCount: "questions",
+    },
+    community: {
+      searchPlaceholder: "Search groups, channels, or friends...",
+      publicChannels: "Public Channels",
+      directMessages: "Direct Messages",
+      createChannel: "Create Channel",
+      membersCount: "members",
+      online: "online",
+      typeMessage: "Type a message...",
+      send: "Send",
+      join: "Join",
+      leave: "Leave",
+      noResults: "No results found",
+      startConversation: "Start the conversation",
+    },
+    common: {
+      save: "Save",
+      cancel: "Cancel",
+      delete: "Delete",
+      edit: "Edit",
+      loading: "Loading...",
+      success: "Successfully saved",
+      errorOccurred: "An error occurred",
+      installApp: "Install App",
+      installAppDesc: "Install on your home screen for quick and seamless access.",
+      later: "Later",
+    },
   },
-  questions: {
-    uz: 'Savollar',
-    en: 'Questions',
-    ru: 'Вопросы',
+  ru: {
+    nav: {
+      home: "Главная",
+      questions: "Банк вопросов",
+      mocks: "Mock Тесты",
+      vocabulary: "Словарь SAT",
+      mistakes: "Банк ошибок",
+      community: "Сообщество",
+      admin: "Панель админа",
+      searchPlaceholder: "Поиск (люди, группы, вопросы)...",
+      login: "Войти",
+      register: "Регистрация",
+      logout: "Выйти",
+      profile: "Мой профиль",
+      settings: "Настройки",
+    },
+    landing: {
+      badge: "ASRON SAT • Формат 2026",
+      heroTitle: "Наберите 1500+ на Digital SAT с адаптивной системой",
+      heroSubtitle: "Профессиональная и системная платформа подготовки к экзамену SAT.",
+      startFree: "Регистрация (Бесплатно)",
+      takeDiagnostic: "Пройти 7-минутный диагностический тест",
+      featuresTitle: "Почему выбирают ASRON SAT?",
+      featuresSubtitle: "Система, выявляющая слабые места и ведущая к максимальному баллу.",
+      statStudents: "Активных студентов",
+      statAvgIncrease: "Средний прирост баллов",
+      statAccuracy: "Точность вопросов",
+      statTests: "Тесты по стандарту Bluebook",
+      faqTitle: "Часто задаваемые вопросы",
+      ctaTitle: "Начните повышать свой балл SAT уже сегодня",
+      ctaButton: "Начать",
+    },
+    dashboard: {
+      welcome: "С возвращением",
+      targetScore: "Целевой балл",
+      studyStreak: "Ударный режим",
+      dailyGoal: "Дневная цель",
+      startPractice: "Начать практику",
+      continueMock: "Продолжить тест",
+      recentActivity: "Недавняя активность",
+      viewAll: "Смотреть все",
+      rwProgress: "Прогресс Reading & Writing",
+      mathProgress: "Прогресс Math",
+      desmosMastery: "Навыки Desmos",
+      days: "дней",
+      questionsCount: "вопросов",
+    },
+    community: {
+      searchPlaceholder: "Поиск групп, каналов или друзей...",
+      publicChannels: "Публичные каналы",
+      directMessages: "Личные сообщения",
+      createChannel: "Создать канал",
+      membersCount: "участников",
+      online: "в сети",
+      typeMessage: "Напишите сообщение...",
+      send: "Отправить",
+      join: "Подписаться",
+      leave: "Выйти",
+      noResults: "Ничего не найдено",
+      startConversation: "Начните диалог",
+    },
+    common: {
+      save: "Сохранить",
+      cancel: "Отмена",
+      delete: "Удалить",
+      edit: "Редактировать",
+      loading: "Загрузка...",
+      success: "Успешно сохранено",
+      errorOccurred: "Произошла ошибка",
+      installApp: "Установить приложение",
+      installAppDesc: "Установите на главный экран для быстрого и удобного доступа.",
+      later: "Позже",
+    },
   },
-  qbank: {
-    uz: 'Savollar',
-    en: 'Questions',
-    ru: 'Вопросы',
-  },
-  mocks: {
-    uz: 'Testlar',
-    en: 'Tests',
-    ru: 'Тесты',
-  },
-  bluebook: {
-    uz: 'Testlar',
-    en: 'Tests',
-    ru: 'Тесты',
-  },
-  vocabulary: {
-    uz: "Lug'at",
-    en: 'Vocabulary',
-    ru: 'Словарь',
-  },
-  vocab: {
-    uz: "Lug'at",
-    en: 'Vocabulary',
-    ru: 'Словарь',
-  },
-  mistakes: {
-    uz: 'Xatolar',
-    en: 'Mistakes',
-    ru: 'Ошибки',
-  },
-  vault: {
-    uz: 'Xatolar',
-    en: 'Mistakes',
-    ru: 'Ошибки',
-  },
-  community: {
-    uz: 'Hamjamiyat',
-    en: 'Community',
-    ru: 'Сообщество',
-  },
-  admin: {
-    uz: 'Admin',
-    en: 'Admin',
-    ru: 'Админ',
-  },
-  adminPanel: {
-    uz: 'Admin Panel',
-    en: 'Admin Panel',
-    ru: 'Админ панель',
-  },
-  mainSections: {
-    uz: 'Asosiy Bo‘limlar',
-    en: 'Main Sections',
-    ru: 'Основные разделы',
-  },
+};
 
-  // Actions & Headers
-  search: {
-    uz: 'Qidiruv',
-    en: 'Search',
-    ru: 'Поиск',
-  },
-  searchPlaceholder: {
-    uz: 'Qidiruv...',
-    en: 'Search...',
-    ru: 'Поиск...',
-  },
-  searchChannelsOrUsers: {
-    uz: 'Foydalanuvchilar, guruhlar yoki kanallarni qidiring...',
-    en: 'Search users, groups, or channels...',
-    ru: 'Поиск пользователей, групп или каналов...',
-  },
-  all: {
-    uz: 'Barchasi',
-    en: 'All',
-    ru: 'Все',
-  },
-  users: {
-    uz: 'Foydalanuvchilar',
-    en: 'Users',
-    ru: 'Пользователи',
-  },
-  channels: {
-    uz: 'Kanallar',
-    en: 'Channels',
-    ru: 'Каналы',
-  },
-  login: {
-    uz: 'Kirish',
-    en: 'Log In',
-    ru: 'Войти',
-  },
-  register: {
-    uz: "Ro'yxatdan o'tish",
-    en: 'Sign Up',
-    ru: 'Регистрация',
-  },
-  signUpFree: {
-    uz: "Bepul ro'yxatdan o'tish",
-    en: 'Sign Up Free',
-    ru: 'Регистрация бесплатно',
-  },
-  logout: {
-    uz: 'Chiqish',
-    en: 'Log Out',
-    ru: 'Выйти',
-  },
-  profile: {
-    uz: 'Profil',
-    en: 'Profile',
-    ru: 'Профиль',
-  },
-  settings: {
-    uz: 'Sozlamalar',
-    en: 'Settings',
-    ru: 'Настройки',
-  },
-  profileAndSettings: {
-    uz: 'Profil & Sozlamalar',
-    en: 'Profile & Settings',
-    ru: 'Профиль и Настройки',
-  },
-  myProfile: {
-    uz: 'Mening Profilim',
-    en: 'My Profile',
-    ru: 'Мой профиль',
-  },
-  language: {
-    uz: 'Til',
-    en: 'Language',
-    ru: 'Язык',
-  },
-  selectLanguage: {
-    uz: 'Tilni tanlang',
-    en: 'Select language',
-    ru: 'Выберите язык',
-  },
-  overviewFeatures: {
-    uz: "Umumiy ko'rinish",
-    en: 'Overview & Features',
-    ru: 'Обзор и возможности',
-  },
-  blogSocial: {
-    uz: 'Blog & Ijtimoiy',
-    en: 'Blog & Social',
-    ru: 'Блог и Сообщество',
-  },
-  diagnosticTest: {
-    uz: 'Diagnostik Test',
-    en: 'Diagnostic Test',
-    ru: 'Диагностический тест',
-  },
-  tenMinDrills: {
-    uz: '10-Daqiqalik Mashq',
-    en: '10-Min Drills',
-    ru: '10-минутные тесты',
-  },
-  openMenu: {
-    uz: 'Menyuni ochish',
-    en: 'Open Menu',
-    ru: 'Открыть меню',
-  },
-  goToProfile: {
-    uz: "Profilga o'tish",
-    en: 'Go to Profile',
-    ru: 'Перейти в профиль',
-  },
-  student: {
-    uz: 'Talaba',
-    en: 'Student',
-    ru: 'Студент',
-  },
-  user: {
-    uz: 'Foydalanuvchi',
-    en: 'User',
-    ru: 'Пользователь',
-  },
-  locked: {
-    uz: 'Qulflangan',
-    en: 'Locked',
-    ru: 'Заблокировано',
-  },
-} as const;
+export type TranslationKey = string;
 
-export type TranslationKey = keyof typeof translations;
+/**
+ * Universal backwards-compatible fallback mapping for flat keys used in legacy components
+ */
+const FLAT_ALIAS_MAP: Record<string, { uz: string; en: string; ru: string }> = {
+  dashboard: { uz: 'Bosh sahifa', en: 'Home', ru: 'Главная' },
+  home: { uz: 'Bosh sahifa', en: 'Home', ru: 'Главная' },
+  qbank: { uz: 'Savollar Banki', en: 'Question Bank', ru: 'Банк вопросов' },
+  practice: { uz: 'Savollar Banki', en: 'Question Bank', ru: 'Банк вопросов' },
+  questions: { uz: 'Savollar Banki', en: 'Question Bank', ru: 'Банк вопросов' },
+  bluebook: { uz: 'Mock Testlar', en: 'Mock Tests', ru: 'Mock Тесты' },
+  mocks: { uz: 'Mock Testlar', en: 'Mock Tests', ru: 'Mock Тесты' },
+  vocab: { uz: "SAT Lug'at", en: 'SAT Vocabulary', ru: 'Словарь SAT' },
+  vocabulary: { uz: "SAT Lug'at", en: 'SAT Vocabulary', ru: 'Словарь SAT' },
+  vault: { uz: 'Xatolar Ombori', en: 'Mistake Bank', ru: 'Банк ошибок' },
+  mistakes: { uz: 'Xatolar Ombori', en: 'Mistake Bank', ru: 'Банк ошибок' },
+  community: { uz: 'Hamjamiyat', en: 'Community', ru: 'Сообщество' },
+  admin: { uz: 'Admin Panel', en: 'Admin Panel', ru: 'Панель админа' },
+  adminPanel: { uz: 'Admin Panel', en: 'Admin Panel', ru: 'Панель админа' },
+  mainSections: { uz: 'Asosiy Bo‘limlar', en: 'Main Sections', ru: 'Основные разделы' },
 
+  language: { uz: 'Til', en: 'Language', ru: 'Язык' },
+  selectLanguage: { uz: 'Tilni tanlang', en: 'Select language', ru: 'Выберите язык' },
+  profile: { uz: 'Mening Profilim', en: 'My Profile', ru: 'Мой профиль' },
+  myProfile: { uz: 'Mening Profilim', en: 'My Profile', ru: 'Мой профиль' },
+  settings: { uz: 'Sozlamalar', en: 'Settings', ru: 'Настройки' },
+  profileAndSettings: { uz: 'Profil & Sozlamalar', en: 'Profile & Settings', ru: 'Профиль и Настройки' },
+  goToProfile: { uz: "Profilga o'tish", en: 'Go to Profile', ru: 'Перейти в профиль' },
+  login: { uz: 'Kirish', en: 'Log In', ru: 'Войти' },
+  register: { uz: "Ro'yxatdan o'tish", en: 'Sign Up', ru: 'Регистрация' },
+  signUpFree: { uz: "Ro'yxatdan o'tish (Bepul)", en: 'Sign Up Free', ru: 'Регистрация (Бесплатно)' },
+  logout: { uz: 'Chiqish', en: 'Log Out', ru: 'Выйти' },
+  student: { uz: 'Talaba', en: 'Student', ru: 'Студент' },
+  user: { uz: 'Foydalanuvchi', en: 'User', ru: 'Пользователь' },
+  locked: { uz: 'Qulflangan', en: 'Locked', ru: 'Заблокировано' },
+
+  all: { uz: 'Barchasi', en: 'All', ru: 'Все' },
+  users: { uz: 'Foydalanuvchilar', en: 'Users', ru: 'Пользователи' },
+  channels: { uz: 'Kanallar', en: 'Channels', ru: 'Каналы' },
+  search: { uz: 'Qidiruv', en: 'Search', ru: 'Поиск' },
+  searchPlaceholder: { uz: 'Qidirish (odamlar, guruhlar, savollar)...', en: 'Search (people, groups, questions)...', ru: 'Поиск (люди, группы, вопросы)...' },
+  searchChannelsOrUsers: { uz: "Guruhlar, kanallar yoki do'stlarni qidirish...", en: 'Search groups, channels, or friends...', ru: 'Поиск групп, каналов или друзей...' },
+  diagnosticTest: { uz: 'Diagnostik Test', en: 'Diagnostic Test', ru: 'Диагностический тест' },
+  tenMinDrills: { uz: '10-Daqiqalik Mashq', en: '10-Min Drills', ru: '10-минутные тесты' },
+  openMenu: { uz: 'Menyuni ochish', en: 'Open Menu', ru: 'Открыть меню' },
+
+  overviewFeatures: { uz: "Umumiy ko'rinish & Imkoniyatlar", en: 'Overview & Features', ru: 'Обзор и Возможности' },
+  blogSocial: { uz: 'Blog & Ijtimoiy', en: 'Blog & Social', ru: 'Блог и Соцсети' },
+  expandSidebar: { uz: 'Kengaytirish', en: 'Expand sidebar', ru: 'Развернуть' },
+  collapseSidebar: { uz: "Panelni yig'ish", en: 'Collapse sidebar', ru: 'Свернуть' },
+  platformSettings: { uz: 'Platforma Sozlamalari', en: 'Platform Settings', ru: 'Настройки платформы' },
+  signingOut: { uz: 'Chiqilmoqda...', en: 'Signing out...', ru: 'Выход...' },
+  accuracy: { uz: 'Aniqlik', en: 'Accuracy', ru: 'Точность' },
+  streak: { uz: 'Streak', en: 'Streak', ru: 'Серия' },
+  active: { uz: 'Faol', en: 'Active', ru: 'Активно' },
+  zero: { uz: 'Nol', en: 'Zero', ru: 'Ноль' },
+  view: { uz: "Ko'rish", en: 'View', ru: 'Смотреть' },
+  noMistakes: { uz: 'Xatolar mavjud emas', en: 'No mistakes recorded', ru: 'Ошибок нет' },
+  mistakesCount: { uz: 'ta xato', en: 'mistakes', ru: 'ошибок' },
+  changeDate: { uz: "Sanani o'zgartirish", en: 'Change Date', ru: 'Изменить дату' },
+  timeRemaining: { uz: 'Imtihongacha Qolgan Vaqt', en: 'Time Remaining Until Exam', ru: 'Время до экзамена' },
+  daysUpper: { uz: 'KUN', en: 'DAYS', ru: 'ДНЕЙ' },
+  hoursUpper: { uz: 'SOAT', en: 'HOURS', ru: 'ЧАСОВ' },
+  minutesUpper: { uz: 'DAQIQA', en: 'MINUTES', ru: 'МИНУТ' },
+  secondsUpper: { uz: 'SEKUND', en: 'SECONDS', ru: 'СЕКУНД' },
+  selectExamDate: { uz: 'SAT Imtihon Sanasini Tanlash', en: 'Select SAT Exam Date', ru: 'Выбор даты экзамена SAT' },
+  currentDate: { uz: 'Hozirgi sana', en: 'Current date', ru: 'Текущая дата' },
+  officialExamDates: { uz: 'Rasmiy Digital SAT Sanalari (2026)', en: 'Official Digital SAT Dates (2026)', ru: 'Официальные даты Digital SAT (2026)' },
+  customDate: { uz: 'Boshqa (Maxsus) Sana Belgilash', en: 'Set Custom Date', ru: 'Указать свою дату' },
+  dateSavedEverywhere: { uz: 'Sana barcha qurilmalarda saqlanadi', en: 'Date is synchronized across all devices', ru: 'Дата сохраняется на всех устройствах' },
+  close: { uz: 'Yopish', en: 'Close', ru: 'Закрыть' },
+};
+
+/**
+ * Universal Translation Resolver
+ * - Resolves hierarchical dot paths: e.g. "nav.home", "landing.heroTitle", "dashboard.studyStreak"
+ * - Resolves flat key aliases: e.g. "questions", "mocks", "goToProfile"
+ * - Graceful fallback to default language ("uz") or custom fallback string
+ */
 export function t(key: TranslationKey | string, lang: Language = 'uz', fallback?: string): string {
-  if (key in translations) {
-    const entry = (translations as Record<string, Record<Language, string>>)[key];
-    if (entry) {
-      return entry[lang] || entry['uz'] || fallback || String(key);
+  const safeLang: Language = (lang === 'uz' || lang === 'en' || lang === 'ru') ? lang : 'uz';
+  const langDict = translations[safeLang] || translations.uz;
+
+  if (typeof key === 'string') {
+    // 1. Check dot notation (e.g., 'nav.home', 'dashboard.studyStreak', 'common.save')
+    if (key.includes('.')) {
+      const parts = key.split('.');
+      let current: any = langDict;
+      for (const part of parts) {
+        if (current && typeof current === 'object' && part in current) {
+          current = current[part];
+        } else {
+          current = undefined;
+          break;
+        }
+      }
+      if (typeof current === 'string') {
+        return current;
+      }
+
+      // Try fallback to 'uz' dictionary if missing in current lang
+      let fallbackCurrent: any = translations.uz;
+      for (const part of parts) {
+        if (fallbackCurrent && typeof fallbackCurrent === 'object' && part in fallbackCurrent) {
+          fallbackCurrent = fallbackCurrent[part];
+        } else {
+          fallbackCurrent = undefined;
+          break;
+        }
+      }
+      if (typeof fallbackCurrent === 'string') {
+        return fallbackCurrent;
+      }
+    }
+
+    // 2. Check each top-level section for direct key
+    const sections = ['nav', 'landing', 'dashboard', 'community', 'common'];
+    for (const sec of sections) {
+      const secDict = (langDict as any)[sec];
+      if (secDict && key in secDict) {
+        return secDict[key];
+      }
+    }
+
+    // 3. Check legacy flat alias map
+    if (key in FLAT_ALIAS_MAP) {
+      const alias = FLAT_ALIAS_MAP[key];
+      return alias[safeLang] || alias.uz;
     }
   }
+
   return fallback !== undefined ? fallback : String(key);
 }

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Calendar, X, Check, Clock } from 'lucide-react';
 import { getSupabaseClient } from '../../lib/supabase';
+import { useLanguage } from '../../context/LanguageContext';
 
 export interface OfficialExamDatePreset {
   id: string;
@@ -41,6 +42,7 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
   onTargetDateChange,
   className = '',
 }) => {
+  const { t, language } = useLanguage();
   // 1. Resolve Target Date from LocalStorage or Prop
   const [targetDate, setTargetDate] = useState<string>(() => {
     if (typeof window !== 'undefined') {
@@ -145,7 +147,8 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
     handleSaveDate(isoFormat);
   };
 
-  const formattedTargetLabel = new Date(targetDate).toLocaleDateString('uz-UZ', {
+  const localeCode = language === 'ru' ? 'ru-RU' : language === 'en' ? 'en-US' : 'uz-UZ';
+  const formattedTargetLabel = new Date(targetDate).toLocaleDateString(localeCode, {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -168,13 +171,13 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md bg-[#F1F5F9] dark:bg-[#1E293B] text-[#0F172A] dark:text-[#94A3B8] border border-slate-200 dark:border-[#334155]/60 text-[10px] font-mono font-semibold uppercase tracking-wider">
                 <Clock size={11} className="text-[#E07A5F]" />
-                Rasmiy Digital SAT
+                Digital SAT
               </span>
             </div>
 
             <div>
               <h2 className="text-sm sm:text-base lg:text-lg font-bold text-[#0F172A] dark:text-[#F8FAFC] tracking-tight">
-                Imtihongacha Qolgan Vaqt
+                {t('timeRemaining', 'Imtihongacha Qolgan Vaqt')}
               </h2>
               <p className="text-[11px] sm:text-xs text-[#64748B] dark:text-[#94A3B8] mt-0.5 leading-relaxed max-w-md hidden xs:block sm:block">
                 College Board rasmiy test sanasiga asoslangan tayyorgarlik rejasi.
@@ -192,7 +195,7 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
                   {timeLeft.days}
                 </div>
                 <div className="text-[9px] sm:text-[10px] tracking-wider sm:tracking-widest text-[#64748B] font-mono font-bold uppercase mt-1">
-                  KUN
+                  {t('daysUpper', 'KUN')}
                 </div>
               </div>
 
@@ -202,7 +205,7 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
                   {pad(timeLeft.hours)}
                 </div>
                 <div className="text-[9px] sm:text-[10px] tracking-wider sm:tracking-widest text-[#64748B] font-mono font-bold uppercase mt-1">
-                  SOAT
+                  {t('hoursUpper', 'SOAT')}
                 </div>
               </div>
 
@@ -212,7 +215,7 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
                   {pad(timeLeft.minutes)}
                 </div>
                 <div className="text-[9px] sm:text-[10px] tracking-wider sm:tracking-widest text-[#64748B] font-mono font-bold uppercase mt-1">
-                  DAQIQA
+                  {t('minutesUpper', 'DAQIQA')}
                 </div>
               </div>
 
@@ -222,7 +225,7 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
                   {pad(timeLeft.seconds)}
                 </div>
                 <div className="text-[9px] sm:text-[10px] tracking-wider sm:tracking-widest text-[#64748B] font-mono font-bold uppercase mt-1">
-                  SEKUND
+                  {t('secondsUpper', 'SEKUND')}
                 </div>
               </div>
             </div>
@@ -232,10 +235,10 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
               type="button"
               onClick={() => setIsModalOpen(true)}
               className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl bg-[#F1F5F9] dark:bg-[#1E293B] hover:bg-[#E2E8F0] dark:hover:bg-[#2D3748] text-[#0F172A] dark:text-[#F8FAFC] border border-slate-200 dark:border-[#334155]/80 text-xs font-mono font-semibold transition-all cursor-pointer shrink-0 shadow-2xs active:scale-98"
-              title="Imtihon sanasini o'zgartirish"
+              title={t('changeDate', "Sanani o'zgartirish")}
             >
               <Calendar size={13} className="text-[#E07A5F]" />
-              <span>Sanani o‘zgartirish</span>
+              <span>{t('changeDate', 'Sanani o‘zgartirish')}</span>
             </button>
           </div>
         </div>
@@ -263,10 +266,10 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
                 </div>
                 <div>
                   <h3 id="exam-date-modal-title" className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC]">
-                    SAT Imtihon Sanasini Tanlash
+                    {t('selectExamDate', 'SAT Imtihon Sanasini Tanlash')}
                   </h3>
                   <p className="text-[11px] font-mono text-[#64748B] dark:text-[#94A3B8]">
-                    Hozirgi sana: {formattedTargetLabel}
+                    {t('currentDate', 'Hozirgi sana')}: {formattedTargetLabel}
                   </p>
                 </div>
               </div>
@@ -285,7 +288,7 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
               {/* Presets List */}
               <div className="space-y-2">
                 <label className="text-[11px] font-mono uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8] font-bold block">
-                  Rasmiy Digital SAT Sanalari (2026)
+                  {t('officialExamDates', 'Rasmiy Digital SAT Sanalari (2026)')}
                 </label>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -327,7 +330,7 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
               {/* Custom Date Selector */}
               <div className="space-y-2 pt-2 border-t border-[#E2E8F0] dark:border-[#1E293B]">
                 <label className="text-[11px] font-mono uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8] font-bold block">
-                  Boshqa (Maxsus) Sana Belgilash
+                  {t('customDate', 'Boshqa (Maxsus) Sana Belgilash')}
                 </label>
 
                 <form onSubmit={handleCustomSubmit} className="flex items-center gap-2">
@@ -344,7 +347,7 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
                     disabled={!customInputDate || isSaving}
                     className="px-4 py-2 rounded-xl bg-[#E07A5F] hover:bg-[#c96c53] text-white text-xs font-mono font-bold transition-colors cursor-pointer disabled:opacity-40 shrink-0"
                   >
-                    Saqlash
+                    {t('common.save', 'Saqlash')}
                   </button>
                 </form>
               </div>
@@ -360,13 +363,13 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
 
             {/* Modal Footer */}
             <div className="px-5 py-3 bg-[#F8FAFC] dark:bg-[#0A0F1D] border-t border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-between text-[11px] font-mono text-[#64748B] dark:text-[#94A3B8]">
-              <span>Sana barcha qurilmalarda saqlanadi</span>
+              <span>{t('dateSavedEverywhere', 'Sana barcha qurilmalarda saqlanadi')}</span>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
                 className="text-[#0F172A] dark:text-[#F8FAFC] font-medium hover:underline cursor-pointer"
               >
-                Yopish
+                {t('close', 'Yopish')}
               </button>
             </div>
           </div>

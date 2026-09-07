@@ -344,7 +344,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
                 : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1E293B]'
             }`}
           >
-            Barchasi {hasSearched && `(${totalResultsCount})`}
+            {t('all', 'Barchasi')} {hasSearched && `(${totalResultsCount})`}
           </button>
 
           <button
@@ -357,7 +357,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
             }`}
           >
             <UserIcon size={13} />
-            <span>Foydalanuvchilar</span>
+            <span>{t('users', 'Foydalanuvchilar')}</span>
             {hasSearched && <span className="text-[10px] opacity-80">({userResults.length})</span>}
           </button>
 
@@ -371,7 +371,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
             }`}
           >
             <Radio size={13} />
-            <span>Kanallar & Guruhlar</span>
+            <span>{t('channels', 'Kanallar')}</span>
             {hasSearched && <span className="text-[10px] opacity-80">({channelResults.length})</span>}
           </button>
         </div>
@@ -513,7 +513,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
                         }}
                         className="px-3 py-1.5 rounded-xl bg-[#E07A5F] hover:bg-[#c9684f] text-white text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 shadow-2xs cursor-pointer"
                       >
-                        <span>Qo'shilish</span>
+                        <span>{t('community.join', "Qo'shilish")}</span>
                         <ArrowRight size={12} />
                       </button>
                     </div>

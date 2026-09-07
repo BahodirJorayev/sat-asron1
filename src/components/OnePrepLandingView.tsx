@@ -49,6 +49,7 @@ import {
 } from '../data/blogAndBrandingData';
 import { ReviewSubmissionModal } from './ReviewSubmissionModal';
 import { AsronLogo } from './AsronLogo';
+import { useLanguage } from '../context/LanguageContext';
 
 interface Props {
   user: User;
@@ -170,15 +171,16 @@ export const OnePrepLandingView: React.FC<Props> = ({
   onNavigateToBlog,
   onOpenAdminLogin,
 }) => {
+  const { t, language } = useLanguage();
   const branding = siteBranding || INITIAL_SITE_CONFIG;
 
   // Dynamic Supabase Platform Content Integration
   const dynamicHero = platformContent?.landing_hero;
-  const heroTitle = dynamicHero?.title || branding.heroHeadline;
-  const heroSubtitle = dynamicHero?.subtitle || branding.heroSubtext;
+  const heroTitle = dynamicHero?.title || (language === 'uz' ? (branding.heroHeadline || t('landing.heroTitle')) : t('landing.heroTitle'));
+  const heroSubtitle = dynamicHero?.subtitle || (language === 'uz' ? (branding.heroSubtext || t('landing.heroSubtitle')) : t('landing.heroSubtitle'));
   const heroBadge =
-    dynamicHero?.content?.badgeText || `${branding.brandName} • Digital SAT Intelligence Platform (2026 Edition)`;
-  const heroCtaText = dynamicHero?.content?.ctaText || 'Sign Up for Free';
+    dynamicHero?.content?.badgeText || t('landing.badge', `${branding.brandName} • Digital SAT Intelligence Platform (2026 Edition)`);
+  const heroCtaText = dynamicHero?.content?.ctaText || t('landing.startFree', 'Sign Up for Free');
 
   const dynamicStats = platformContent?.stats_bar;
   const isStatsActive = dynamicStats?.is_active ?? true;
@@ -186,10 +188,10 @@ export const OnePrepLandingView: React.FC<Props> = ({
     Array.isArray(dynamicStats?.content) && dynamicStats.content.length > 0
       ? dynamicStats.content
       : [
-          { id: '1', value: '45,000+', label: 'Faol SAT Talabalari' },
-          { id: '2', value: '+210 ball', label: "O'rtacha Ball O'sishi" },
-          { id: '3', value: '100%', label: 'Bluebook 2-Stage MST Format' },
-          { id: '4', value: '10 Daqiqa', label: 'Kunlik Samarali Trenirovka' },
+          { id: '1', value: '45,000+', label: t('landing.statStudents', 'Faol SAT Talabalari') },
+          { id: '2', value: '+210 ball', label: t('landing.statAvgIncrease', "O'rtacha Ball O'sishi") },
+          { id: '3', value: '100%', label: t('landing.statTests', 'Bluebook 2-Stage MST Format') },
+          { id: '4', value: '10 Daqiqa', label: t('tenMinDrills', 'Kunlik Samarali Trenirovka') },
         ];
   // Score growth slider state
   const [currentScore, setCurrentScore] = useState<number>(1280);
@@ -356,7 +358,7 @@ export const OnePrepLandingView: React.FC<Props> = ({
             className="w-full sm:w-auto px-7 py-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#0A0F1D] hover:bg-[#F5F0EB] dark:hover:bg-[#18233C] border border-[#E5E0D8] dark:border-[#1E293B] text-[#0B1B3D] dark:text-[#EAEBED] font-bold text-sm shadow-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
           >
             <FileCheck2 className="w-4 h-4 text-[#E07A5F]" />
-            <span>Take Free 7-Min Diagnostic Test</span>
+            <span>{t('landing.takeDiagnostic', 'Take Free 7-Min Diagnostic Test')}</span>
           </button>
         </div>
 

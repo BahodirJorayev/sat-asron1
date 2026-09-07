@@ -13,12 +13,14 @@ import {
 } from 'lucide-react';
 import { ExamCountdownWidget } from '../../components/dashboard/ExamCountdownWidget';
 import { supabase } from '../../lib/supabase';
+import { useLanguage } from '../../context/LanguageContext';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [targetExamDate, setTargetExamDate] = useState<string>('2026-10-03T08:00:00');
   const [stats, setStats] = useState({
     streakDays: 0,
@@ -90,7 +92,7 @@ export default function DashboardPage() {
       {/* 1. Header Strip: Minimalist Identification */}
       <header className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#0F172A] dark:text-[#F8FAFC]">
-          Uy
+          {t('nav.home', 'Uy')}
         </h1>
       </header>
 
@@ -106,14 +108,14 @@ export default function DashboardPage() {
         <div className="p-3 sm:p-4 md:p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col justify-between transition-colors">
           <div className="flex items-center justify-between">
             <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold truncate">
-              Streak
+              {t('streak', 'Streak')}
             </span>
             <span className="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#0A0F1D] text-slate-500">
-              {stats.streakDays > 0 ? 'Faol' : 'Nol'}
+              {stats.streakDays > 0 ? t('active', 'Faol') : t('zero', 'Nol')}
             </span>
           </div>
           <div className="mt-1.5 sm:mt-2 text-xl sm:text-2xl lg:text-3xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC]">
-            {stats.streakDays} <span className="text-[10px] sm:text-xs font-normal text-slate-400">Kun</span>
+            {stats.streakDays} <span className="text-[10px] sm:text-xs font-normal text-slate-400">{t('dashboard.days', 'Kun')}</span>
           </div>
         </div>
 
@@ -121,7 +123,7 @@ export default function DashboardPage() {
         <div className="p-3 sm:p-4 md:p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col justify-between transition-colors">
           <div className="flex items-center justify-between">
             <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold truncate">
-              Savollar
+              {t('nav.questions', 'Savollar')}
             </span>
           </div>
           <div className="mt-1.5 sm:mt-2 text-xl sm:text-2xl lg:text-3xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC] truncate">
@@ -133,7 +135,7 @@ export default function DashboardPage() {
         <div className="p-3 sm:p-4 md:p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col justify-between transition-colors">
           <div className="flex items-center justify-between">
             <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold truncate">
-              Aniqlik
+              {t('accuracy', 'Aniqlik')}
             </span>
           </div>
           <div className="mt-1.5 sm:mt-2 text-xl sm:text-2xl lg:text-3xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC]">
@@ -145,7 +147,7 @@ export default function DashboardPage() {
       {/* 5. Quick Launch Modules (Punchy Badges, Zero Text Clutter) */}
       <section aria-label="Asosiy Modullar" className="space-y-2.5 sm:space-y-3">
         <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-          Asosiy Modullar
+          {t('mainSections', 'Asosiy Modullar')}
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-4">
@@ -160,7 +162,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <div className="font-bold text-xs sm:text-sm text-[#0F172A] dark:text-[#F8FAFC]">
-                  Testlar
+                  {t('nav.mocks', 'Testlar')}
                 </div>
               </div>
             </div>
@@ -181,7 +183,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <div className="font-bold text-xs sm:text-sm text-[#0F172A] dark:text-[#F8FAFC]">
-                  Savollar
+                  {t('nav.questions', 'Savollar')}
                 </div>
               </div>
             </div>
@@ -202,7 +204,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <div className="font-bold text-xs sm:text-sm text-[#0F172A] dark:text-[#F8FAFC]">
-                  Lug'at
+                  {t('nav.vocabulary', "Lug'at")}
                 </div>
               </div>
             </div>
@@ -223,7 +225,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <div className="font-bold text-xs sm:text-sm text-[#0F172A] dark:text-[#F8FAFC]">
-                  Hamjamiyat
+                  {t('nav.community', 'Hamjamiyat')}
                 </div>
               </div>
             </div>
@@ -243,10 +245,10 @@ export default function DashboardPage() {
           </div>
           <div>
             <div className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC]">
-              Xatolar Ombori
+              {t('nav.mistakes', 'Xatolar Ombori')}
             </div>
             <div className="text-[11px] font-mono text-slate-400">
-              {stats.mistakesCount > 0 ? `${stats.mistakesCount} ta xato` : 'Xatolar mavjud emas'}
+              {stats.mistakesCount > 0 ? `${stats.mistakesCount} ${t('mistakesCount', 'ta xato')}` : t('noMistakes', 'Xatolar mavjud emas')}
             </div>
           </div>
         </div>
@@ -255,7 +257,7 @@ export default function DashboardPage() {
           href="/mistakes"
           className="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-[#0A0F1D] hover:bg-slate-200 dark:hover:bg-[#1E293B] text-xs font-mono font-bold text-[#0F172A] dark:text-[#F8FAFC] transition-colors flex items-center gap-1"
         >
-          <span>Ko'rish</span>
+          <span>{t('view', "Ko'rish")}</span>
           <ArrowUpRight size={13} />
         </Link>
       </section>

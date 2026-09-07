@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, X, Share, PlusSquare, Sparkles, Smartphone, Check } from 'lucide-react';
 import { usePlatformSettings } from '../../hooks/usePlatformSettings';
+import { useLanguage } from '../../context/LanguageContext';
 import { AsronLogo } from '../AsronLogo';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -17,6 +18,7 @@ interface BeforeInstallPromptEvent extends Event {
 
 export const PwaInstallPrompt: React.FC = () => {
   const { settings } = usePlatformSettings();
+  const { t } = useLanguage();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isStandalone, setIsStandalone] = useState<boolean>(true);
   const [isVisible, setIsVisible] = useState<boolean>(false);
@@ -188,7 +190,7 @@ export const PwaInstallPrompt: React.FC = () => {
                   className="px-3.5 py-1.5 rounded-xl bg-[#E07A5F] hover:bg-[#c9684f] active:scale-95 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  <span>O'rnatish</span>
+                  <span>{t('common.installApp', "O'rnatish")}</span>
                 </button>
 
                 <button

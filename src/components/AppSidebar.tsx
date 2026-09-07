@@ -139,11 +139,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     },
     {
       id: 'vault',
-      label: 'Xatolar Ombori',
+      label: t('mistakes', 'Xatolar Ombori'),
       icon: BookmarkCheck,
       onClick: () => {
         if (isModuleLocked('mistakes')) {
-          showLockedNotice('Xatolar Ombori');
+          showLockedNotice(t('mistakes', 'Xatolar Ombori'));
           return;
         }
         setActiveTab('vault');
@@ -156,7 +156,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       icon: Users,
       onClick: () => {
         if (isModuleLocked('community')) {
-          showLockedNotice('Hamjamiyat');
+          showLockedNotice(t('community', 'Hamjamiyat'));
           return;
         }
         setActiveTab('community');
@@ -167,7 +167,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       ? [
           {
             id: 'admin',
-            label: 'Admin Panel',
+            label: t('adminPanel', 'Admin Panel'),
             icon: ShieldAlert,
             onClick: () => setActiveTab('admin'),
             isLocked: false,
@@ -193,7 +193,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           <button
             type="button"
             onClick={handleToggleCollapse}
-            aria-label="Kengaytirish (Expand sidebar)"
+            aria-label={t('expandSidebar', 'Kengaytirish')}
             className="w-10 h-10 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#0F172A] dark:text-white flex items-center justify-center font-extrabold text-sm shadow-xs border border-[#E2E8F0] dark:border-[#1E293B] hover:border-[#E07A5F]/60 transition-all cursor-pointer relative overflow-hidden p-1.5"
           >
             {settings.logo_url && settings.logo_url !== '/brand/logo.svg' ? (
@@ -213,7 +213,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           </button>
 
           <div className="absolute left-full ml-3 px-2.5 py-1.5 bg-[#0F172A] dark:bg-[#1E293B] text-white text-xs font-medium rounded-lg shadow-xl whitespace-nowrap z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-all -translate-x-1 group-hover:translate-x-0 border border-[#E2E8F0] dark:border-[#334155] flex items-center gap-1.5">
-            <span>Kengaytirish</span>
+            <span>{t('expandSidebar', 'Kengaytirish')}</span>
           </div>
         </div>
       ) : (
@@ -221,7 +221,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           <div
             onClick={() => setActiveTab('dashboard')}
             className="flex items-center gap-3 cursor-pointer group min-w-0"
-            title={`${brandName} - Bosh Sahifa`}
+            title={`${brandName} - ${t('nav.home', 'Bosh Sahifa')}`}
           >
             {settings.logo_url && settings.logo_url !== '/brand/logo.svg' ? (
               <img
@@ -243,7 +243,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           <button
             type="button"
             onClick={handleToggleCollapse}
-            aria-label="Panelni yig'ish"
+            aria-label={t('collapseSidebar', "Panelni yig'ish")}
             className="p-1.5 rounded-lg text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] transition-colors cursor-pointer shrink-0"
           >
             <PanelLeftClose size={16} />
@@ -255,7 +255,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto [&::-webkit-scrollbar]:hidden scrollbar-none">
         {!isCollapsed && (
           <div className="px-3 pb-2 text-[10px] font-mono font-semibold uppercase tracking-wider text-[#64748B] dark:text-[#64748B]">
-            Asosiy Bo‘limlar
+            {t('mainSections', 'Asosiy Bo‘limlar')}
           </div>
         )}
 

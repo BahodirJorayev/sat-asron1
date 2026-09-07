@@ -19,6 +19,7 @@ import {
 } from './ui/dropdown-menu';
 import { User } from '../types';
 import { supabase, signOutUser } from '../lib/supabase';
+import { useLanguage } from '../context/LanguageContext';
 
 export interface SidebarFooterProps {
   user: User;
@@ -45,6 +46,7 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
   onLogout,
   router,
 }) => {
+  const { t } = useLanguage();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
@@ -179,7 +181,7 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
               className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium text-[#1E1B18] dark:text-[#EAEBED] hover:bg-white dark:hover:bg-[#202534] rounded-xl cursor-pointer transition-colors"
             >
               <UserIcon size={14} className="text-[#78716C] dark:text-[#94A3B8]" />
-              <span>Mening Profilim</span>
+              <span>{t('myProfile', 'Mening Profilim')}</span>
             </DropdownMenuItem>
 
             <DropdownMenuItem
@@ -187,7 +189,7 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
               className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium text-[#1E1B18] dark:text-[#EAEBED] hover:bg-white dark:hover:bg-[#202534] rounded-xl cursor-pointer transition-colors"
             >
               <Settings size={14} className="text-[#78716C] dark:text-[#94A3B8]" />
-              <span>Platforma Sozlamalari</span>
+              <span>{t('platformSettings', 'Platforma Sozlamalari')}</span>
             </DropdownMenuItem>
 
             <DropdownMenuSeparator className="my-1 bg-[#EBE5DF] dark:bg-[#262B3D]" />
@@ -198,7 +200,7 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
               className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl cursor-pointer transition-colors"
             >
               <LogOut size={14} className="text-red-500 dark:text-red-400" />
-              <span>{isSigningOut ? 'Chiqilmoqda...' : 'Hisobdan Chiqish'}</span>
+              <span>{isSigningOut ? t('signingOut', 'Chiqilmoqda...') : t('logout', 'Hisobdan Chiqish')}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -216,7 +218,7 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
         <div
           onClick={handleProfileClick}
           className="w-full flex items-center justify-between p-2.5 rounded-2xl bg-[#F1F5F9]/80 dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] hover:border-[#CBD5E1] dark:hover:border-[#334155] transition-all cursor-pointer shadow-2xs group"
-          title="Mening Profilim sahifasiga o'tish"
+          title={t('goToProfile', "Mening Profilim sahifasiga o'tish")}
         >
           {/* Left: Avatar + Green Online Dot */}
           <div className="relative shrink-0 mr-2.5">
@@ -249,9 +251,9 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
               <button
                 type="button"
                 onClick={(e) => e.stopPropagation()}
-                aria-label="Amallar menyusini ochish"
+                aria-label={t('openMenu', 'Amallar menyusini ochish')}
                 className="p-1 rounded-lg text-[#78716C] dark:text-[#94A3B8] hover:text-[#1E1B18] dark:hover:text-[#EAEBED] hover:bg-[#EFEAE3] dark:hover:bg-[#202534] transition-colors cursor-pointer focus:outline-none"
-                title="Qo'shimcha amallar"
+                title={t('openMenu', "Qo'shimcha amallar")}
               >
                 <MoreVertical size={15} />
               </button>
@@ -281,7 +283,7 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
             className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium text-[#1E1B18] dark:text-[#EAEBED] hover:bg-white dark:hover:bg-[#202534] rounded-xl cursor-pointer transition-colors"
           >
             <UserIcon size={14} className="text-[#78716C] dark:text-[#94A3B8]" />
-            <span>Mening Profilim</span>
+            <span>{t('myProfile', 'Mening Profilim')}</span>
           </DropdownMenuItem>
 
           {/* ⚙️ Platforma Sozlamalari */}
@@ -290,7 +292,7 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
             className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium text-[#1E1B18] dark:text-[#EAEBED] hover:bg-white dark:hover:bg-[#202534] rounded-xl cursor-pointer transition-colors"
           >
             <Settings size={14} className="text-[#78716C] dark:text-[#94A3B8]" />
-            <span>Platforma Sozlamalari</span>
+            <span>{t('platformSettings', 'Platforma Sozlamalari')}</span>
           </DropdownMenuItem>
 
           <DropdownMenuSeparator className="my-1 bg-[#EBE5DF] dark:bg-[#262B3D]" />
@@ -302,7 +304,7 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
             className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl cursor-pointer transition-colors"
           >
             <LogOut size={14} className="text-red-500 dark:text-red-400" />
-            <span>{isSigningOut ? 'Chiqilmoqda...' : 'Hisobdan Chiqish'}</span>
+            <span>{isSigningOut ? t('signingOut', 'Chiqilmoqda...') : t('logout', 'Hisobdan Chiqish')}</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

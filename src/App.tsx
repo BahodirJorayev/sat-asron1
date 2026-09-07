@@ -1447,7 +1447,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#0F172A] dark:text-[#F8FAFC] flex font-sans selection:bg-[#E07A5F] selection:text-white transition-colors duration-150">
+    <div className={`min-h-screen ${activeTab === 'community' ? 'h-[100dvh] overflow-hidden overflow-x-hidden overflow-y-hidden' : ''} bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#0F172A] dark:text-[#F8FAFC] flex font-sans selection:bg-[#E07A5F] selection:text-white transition-colors duration-150`}>
       {/* 1. Left Fixed Sidebar (Visible in Dashboard & Study Views) */}
       {activeTab !== 'landing' && activeTab !== 'blog' && (
         <Sidebar
@@ -1489,10 +1489,10 @@ export default function App() {
       )}
 
       {/* 2. Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
+      <div className={`flex-1 flex flex-col min-w-0 ${activeTab === 'community' ? 'h-[100dvh] md:h-screen overflow-hidden overflow-x-hidden overflow-y-hidden' : 'overflow-x-hidden'}`}>
         {/* Maintenance Mode Alert if enabled and student is logged in */}
         {globalSettings.isMaintenance && currentUser.role !== 'ADMIN' && currentUser.role !== 'SUPER_ADMIN' && (
-          <div className="w-full bg-rose-950/80 border-b border-rose-800/60 px-4 py-2 text-xs font-mono text-rose-200 flex items-center justify-between z-50">
+          <div className="w-full bg-rose-950/80 border-b border-rose-800/60 px-4 py-2 text-xs font-mono text-rose-200 flex items-center justify-between z-50 shrink-0">
             <span>⚠️ Platform Maintenance Mode Active. Some features are temporarily offline.</span>
             <button
               onClick={() => setIsAdminLoginModalOpen(true)}
@@ -1504,29 +1504,31 @@ export default function App() {
         )}
 
         {/* Top Header with Quick Actions */}
-        <Header
-          user={currentUser}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          siteBranding={siteBranding}
-          onOpenDailyWorkout={() => setIsDailyWorkoutOpen(true)}
-          onOpenDiagnostic={() => setIsDiagnosticOpen(true)}
-          onOpenPaywall={() => setIsPaywallOpen(true)}
-          onOpenTelegramLogs={() => setIsTelegramLogsOpen(true)}
-          onSwitchUserRole={handleSwitchUserRole}
-          onOpenAuthModal={handleOpenAuth}
-          onOpenMilestoneModal={handleOpenMilestoneModal}
-          onOpenProfileSearch={() => {
-            setIsGlobalSearchOpen(true);
-          }}
-          onOpenCurrentUserProfile={() => {
-            setActiveTab('profile');
-          }}
-          unreadAlertCount={notifications.filter((n) => !n.read).length}
-        />
+        <div className={activeTab === 'community' ? 'hidden md:block shrink-0' : 'shrink-0'}>
+          <Header
+            user={currentUser}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            siteBranding={siteBranding}
+            onOpenDailyWorkout={() => setIsDailyWorkoutOpen(true)}
+            onOpenDiagnostic={() => setIsDiagnosticOpen(true)}
+            onOpenPaywall={() => setIsPaywallOpen(true)}
+            onOpenTelegramLogs={() => setIsTelegramLogsOpen(true)}
+            onSwitchUserRole={handleSwitchUserRole}
+            onOpenAuthModal={handleOpenAuth}
+            onOpenMilestoneModal={handleOpenMilestoneModal}
+            onOpenProfileSearch={() => {
+              setIsGlobalSearchOpen(true);
+            }}
+            onOpenCurrentUserProfile={() => {
+              setActiveTab('profile');
+            }}
+            unreadAlertCount={notifications.filter((n) => !n.read).length}
+          />
+        </div>
 
         {/* Main Routed Views */}
-        <main className="flex-1 pb-16">
+        <main className={`flex-1 ${activeTab === 'community' ? 'h-[100dvh] md:h-[calc(100dvh-64px)] overflow-hidden overflow-x-hidden overflow-y-hidden pb-0' : 'pb-16'}`}>
           {activeTab === 'landing' && (
             <LandingView
               user={currentUser}
@@ -1761,7 +1763,7 @@ export default function App() {
       </div>
 
       {/* Mobile Bottom Navigation Bar (Visible only on < 768px in student/dashboard views) */}
-      {activeTab !== 'landing' && activeTab !== 'blog' && !activeBluebookTest && (
+      {activeTab !== 'landing' && activeTab !== 'blog' && activeTab !== 'community' && !activeBluebookTest && (
         <MobileBottomNav
           activeTab={activeTab}
           setActiveTab={setActiveTab}

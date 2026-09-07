@@ -76,7 +76,7 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({
   }, [initialUser]);
 
   return (
-    <div className="h-[100dvh] w-full overflow-hidden flex flex-col bg-slate-50 dark:bg-[#0A0F1D] select-none">
+    <div className="h-full w-full overflow-hidden overflow-x-hidden overflow-y-hidden flex flex-col bg-slate-50 dark:bg-[#070D1E] select-none">
       <CommunityChatHub
         currentUser={activeUser}
         usersList={usersList}

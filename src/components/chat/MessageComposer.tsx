@@ -70,7 +70,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
 
   if (!canPost) {
     return (
-      <footer className="flex-shrink-0 bg-white dark:bg-[#0A0F1D] border-t border-slate-200 dark:border-slate-800 p-2 text-center text-xs font-mono text-slate-500 dark:text-slate-400 select-none transition-colors">
+      <footer className="flex-shrink-0 p-3 bg-white dark:bg-[#0B132B] border-t border-slate-200 dark:border-slate-800 text-center text-xs font-mono text-slate-500 dark:text-slate-400 select-none transition-colors z-10">
         <div className="flex items-center justify-center gap-1.5 py-1">
           <Lock className="w-3.5 h-3.5 text-amber-500" />
           <span>Faqat kanal ma'murlari xabar yuborishi mumkin.</span>
@@ -80,7 +80,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
   }
 
   return (
-    <footer className="flex-shrink-0 p-2.5 bg-white dark:bg-[#0A0F1D] border-t border-slate-200 dark:border-slate-800 z-10 transition-colors">
+    <footer className="flex-shrink-0 p-3 bg-white dark:bg-[#0B132B] border-t border-slate-200 dark:border-slate-800 z-10 transition-colors">
       {/* 1. Reply Banner */}
       {replyingTo && (
         <div className="mb-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between text-xs animate-in fade-in duration-150">

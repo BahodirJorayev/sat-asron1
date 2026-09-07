@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ChevronLeft, Share2, Info, Radio, Lock, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Share2, Info, Radio, Lock, CheckCircle2 } from 'lucide-react';
 import { Chat } from '../../types';
 import { EntityAvatar } from './EntityAvatar';
 
@@ -27,9 +27,9 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   isInfoOpen = false,
 }) => {
   return (
-    <header className="flex-shrink-0 h-12 px-2.5 sm:px-4 bg-white dark:bg-[#121A2F] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between select-none z-10">
+    <header className="h-14 flex-shrink-0 border-b border-slate-200 dark:border-slate-800 px-4 flex items-center justify-between bg-white/80 dark:bg-[#0B132B]/80 backdrop-blur-md z-10 select-none">
       {/* Left: Back button + Compact Avatar */}
-      <div className="flex items-center gap-2 min-w-0 flex-1">
+      <div className="flex items-center gap-2.5 min-w-0 flex-1">
         {onBack && (
           <button
             type="button"
@@ -37,7 +37,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
             aria-label="Orqaga"
             className="md:hidden p-1.5 -ml-1 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5" />
           </button>
         )}
 

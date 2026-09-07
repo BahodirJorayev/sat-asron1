@@ -63,13 +63,24 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   const { isModuleHidden, isModuleLocked, showLockedNotice } = usePlatformSettings();
   const { t } = useLanguage();
   const [isChatOpen, setIsChatOpen] = React.useState(false);
+  const [currentHash, setCurrentHash] = React.useState(() => {
+    if (typeof window !== 'undefined') return window.location.hash || '';
+    return '';
+  });
 
   React.useEffect(() => {
     const handleChatState = (e: any) => {
       setIsChatOpen(!!e?.detail?.isOpen);
     };
     window.addEventListener('asron_chat_state_change', handleChatState);
-    return () => window.removeEventListener('asron_chat_state_change', handleChatState);
+
+    const handleHash = () => setCurrentHash(window.location.hash || '');
+    window.addEventListener('hashchange', handleHash);
+
+    return () => {
+      window.removeEventListener('asron_chat_state_change', handleChatState);
+      window.removeEventListener('hashchange', handleHash);
+    };
   }, []);
 
   const isCurrentActive = (item: typeof navItems[0]) => {
@@ -87,11 +98,13 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     return pathname === item.href || pathname.startsWith(item.href + '/');
   };
 
-  // Hide bottom nav entirely when on /chat, /community, or when an active conversation is open on mobile
-  if (
-    isChatOpen ||
-    (pathname && (pathname.startsWith('/chat') || pathname.startsWith('/community')))
-  ) {
+  // Hide bottom nav entirely when inside /community, /chat, or on mobile community view
+  const isCommunity =
+    activeTab === 'community' ||
+    Boolean(pathname && (pathname.includes('community') || pathname.includes('chat'))) ||
+    Boolean(currentHash && (currentHash.includes('community') || currentHash.includes('chat')));
+
+  if (isChatOpen || isCommunity) {
     return null;
   }
 

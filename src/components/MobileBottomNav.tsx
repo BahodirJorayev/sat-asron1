@@ -24,17 +24,35 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
 }) => {
   const { t } = useLanguage();
   const [isChatOpen, setIsChatOpen] = React.useState(false);
+  const [currentHash, setCurrentHash] = React.useState(() => {
+    if (typeof window !== 'undefined') return window.location.hash || '';
+    return '';
+  });
 
   React.useEffect(() => {
     const handleChatState = (e: any) => {
       setIsChatOpen(!!e?.detail?.isOpen);
     };
     window.addEventListener('asron_chat_state_change', handleChatState);
-    return () => window.removeEventListener('asron_chat_state_change', handleChatState);
+
+    const handleHash = () => setCurrentHash(window.location.hash || '');
+    window.addEventListener('hashchange', handleHash);
+
+    return () => {
+      window.removeEventListener('asron_chat_state_change', handleChatState);
+      window.removeEventListener('hashchange', handleHash);
+    };
   }, []);
 
-  // Hide entirely when viewing an active chat channel
-  if (isChatOpen) {
+  const isCommunity =
+    activeTab === 'community' ||
+    (typeof window !== 'undefined' &&
+      (window.location.pathname?.includes('community') ||
+       window.location.pathname?.includes('chat'))) ||
+    Boolean(currentHash && (currentHash.includes('community') || currentHash.includes('chat')));
+
+  // Hide entirely when inside community or viewing an active chat channel
+  if (isChatOpen || isCommunity) {
     return null;
   }
 

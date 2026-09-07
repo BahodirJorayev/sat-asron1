@@ -833,17 +833,17 @@ export const CommunityChatHub: React.FC<Props> = ({
   };
 
   return (
-    <div className="h-[100dvh] w-full flex bg-slate-50 dark:bg-[#0A0F1D] text-[#0F172A] dark:text-[#F8FAFC] font-sans overflow-hidden select-none border-0 sm:border border-slate-200 dark:border-slate-800 rounded-none sm:rounded-2xl shadow-xs">
+    <div className="h-[100dvh] md:h-[calc(100dvh-64px)] w-full overflow-hidden overflow-x-hidden overflow-y-hidden flex flex-row select-none bg-slate-50 dark:bg-[#070D1E] text-[#0F172A] dark:text-[#F8FAFC] font-sans">
       {/* ============================================================= */}
       {/* 1. LEFT SIDEBAR: FOLDERS & CLEAN CHATS LIST                   */}
       {/* ============================================================= */}
       <aside
         className={`${
           isMobileChatViewOpen ? 'hidden md:flex' : 'flex'
-        } w-full md:w-80 lg:w-96 h-[100dvh] md:h-full bg-white dark:bg-[#121A2F] border-r border-[#E2E8F0] dark:border-[#1E293B] flex-col shrink-0 overflow-hidden`}
+        } w-full md:w-80 lg:w-96 flex-shrink-0 flex flex-col h-full border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B132B] overflow-hidden`}
       >
         {/* Top Hub Bar */}
-        <div className="p-3.5 border-b border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-between gap-3">
+        <div className="flex-shrink-0 p-3 bg-white dark:bg-[#0B132B] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
           <div className="relative flex-1">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8]" />
             <input
@@ -851,7 +851,7 @@ export const CommunityChatHub: React.FC<Props> = ({
               value={globalSearchQuery}
               onChange={(e) => setGlobalSearchQuery(e.target.value)}
               placeholder="Qidiruv (@username, kanal yoki ism)..."
-              className="w-full pl-9 pr-8 py-1.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] text-xs text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-hidden focus:border-[#E07A5F]"
+              className="w-full pl-9 pr-8 py-1.5 rounded-xl bg-slate-50 dark:bg-[#070D1E] border border-slate-200 dark:border-slate-800 text-xs text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-hidden focus:border-[#E07A5F]"
             />
             {globalSearchQuery && (
               <button
@@ -870,7 +870,7 @@ export const CommunityChatHub: React.FC<Props> = ({
           <button
             type="button"
             onClick={() => setIsCreateChatModalOpen(true)}
-            className="p-2 rounded-xl bg-[#F1F5F9] dark:bg-[#0A0F1D] hover:bg-[#E2E8F0] dark:hover:bg-[#1A233A] border border-[#E2E8F0] dark:border-[#1E293B] text-[#E07A5F] transition-colors cursor-pointer"
+            className="p-2 rounded-xl bg-slate-100 dark:bg-[#070D1E] hover:bg-slate-200 dark:hover:bg-[#1E293B] border border-slate-200 dark:border-slate-800 text-[#E07A5F] transition-colors cursor-pointer"
             title="Yangi Muloqot Yaratish (Kanal / Guruh / Shaxsiy)"
           >
             <Pencil className="w-4 h-4" />
@@ -879,7 +879,7 @@ export const CommunityChatHub: React.FC<Props> = ({
 
         {/* Search Results Dropdown Overlay or Feed */}
         {globalSearchQuery.trim() ? (
-          <div className="flex-1 overflow-y-auto overscroll-contain p-3 space-y-4 font-sans">
+          <div className="flex-1 overflow-y-auto overscroll-contain p-3 space-y-4 font-sans custom-scrollbar">
             {isSearching ? (
               <div className="py-8 flex flex-col items-center justify-center text-center text-[#64748B] dark:text-[#94A3B8] gap-2">
                 <Loader2 className="w-5 h-5 animate-spin text-[#E07A5F]" />
@@ -985,7 +985,7 @@ export const CommunityChatHub: React.FC<Props> = ({
         ) : (
           <>
             {/* Folder Tabs Strip */}
-            <div className="px-3 py-2 border-b border-[#E2E8F0] dark:border-[#1E293B] flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs font-mono">
+            <div className="flex-shrink-0 px-3 py-2 bg-white dark:bg-[#0B132B] border-b border-slate-200 dark:border-slate-800 flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs font-mono">
               {[
                 { id: 'ALL', label: 'Barchasi' },
                 { id: 'CHANNELS', label: 'Kanallar' },
@@ -1008,7 +1008,7 @@ export const CommunityChatHub: React.FC<Props> = ({
             </div>
 
             {/* Chats Feed */}
-            <div className="flex-1 overflow-y-auto overscroll-contain divide-y divide-[#E2E8F0] dark:divide-[#1E293B]/40">
+            <div className="flex-1 overflow-y-auto overscroll-contain divide-y divide-slate-100 dark:divide-slate-800/60 custom-scrollbar">
               {filteredChats.map((chat) => {
                 const isSelected = chat.id === activeChat?.id;
 
@@ -1083,7 +1083,7 @@ export const CommunityChatHub: React.FC<Props> = ({
       <main
         className={`${
           isMobileChatViewOpen ? 'flex' : 'hidden md:flex'
-        } flex-1 flex flex-col h-[100dvh] md:h-full bg-slate-50 dark:bg-[#0A0F1D] overflow-hidden relative min-w-0`}
+        } flex-1 flex flex-col h-full overflow-hidden bg-slate-50 dark:bg-[#070D1E] relative min-w-0`}
       >
         {activeChat ? (
           <>
@@ -1122,7 +1122,7 @@ export const CommunityChatHub: React.FC<Props> = ({
             {/* 2. Middle Scrollable Message Feed */}
             <div
               ref={messagesContainerRef}
-              className="flex-1 p-3 sm:p-4 overflow-y-auto overscroll-contain space-y-3 bg-slate-50 dark:bg-[#0A0F1D]"
+              className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar flex flex-col bg-slate-50 dark:bg-[#070D1E]"
             >
               {messages.map((msg) => (
                 <MessageBubble

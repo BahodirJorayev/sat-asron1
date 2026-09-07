@@ -60,10 +60,10 @@ export const AuthModal: React.FC<Props> = ({
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${origin}/auth/callback`,
+          redirectTo: origin, // Direct return to root origin so listener handles redirection to dashboard
           queryParams: {
             access_type: 'offline',
-            prompt: 'consent',
+            prompt: 'select_account', // Allows choosing existing google account cleanly
           },
         },
       });

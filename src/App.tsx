@@ -295,6 +295,63 @@ export default function App() {
     };
   }, []);
 
+  // Permanent Google OAuth redirect & auto-session routing
+  useEffect(() => {
+    const handleAuthenticatedUser = async (user: any) => {
+      try {
+        const { data: existingProfile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (!existingProfile) {
+          // Create profile row ONLY if it doesn't exist yet (Absolute no-duplicate enforcement)
+          await supabase.from('profiles').insert({
+            id: user.id,
+            email: user.email,
+            full_name: user.user_metadata?.full_name || user.user_metadata?.name || 'Talaba',
+            username: user.email?.split('@')[0] || `user_${user.id.slice(0, 5)}`,
+            avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
+          });
+        }
+      } catch (err) {
+        console.warn('Profile existence check warning:', err);
+      }
+
+      // If user is authenticated and currently on landing/login/register, force immediate route to dashboard
+      if (typeof window !== 'undefined') {
+        const currentPath = window.location.hash || window.location.pathname;
+        if (
+          currentPath === '' ||
+          currentPath === '/' ||
+          currentPath.includes('landing') ||
+          currentPath.includes('login') ||
+          currentPath.includes('register')
+        ) {
+          window.location.hash = '#/dashboard';
+          setActiveTab('dashboard');
+        }
+      }
+    };
+
+    // 1. Listen for instant auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        handleAuthenticatedUser(session.user);
+      }
+    });
+
+    // 2. Initial session check on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        handleAuthenticatedUser(session.user);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   // Live Supabase public.profiles fetch and Realtime sync across PC & Mobile devices
   useEffect(() => {
     let isMounted = true;

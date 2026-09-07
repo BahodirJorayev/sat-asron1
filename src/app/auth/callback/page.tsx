@@ -28,31 +28,28 @@ export default function AuthCallbackPage() {
         const user = sessionData?.session?.user;
 
         if (user) {
-          // Sync profile to public.profiles if needed
-          const { data: profile } = await supabase
+          // Strictly enforce One User = One Profile (no duplicate creation or overwrite)
+          const { data: existingProfile } = await supabase
             .from('profiles')
-            .select('id, full_name, username, avatar_url, target_score')
+            .select('*')
             .eq('id', user.id)
             .maybeSingle();
 
-          if (!profile) {
-            const meta = user.user_metadata || {};
-            const cleanName = meta.full_name || meta.name || 'Talaba';
-            const cleanUser = meta.username || user.email?.split('@')[0] || 'user';
-            const cleanAvatar = meta.avatar_url || meta.picture || `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanUser}`;
-            await supabase.from('profiles').upsert({
+          if (!existingProfile) {
+            // Create profile row ONLY if it doesn't exist yet
+            await supabase.from('profiles').insert({
               id: user.id,
-              full_name: cleanName,
-              username: cleanUser,
-              avatar_url: cleanAvatar,
-              target_score: 1500,
+              email: user.email,
+              full_name: user.user_metadata?.full_name || user.user_metadata?.name || 'Talaba',
+              username: user.email?.split('@')[0] || `user_${user.id.slice(0, 5)}`,
+              avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
             });
           }
 
           const appUser = mapSupabaseUserToAppUser(user, {
-            fullName: profile?.full_name,
-            username: profile?.username,
-            avatarUrl: profile?.avatar_url,
+            fullName: existingProfile?.full_name,
+            username: existingProfile?.username,
+            avatarUrl: existingProfile?.avatar_url,
           });
 
           setAuthCookie(appUser);

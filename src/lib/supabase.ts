@@ -112,14 +112,13 @@ export function mapSupabaseUserToAppUser(sbUser: SupabaseAuthUser, customDetails
 export async function signInWithGoogle(): Promise<{ data: { user?: User; url?: string } | null; error: any }> {
   try {
     const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
-    const redirectUrl = `${currentOrigin}/auth/callback`;
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: redirectUrl,
+        redirectTo: currentOrigin,
         queryParams: {
           access_type: 'offline',
-          prompt: 'consent',
+          prompt: 'select_account',
         },
       },
     });

@@ -17,6 +17,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { usePlatformSettings } from '../../hooks/usePlatformSettings';
+import { useLanguage } from '../../context/LanguageContext';
 import { AsronLogo } from '../AsronLogo';
 
 export interface NavItem {
@@ -101,6 +102,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const pathname = usePathname() || currentPath || '/dashboard';
   const { settings, isModuleHidden, isModuleLocked, showLockedNotice } = usePlatformSettings();
+  const { t } = useLanguage();
   const [internalCollapsed, setInternalCollapsed] = useState(false);
 
   const isCollapsed = controlledCollapsed !== undefined ? controlledCollapsed : internalCollapsed;
@@ -171,7 +173,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto [&::-webkit-scrollbar]:hidden scrollbar-none">
         {!isCollapsed && (
           <div className="px-3 pb-2 text-[10px] font-mono font-semibold uppercase tracking-wider text-[#64748B] dark:text-[#64748B]">
-            Asosiy Bo‘limlar
+            {t('mainSections', 'Asosiy Bo‘limlar')}
           </div>
         )}
 
@@ -180,6 +182,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         ).map((item) => {
           const Icon = item.icon;
           const isLocked = item.id !== 'dashboard' && isModuleLocked(item.id as any);
+          const localizedLabel = t(item.id, item.label);
           const isCurrentActive = () => {
             if (activeTab) {
               if (activeTab === item.id) return true;
@@ -205,14 +208,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onClick={(e) => {
                   if (isLocked) {
                     e.preventDefault();
-                    showLockedNotice(item.label);
+                    showLockedNotice(localizedLabel);
                     return;
                   }
                   if (setActiveTab) {
                     setActiveTab(item.id);
                   }
                 }}
-                title={isCollapsed ? (isLocked ? `${item.label} (Qulflangan)` : item.label) : undefined}
+                title={isCollapsed ? (isLocked ? `${localizedLabel} (${t('locked', 'Qulflangan')})` : localizedLabel) : undefined}
                 className={`relative flex items-center gap-3 ${
                   isCollapsed ? 'justify-center h-10 w-10 mx-auto' : 'px-3 py-2.5'
                 } rounded-xl text-xs font-medium transition-all duration-150 cursor-pointer ${
@@ -235,7 +238,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 />
 
                 {!isCollapsed && (
-                  <span className="truncate tracking-tight flex-1">{item.label}</span>
+                  <span className="truncate tracking-tight flex-1">{localizedLabel}</span>
                 )}
 
                 {/* Lock Badge */}
@@ -251,7 +254,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {/* Collapsed Tooltip */}
               {isCollapsed && (
                 <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1.5 bg-[#0F172A] dark:bg-[#1E293B] text-[#F8FAFC] text-xs font-medium rounded-lg shadow-xl whitespace-nowrap z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-all -translate-x-1 group-hover:translate-x-0 border border-[#E2E8F0] dark:border-[#334155] flex items-center gap-1.5">
-                  <span>{item.label}</span>
+                  <span>{localizedLabel}</span>
                 </div>
               )}
             </div>
@@ -268,7 +271,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               } rounded-xl text-xs font-medium transition-all text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40`}
             >
               <ShieldAlert size={17} />
-              {!isCollapsed && <span>Admin Panel</span>}
+              {!isCollapsed && <span>{t('adminPanel', 'Admin Panel')}</span>}
             </Link>
           </div>
         )}
@@ -318,7 +321,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   window.location.href = '/';
                 }
               }}
-              title="Chiqish"
+              title={t('logout', 'Chiqish')}
               className="p-1.5 rounded-lg text-[#64748B] dark:text-[#94A3B8] hover:text-rose-500 hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] transition-colors cursor-pointer shrink-0"
             >
               <LogOut size={13} />

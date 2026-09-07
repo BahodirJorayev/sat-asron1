@@ -12,6 +12,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { usePlatformSettings } from '../../hooks/usePlatformSettings';
+import { useLanguage } from '../../context/LanguageContext';
 
 export interface BottomNavProps {
   activeTab?: string;
@@ -60,6 +61,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 }) => {
   const pathname = usePathname() || '';
   const { isModuleHidden, isModuleLocked, showLockedNotice } = usePlatformSettings();
+  const { t } = useLanguage();
   const [isChatOpen, setIsChatOpen] = React.useState(false);
 
   React.useEffect(() => {
@@ -151,7 +153,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                     : 'text-slate-500 dark:text-slate-400'
                 }`}
               >
-                {item.label}
+                {t(item.id, item.label)}
               </span>
             </div>
           </Link>

@@ -9,6 +9,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { User } from '../types';
+import { useLanguage } from '../context/LanguageContext';
 
 interface MobileBottomNavProps {
   activeTab: string;
@@ -21,6 +22,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   activeTab,
   setActiveTab,
 }) => {
+  const { t } = useLanguage();
   const [isChatOpen, setIsChatOpen] = React.useState(false);
 
   React.useEffect(() => {
@@ -105,7 +107,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                   : 'text-slate-500 dark:text-slate-400'
               }`}
             >
-              {item.label}
+              {t(item.id, item.label)}
             </span>
           </button>
         );

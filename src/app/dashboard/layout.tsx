@@ -12,6 +12,7 @@ import { PwaInstallPrompt } from '../../components/pwa/PwaInstallPrompt';
 import { PwaSplashScreen } from '../../components/pwa/PwaSplashScreen';
 import { supabase } from '../../lib/supabase';
 import { PlatformSettingsProvider, usePlatformSettings } from '../../contexts/PlatformSettingsContext';
+import { LanguageProvider, useLanguage } from '../../context/LanguageContext';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -26,6 +27,7 @@ function DashboardLayoutContent({
 }) {
   const pathname = usePathname() || '/dashboard';
   const { settings, isModuleHidden, isModuleLocked, showLockedNotice } = usePlatformSettings();
+  const { t } = useLanguage();
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState<boolean>(false);
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
@@ -256,7 +258,7 @@ function DashboardLayoutContent({
                           size={17}
                           className={isActive ? 'text-[#E07A5F]' : 'text-[#64748B] dark:text-[#94A3B8]'}
                         />
-                        <span>{item.label}</span>
+                        <span>{t(item.id, item.label)}</span>
                       </div>
                       {isLocked && <Lock size={13} className="text-amber-500 shrink-0" />}
                     </Link>
@@ -297,7 +299,9 @@ export default function DashboardLayout({
 }) {
   return (
     <PlatformSettingsProvider>
-      <DashboardLayoutContent>{children}</DashboardLayoutContent>
+      <LanguageProvider>
+        <DashboardLayoutContent>{children}</DashboardLayoutContent>
+      </LanguageProvider>
     </PlatformSettingsProvider>
   );
 }

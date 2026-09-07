@@ -16,6 +16,8 @@ import { GlobalSearchModal } from '../chat/GlobalSearchModal';
 import { supabase } from '../../lib/supabase';
 import { usePlatformSettings } from '../../hooks/usePlatformSettings';
 import { AsronLogo } from '../AsronLogo';
+import { LanguageSwitcher } from './LanguageSwitcher';
+import { useLanguage } from '../../context/LanguageContext';
 
 export interface HeaderProps {
   onOpenMobileDrawer?: () => void;
@@ -42,6 +44,7 @@ export const Header: React.FC<HeaderProps> = ({
   const router = useRouter();
   const pathname = usePathname() || '';
   const { settings, isModuleHidden, isModuleLocked, showLockedNotice } = usePlatformSettings();
+  const { t } = useLanguage();
   const [currentUser, setCurrentUser] = useState<{
     fullName?: string;
     username?: string;
@@ -214,7 +217,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               type="button"
               onClick={onOpenMobileDrawer}
-              aria-label="Menyuni ochish"
+              aria-label={t('openMenu', 'Menyuni ochish')}
               className="md:hidden p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60 transition-transform active:scale-95 cursor-pointer shrink-0"
             >
               <Menu size={16} />
@@ -227,7 +230,7 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={() => {
               if (setActiveTab) setActiveTab('profile');
             }}
-            aria-label="Profilga o'tish"
+            aria-label={t('goToProfile', "Profilga o'tish")}
             className="flex md:hidden items-center gap-2 p-1 pl-1 pr-2.5 rounded-full bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 hover:border-[#E07A5F]/40 active:scale-95 transition-all cursor-pointer text-left"
           >
             {hasAvatar ? (
@@ -271,12 +274,15 @@ export const Header: React.FC<HeaderProps> = ({
         {/* RIGHT SECTION: Action Icons (Search, Community, Desktop Dropdown)         */}
         {/* ========================================================================= */}
         <div className="flex items-center gap-2 sm:gap-2.5">
+          {/* Minimalist Multi-Language Switcher */}
+          <LanguageSwitcher />
+
           {/* Dedicated Search Action Button (Opens GlobalSearchModal) */}
           <button
             type="button"
             onClick={handleOpenSearch}
-            aria-label="Qidiruv"
-            title="Qidiruv"
+            aria-label={t('search', 'Qidiruv')}
+            title={t('search', 'Qidiruv')}
             className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white border border-slate-200/50 dark:border-slate-700/50 active:scale-95 transition-transform cursor-pointer"
           >
             <Search size={17} />
@@ -294,8 +300,8 @@ export const Header: React.FC<HeaderProps> = ({
                 if (setActiveTab) setActiveTab('community');
                 else router.push('/chat');
               }}
-              aria-label="Hamjamiyat"
-              title="Hamjamiyat"
+              aria-label={t('community', 'Hamjamiyat')}
+              title={t('community', 'Hamjamiyat')}
               className="relative flex md:hidden w-9 h-9 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white border border-slate-200/50 dark:border-slate-700/50 active:scale-95 transition-transform cursor-pointer"
             >
               <Users size={17} />
@@ -356,7 +362,7 @@ export const Header: React.FC<HeaderProps> = ({
                     className="flex items-center gap-2 px-3.5 py-2 text-[#0F172A] dark:text-[#F8FAFC] hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                   >
                     <UserIcon size={14} className="text-[#E07A5F]" />
-                    <span>Profil & Sozlamalar</span>
+                    <span>{t('profileAndSettings', 'Profil & Sozlamalar')}</span>
                   </Link>
                 </div>
 
@@ -375,7 +381,7 @@ export const Header: React.FC<HeaderProps> = ({
                     className="w-full text-left flex items-center gap-2 px-3.5 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
                   >
                     <LogOut size={14} />
-                    <span>Chiqish</span>
+                    <span>{t('logout', 'Chiqish')}</span>
                   </button>
                 </div>
               </div>

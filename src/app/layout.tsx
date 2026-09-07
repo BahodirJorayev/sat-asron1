@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import React from 'react';
 import '../index.css';
 import '../lib/supabase';
+import { LanguageProvider } from '../context/LanguageContext';
+import { PlatformSettingsProvider } from '../contexts/PlatformSettingsContext';
 
 export const metadata: Metadata = {
   title: 'ASRON SAT • Digital SAT Intelligence Platform',
@@ -45,7 +47,11 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
       <body className="bg-[#0A0F1D] text-[#F8FAFC] antialiased min-h-screen">
-        {children}
+        <PlatformSettingsProvider>
+          <LanguageProvider>
+            {children}
+          </LanguageProvider>
+        </PlatformSettingsProvider>
       </body>
     </html>
   );

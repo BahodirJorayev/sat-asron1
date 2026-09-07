@@ -29,6 +29,8 @@ import { SiteBrandingConfig } from '../data/blogAndBrandingData';
 import { ThemeToggle } from './ThemeToggle';
 import { AsronLogo } from './AsronLogo';
 import { usePlatformSettings } from '../hooks/usePlatformSettings';
+import { LanguageSwitcher } from './navigation/LanguageSwitcher';
+import { useLanguage } from '../context/LanguageContext';
 
 interface Props {
   user: User;
@@ -48,6 +50,7 @@ interface Props {
 }
 
 export const Header: React.FC<Props> = ({
+
   user,
   activeTab,
   setActiveTab,
@@ -65,6 +68,7 @@ export const Header: React.FC<Props> = ({
 }) => {
   const isPro = user.planTier === 'PRO';
   const { settings } = usePlatformSettings();
+  const { t } = useLanguage();
 
   const brandName = settings.platform_title || siteBranding?.brandName || 'ASRON SAT';
   const brandTagline = settings.tagline || siteBranding?.brandTagline || 'Digital SAT Platform';
@@ -167,7 +171,7 @@ export const Header: React.FC<Props> = ({
                 activeTab === 'landing' ? 'text-[#2563EB] dark:text-[#4EA8DE] font-bold' : ''
               }`}
             >
-              Overview & Features
+              {t('overviewFeatures', 'Overview & Features')}
             </button>
             <button
               onClick={() => setActiveTab('blog')}
@@ -176,25 +180,28 @@ export const Header: React.FC<Props> = ({
               }`}
             >
               <BookOpen className="w-3.5 h-3.5" />
-              <span>Blog & Social</span>
+              <span>{t('blogSocial', 'Blog & Social')}</span>
             </button>
             <button
               onClick={onOpenDiagnostic}
               className="hover:text-[#2563EB] dark:hover:text-[#4EA8DE] transition-colors cursor-pointer"
             >
-              Diagnostic Test
+              {t('diagnosticTest', 'Diagnostic Test')}
             </button>
             <button
               onClick={onOpenDailyWorkout}
               className="hover:text-[#2563EB] dark:hover:text-[#4EA8DE] transition-colors cursor-pointer"
             >
-              10-Min Drills
+              {t('tenMinDrills', '10-Min Drills')}
             </button>
           </div>
         )}
 
         {/* Right Section: Controls, Search, Community, Desktop Theme & Profile */}
         <div className="flex items-center gap-2 sm:gap-2.5">
+          {/* Minimalist Multi-Language Switcher */}
+          <LanguageSwitcher />
+
           {!isLandingOrBlog && (
             <>
               {/* Dedicated Search Action Button */}
@@ -233,16 +240,12 @@ export const Header: React.FC<Props> = ({
               <button
                 onClick={() => onOpenAuthModal('signin')}
                 className="px-3.5 py-1.5 rounded-xl bg-[#FFFFFF] dark:bg-[#181B26] hover:bg-[#F3EFE6] dark:hover:bg-[#202534] border border-[#D6CEBE] dark:border-[#262B3D] text-[#1C1917] dark:text-[#EAEBED] text-xs font-semibold transition-colors cursor-pointer"
-              >
-                Log In
-              </button>
+              >{t('login', 'Log In')}</button>
 
               <button
                 onClick={() => onOpenAuthModal('signup')}
                 className="px-3.5 py-1.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] dark:bg-[#3B82F6] dark:hover:bg-[#2563EB] text-white font-bold text-xs shadow-md shadow-blue-600/20 transition-all hover:scale-105 active:scale-95 cursor-pointer"
-              >
-                Sign Up Free
-              </button>
+              >{t('signUpFree', 'Sign Up Free')}</button>
             </>
           ) : (
             <>

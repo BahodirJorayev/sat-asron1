@@ -15,6 +15,7 @@ import { User } from '../types';
 import { SiteBrandingConfig } from '../data/blogAndBrandingData';
 import { SidebarFooter } from './SidebarFooter';
 import { usePlatformSettings } from '../hooks/usePlatformSettings';
+import { useLanguage } from '../context/LanguageContext';
 import { AsronLogo } from './AsronLogo';
 
 export interface AppSidebarProps {
@@ -78,6 +79,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   };
 
   const { settings, isModuleHidden, isModuleLocked, showLockedNotice } = usePlatformSettings();
+  const { t } = useLanguage();
   const brandName = settings.platform_title || siteBranding?.brandName || 'ASRON SAT';
 
   const moduleMap: Record<string, 'questions' | 'mocks' | 'vocabulary' | 'mistakes' | 'community'> = {
@@ -92,13 +94,13 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   const allNavItems = [
     {
       id: 'dashboard',
-      label: 'Bosh sahifa',
+      label: t('dashboard', 'Bosh sahifa'),
       icon: LayoutDashboard,
       onClick: () => setActiveTab('dashboard'),
     },
     {
       id: 'qbank',
-      label: 'Savollar Banki',
+      label: t('questions', 'Savollar Banki'),
       icon: Database,
       onClick: () => {
         if (isModuleLocked('questions')) {
@@ -111,7 +113,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     },
     {
       id: 'bluebook',
-      label: 'Mock Testlar',
+      label: t('mocks', 'Mock Testlar'),
       icon: FileText,
       onClick: () => {
         if (isModuleLocked('mocks')) {
@@ -124,7 +126,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     },
     {
       id: 'vocab',
-      label: 'SAT Lug\'at',
+      label: t('vocabulary', "SAT Lug'at"),
       icon: BookOpen,
       onClick: () => {
         if (isModuleLocked('vocabulary')) {
@@ -150,7 +152,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     },
     {
       id: 'community',
-      label: 'Hamjamiyat',
+      label: t('community', 'Hamjamiyat'),
       icon: Users,
       onClick: () => {
         if (isModuleLocked('community')) {

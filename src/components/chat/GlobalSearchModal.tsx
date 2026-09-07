@@ -16,6 +16,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useLanguage } from '../../context/LanguageContext';
 
 export interface GlobalSearchModalProps {
   isOpen: boolean;
@@ -51,6 +52,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
   onSelectChannel,
 }) => {
   const router = useRouter();
+  const { t } = useLanguage();
   const [query, setQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'ALL' | 'USERS' | 'CHANNELS'>('ALL');
   const [loading, setLoading] = useState(false);
@@ -58,7 +60,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
   const [channelResults, setChannelResults] = useState<ChannelSearchResult[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | any>(null);
 
   // Auto-focus input when opened
   useEffect(() => {
@@ -293,7 +295,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Foydalanuvchilar, guruhlar yoki kanallarni qidiring..."
+            placeholder={t('searchChannelsOrUsers', 'Foydalanuvchilar, guruhlar yoki kanallarni qidiring...')}
             className="flex-1 bg-transparent text-sm sm:text-base font-medium text-[#0F172A] dark:text-[#F8FAFC] placeholder-slate-400 dark:placeholder-slate-500 outline-none"
           />
 

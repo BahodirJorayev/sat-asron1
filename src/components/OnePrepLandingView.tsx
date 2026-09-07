@@ -232,7 +232,7 @@ export const OnePrepLandingView: React.FC<Props> = ({
 
   // Timer effect for interactive widget
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval> | any;
     if (isTimerRunning && timerSeconds > 0) {
       interval = setInterval(() => {
         setTimerSeconds((prev) => prev - 1);

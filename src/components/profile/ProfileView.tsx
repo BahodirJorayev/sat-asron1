@@ -125,6 +125,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               planTier: (meta.plan_tier as any) || user.planTier || 'STANDARD',
               role: (meta.role as any) || user.role || 'STUDENT',
               streakDays: user.streakDays || 0,
+              streakFreezes: user.streakFreezes ?? 1,
+              xpPoints: user.xpPoints ?? 100,
               totalQuestionsDone: user.totalQuestionsDone || 0,
               overallAccuracy: user.overallAccuracy || 0,
               targetScore: Number(dbProfile?.target_score) || Number(meta.target_score) || user.targetScore || 1550,
@@ -356,7 +358,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
         try {
           await supabase.from('user_progress').delete().eq('user_id', activeUserId);
           await supabase.from('profiles').delete().eq('id', activeUserId);
-          await supabase.from('users').delete().eq('id', activeUserId);
         } catch (tableErr) {
           console.warn('Direct tables wipe notice:', tableErr);
         }

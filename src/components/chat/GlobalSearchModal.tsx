@@ -45,6 +45,18 @@ export interface ChannelSearchResult {
   inviteToken?: string;
 }
 
+
+const FALLBACK_PUBLIC_CHANNELS: ChannelSearchResult[] = [
+  {
+    id: 'ac87ee03-2610-4ea3-bfc1-a35a8a3dcbbf',
+    name: 'ASRON SAT Rasmiy Kanal',
+    username: 'asron_official',
+    description: 'Digital SAT yangiliklari va muhim eʼlonlar',
+    type: 'PUBLIC_CHANNEL',
+    isPublic: true,
+  },
+];
+
 export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
   isOpen,
   onClose,
@@ -110,7 +122,9 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
               inviteToken: c.invite_token,
               isPublic: true,
             }));
-            setChannelResults(mappedChannels);
+            setChannelResults(mappedChannels.length > 0 ? mappedChannels : FALLBACK_PUBLIC_CHANNELS);
+          } else {
+            setChannelResults(FALLBACK_PUBLIC_CHANNELS);
           }
         } catch (err) {
           console.warn('Load initial public channels notice:', err);
@@ -138,20 +152,20 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
 
     debounceTimerRef.current = setTimeout(async () => {
       try {
-        // 1. Search Users from live public.profiles
+        // 1. Search Users
         const { data: users } = await supabase
           .from('profiles')
           .select('id, full_name, username, avatar_url')
           .or(`full_name.ilike.%${cleanTerm}%,username.ilike.%${cleanTerm}%`)
           .limit(10);
 
-        // 2. Search Public Channels & Groups from live public.community_channels
+        // 2. Search Channels & Groups
         const { data: channels } = await supabase
           .from('community_channels')
-          .select('id, name, username, description, avatar_url, type, is_public, invite_token')
+          .select('id, name, username, description, avatar_url, type, is_public')
           .eq('is_public', true)
-          .or(`name.ilike.%${cleanTerm}%,username.ilike.%${cleanTerm}%,description.ilike.%${cleanTerm}%`)
-          .limit(15);
+          .or(`name.ilike.%${cleanTerm}%,username.ilike.%${cleanTerm}%`)
+          .limit(10);
 
         const mappedUsers: ProfileSearchResult[] = [];
         if (users && Array.isArray(users)) {

@@ -62,22 +62,6 @@ export default function DashboardPage() {
             streak = progress.streak_days || 0;
             done = progress.total_questions_done || 0;
             acc = progress.overall_accuracy || 0;
-          } else {
-            // 3. Fallback to public.users table if used
-            const { data: dbUser } = await supabase
-              .from('users')
-              .select('streak_days, total_questions_done, overall_accuracy, target_exam_date')
-              .eq('id', activeUser.id)
-              .maybeSingle();
-
-            if (dbUser) {
-              streak = dbUser.streak_days || 0;
-              done = dbUser.total_questions_done || 0;
-              acc = dbUser.overall_accuracy || 0;
-              if (dbUser.target_exam_date && isMounted) {
-                setTargetExamDate(dbUser.target_exam_date);
-              }
-            }
           }
 
           if (isMounted) {

@@ -119,8 +119,8 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
 
         if (activeUserId) {
           await supabase
-            .from('users')
-            .update({ target_exam_date: newDateIso })
+            .from('profiles')
+            .update({ target_exam_date: newDateIso } as any)
             .eq('id', activeUserId);
         }
       }

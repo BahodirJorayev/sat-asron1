@@ -250,25 +250,6 @@ export async function signUpWithEmail(
       console.warn('Profiles table sync:', e);
     }
 
-    // Also sync to public.users if present
-    try {
-      await supabase.from('users').upsert({
-        id: data.user.id,
-        email: email.trim(),
-        full_name: cleanFullName,
-        username: cleanUsername,
-        avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanUsername}`,
-        role: 'STUDENT',
-        plan_tier: 'STANDARD',
-        target_score: 1500,
-        streak_days: 0,
-        total_questions_done: 0,
-        created_at: new Date().toISOString(),
-      }, { onConflict: 'id' });
-    } catch (e) {
-      // ignore
-    }
-
     const createdUser: User = mapSupabaseUserToAppUser(data.user, {
       fullName: cleanFullName,
       username: cleanUsername,

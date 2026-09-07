@@ -90,32 +90,7 @@ export async function searchGlobalCommunity(
     console.warn('Supabase profiles search notice:', err);
   }
 
-  // Also query users table if exists in Supabase
-  try {
-    const { data: userData, error: userErr } = await supabase
-      .from('users')
-      .select('id, full_name, username, email, avatar_url, role')
-      .or(`full_name.ilike.%${query}%,username.ilike.%${query}%,email.ilike.%${query}%`)
-      .limit(10);
-
-    if (!userErr && Array.isArray(userData)) {
-      userData.forEach((u) => {
-        if (!foundUserIds.has(u.id)) {
-          foundUserIds.add(u.id);
-          usersResults.push({
-            id: u.id,
-            fullName: u.full_name || u.username || 'Foydalanuvchi',
-            username: u.username || 'user',
-            email: u.email,
-            avatarUrl: u.avatar_url,
-            role: u.role,
-          });
-        }
-      });
-    }
-  } catch (err) {
-    // Non-critical, fallback to local users
-  }
+  // Remote user query relies on canonical profiles table
 
   // 2. Query Remote Supabase for Public Groups & Channels
   try {
@@ -236,7 +211,7 @@ export async function joinChannelByToken(
         .from('community_channels')
         .select('*')
         .eq('id', channelId)
-        .single();
+        .maybeSingle();
 
       if (ch) {
         const joinedChat: Chat = {

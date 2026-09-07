@@ -8,6 +8,7 @@ import { CommunityView } from './components/CommunityView';
 import { RoadmapView } from './components/RoadmapView';
 import { AdminPanelView } from './components/AdminPanelView';
 import { OnePrepLandingView } from './components/OnePrepLandingView';
+import { LandingView } from './components/LandingView';
 import { BlogView } from './components/BlogView';
 import { AuthModal } from './components/AuthModal';
 import { AdminLoginModal } from './components/AdminLoginModal';
@@ -323,6 +324,8 @@ export default function App() {
             planTier: 'STANDARD',
             role: (authData.user.user_metadata?.role as any) || 'STUDENT',
             streakDays: 0,
+            streakFreezes: 1,
+            xpPoints: 100,
             totalQuestionsDone: 0,
             overallAccuracy: 0,
             targetExamDate: profile.target_exam_date || '2026-10-03',
@@ -545,7 +548,7 @@ export default function App() {
       .channel('global-platform-db-sync')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'global_platform_settings' },
+        { event: '*', schema: 'public', table: 'platform_settings' },
         (payload: any) => {
           if (payload.new) {
             const data = payload.new;
@@ -646,8 +649,8 @@ export default function App() {
         platformName: updated.brandName || prev.platformName,
         platformTagline: updated.brandTagline || prev.platformTagline,
         logoUrl: updated.logoIcon || prev.logoUrl,
-        adminTelegram: updated.adminTelegram || prev.adminTelegram,
-        contactTelegram: updated.adminTelegram || prev.contactTelegram,
+        adminTelegram: (updated as any).adminTelegram || prev.adminTelegram,
+        contactTelegram: (updated as any).adminTelegram || prev.contactTelegram,
         supportEmail: updated.supportEmail || prev.supportEmail,
         updatedAt: new Date().toISOString(),
       };
@@ -1468,7 +1471,7 @@ export default function App() {
         {/* Main Routed Views */}
         <main className="flex-1 pb-16">
           {activeTab === 'landing' && (
-            <OnePrepLandingView
+            <LandingView
               user={currentUser}
               siteBranding={siteBranding}
               platformContent={platformContentMap}

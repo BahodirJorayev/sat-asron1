@@ -164,9 +164,12 @@ export const PlatformSettingsProvider: React.FC<{ children: ReactNode }> = ({ ch
           updated_at: data.updated_at,
         };
         applySettingsLocally(merged);
+      } else {
+        applySettingsLocally(DEFAULT_PLATFORM_SETTINGS);
       }
     } catch (err) {
       console.warn('Failed to fetch platform_settings:', err);
+      applySettingsLocally(DEFAULT_PLATFORM_SETTINGS);
     } finally {
       setIsLoading(false);
     }

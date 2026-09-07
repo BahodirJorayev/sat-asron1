@@ -124,10 +124,10 @@ export async function fetchGlobalPlatformSettings(): Promise<GlobalPlatformSetti
   // 3. Fallback to direct Supabase query
   try {
     const { data, error } = await supabase
-      .from('global_platform_settings')
+      .from('platform_settings')
       .select('*')
       .eq('id', 'global_config')
-      .single();
+      .maybeSingle();
 
     if (!error && data) {
       const settings: GlobalPlatformSettings = {
@@ -192,7 +192,7 @@ export async function saveGlobalPlatformSettings(settings: GlobalPlatformSetting
 
   // 3. Persist to Supabase Postgres database
   try {
-    await supabase.from('global_platform_settings').upsert({
+    await supabase.from('platform_settings').upsert({
       id: 'global_config',
       platform_name: payload.platformName,
       logo_url: payload.logoUrl,
@@ -483,7 +483,7 @@ export async function fetchPlatformContent(targetKey?: string): Promise<Platform
   }
 
   try {
-    let query = supabase.from('platform_content').select('*');
+    let query = supabase.from('landing_content').select('*').eq('id', 'main_content').maybeSingle();
     if (targetKey) {
       query = query.eq('key', targetKey);
     }

@@ -38,28 +38,28 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({
             .eq('id', authData.user.id)
             .maybeSingle();
 
-          const { data: dbUser } = await supabase
-            .from('users')
+          // Fetch active public community channels
+          await supabase
+            .from('community_channels')
             .select('*')
-            .eq('id', authData.user.id)
-            .maybeSingle();
+            .eq('is_public', true);
 
           if (isMounted) {
             setActiveUser({
               id: authData.user.id,
               email: authData.user.email || '',
-              fullName: profile?.full_name || dbUser?.full_name || authData.user.user_metadata?.full_name || 'Talaba',
-              username: profile?.username || dbUser?.username || authData.user.user_metadata?.username || 'talaba',
+              fullName: profile?.full_name || authData.user.user_metadata?.full_name || 'Talaba',
+              username: profile?.username || authData.user.user_metadata?.username || 'talaba',
               avatarUrl: profile?.avatar_url || authData.user.user_metadata?.avatar_url,
-              phoneNumber: dbUser?.phone_number || authData.user.user_metadata?.phone || '',
-              planTier: (dbUser?.plan_tier as any) || 'FREE',
-              role: (dbUser?.role as any) || 'STUDENT',
-              streakDays: dbUser?.streak_days || 0,
-              totalQuestionsDone: dbUser?.total_questions_done || 0,
-              overallAccuracy: dbUser?.overall_accuracy || 0,
-              targetScore: profile?.target_score || dbUser?.target_score || 1550,
-              targetExamDate: dbUser?.target_exam_date || '2026-10-03',
-              createdAt: profile?.created_at || dbUser?.created_at || new Date().toISOString(),
+              phoneNumber: authData.user.user_metadata?.phone || '',
+              planTier: 'FREE',
+              role: 'STUDENT',
+              streakDays: 0,
+              totalQuestionsDone: 0,
+              overallAccuracy: 0,
+              targetScore: profile?.target_score || 1550,
+              targetExamDate: '2026-10-03',
+              createdAt: profile?.created_at || new Date().toISOString(),
             });
           }
         }

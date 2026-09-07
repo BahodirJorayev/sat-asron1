@@ -401,10 +401,10 @@ export const AdminGlobalSettings: React.FC<AdminGlobalSettingsProps> = ({
             <div className="space-y-3">
               <div className="flex items-center gap-4 p-4 rounded-xl bg-[#0A0F1D] border border-[#1E293B]">
                 <div className="w-16 h-16 rounded-lg bg-[#121A2F] border border-[#1E293B] flex items-center justify-center p-2 shrink-0">
-                  {logoUrl && logoUrl !== '/brand/logo.svg' ? (
+                  {logoUrl && logoUrl !== '/brand/logo.svg' && logoUrl !== '/logo.png' && logoUrl !== '/logo.svg' ? (
                     <img src={logoUrl} alt="Logo" className="w-full h-full object-contain" />
                   ) : (
-                    <AsronLogo size={40} showText={false} />
+                    <AsronLogo size={48} showText={false} />
                   )}
                 </div>
                 <div className="space-y-1.5 flex-1 min-w-0">

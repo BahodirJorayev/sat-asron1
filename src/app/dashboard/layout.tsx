@@ -10,6 +10,7 @@ import { Sidebar, SIDEBAR_ITEMS, type NavItem } from '../../components/navigatio
 import { GlobalSearchModal } from '../../components/chat/GlobalSearchModal';
 import { PwaInstallPrompt } from '../../components/pwa/PwaInstallPrompt';
 import { PwaSplashScreen } from '../../components/pwa/PwaSplashScreen';
+import { AsronLogo } from '../../components/AsronLogo';
 import { supabase } from '../../lib/supabase';
 import { PlatformSettingsProvider, usePlatformSettings } from '../../contexts/PlatformSettingsContext';
 import { LanguageProvider, useLanguage } from '../../context/LanguageContext';
@@ -197,20 +198,14 @@ function DashboardLayoutContent({
             <div className="space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0] dark:border-[#1E293B]">
                 <div className="flex items-center gap-2.5">
-                  {settings.logo_url ? (
+                  {settings.logo_url && settings.logo_url !== '/brand/logo.svg' ? (
                     <img
                       src={settings.logo_url}
                       alt="Logo"
-                      className="w-8 h-8 rounded-xl object-cover border border-slate-200 dark:border-[#1E293B] shrink-0 shadow-2xs"
+                      className="w-8 h-8 rounded-xl object-contain border border-slate-200 dark:border-[#1E293B] shrink-0 shadow-2xs"
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded-xl bg-[#0B1B3D] dark:bg-[#0F172A] border border-slate-800 dark:border-[#1E293B] flex items-center justify-center text-white shrink-0 shadow-2xs">
-                      <svg viewBox="0 0 100 100" className="w-4 h-4 text-[#E07A5F] fill-current" fill="none">
-                        <rect x="32" y="21" width="11" height="40" rx="5.5" transform="rotate(-45 32 21)" />
-                        <rect x="55" y="36" width="11" height="26" rx="5.5" transform="rotate(-45 55 36)" />
-                        <path d="M38.5 56.5L49.5 45.5C50.3 44.7 51.7 44.7 52.5 45.5L63.5 56.5" stroke="currentColor" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </div>
+                    <AsronLogo size={32} variant="mark-only" />
                   )}
                   <span className="font-bold tracking-tight text-base sm:text-lg text-slate-900 dark:text-white">
                     {settings.platform_title || 'ASRON SAT'}

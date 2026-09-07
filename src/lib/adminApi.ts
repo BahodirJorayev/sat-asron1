@@ -6,7 +6,7 @@ export const DEFAULT_GLOBAL_SETTINGS: GlobalPlatformSettings = {
   platformName: 'ASRON SAT',
   platformSubtitle: 'Digital SAT Intelligence & Scoring Engine',
   platformTagline: 'Master the Digital SAT with Executive Precision',
-  logoUrl: '/brand/logo.svg',
+  logoUrl: '/logo.png',
   adminTelegram: '@rcmnx',
   contactTelegram: '@rcmnx',
   supportEmail: 'support@asronsat.uz',

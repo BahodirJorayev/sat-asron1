@@ -150,11 +150,11 @@ export const AuthModal: React.FC<Props> = ({
         {/* Sticky Header with Close Button */}
         <div className="px-5 py-4 bg-[#FFFFFF] border-b border-[#E8E2D5] flex items-center justify-between shrink-0 sticky top-0 z-20">
           <div className="flex items-center gap-3">
-            {settings.logo_url ? (
+            {settings.logo_url && settings.logo_url !== '/brand/logo.svg' ? (
               <img
                 src={settings.logo_url}
                 alt="Logo"
-                className="w-9 h-9 rounded-xl object-cover border border-slate-200 shrink-0 shadow-xs"
+                className="w-9 h-9 rounded-xl object-contain border border-slate-200 shrink-0 shadow-xs"
               />
             ) : (
               <AsronLogo size={36} variant="mark-only" />

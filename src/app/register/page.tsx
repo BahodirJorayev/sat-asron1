@@ -84,11 +84,11 @@ export default function RegisterPage() {
         {/* Brand Header */}
         <div className="text-center space-y-2">
           <Link href="/" className="inline-flex items-center gap-2.5 group">
-            {settings.logo_url ? (
+            {settings.logo_url && settings.logo_url !== '/brand/logo.svg' ? (
               <img
                 src={settings.logo_url}
                 alt="Logo"
-                className="w-10 h-10 rounded-2xl object-cover border border-slate-200 dark:border-slate-800 shrink-0 shadow-2xs"
+                className="w-10 h-10 rounded-2xl object-contain border border-slate-200 dark:border-slate-800 shrink-0 shadow-2xs"
               />
             ) : (
               <AsronLogo size={40} variant="mark-only" />

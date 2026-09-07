@@ -138,11 +138,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
           href="/dashboard"
           className="flex items-center gap-3 min-w-0 group cursor-pointer"
         >
-          {settings.logo_url ? (
+          {settings.logo_url && settings.logo_url !== '/brand/logo.svg' ? (
             <img
               src={settings.logo_url}
               alt="Logo"
-              className="w-9 h-9 rounded-xl object-cover border border-[#E2E8F0] dark:border-[#1E293B] shrink-0 shadow-2xs"
+              className="w-9 h-9 rounded-xl object-contain border border-[#E2E8F0] dark:border-[#1E293B] shrink-0 shadow-2xs"
             />
           ) : (
             <AsronLogo size={36} variant="mark-only" />

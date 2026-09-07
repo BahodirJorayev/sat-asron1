@@ -45,7 +45,7 @@ const BROADCAST_CHANNEL_NAME = 'asron_platform_settings_channel';
 const updateDomBrandAssets = (title?: string, logoUrl?: string | null) => {
   if (typeof document === 'undefined') return;
   try {
-    const activeIconUrl = logoUrl && logoUrl.trim() ? logoUrl.trim() : '/logo.svg';
+    const activeIconUrl = logoUrl && logoUrl.trim() && logoUrl !== '/brand/logo.svg' ? logoUrl.trim() : '/logo.svg';
 
     // 1. Favicon / Icon link
     let iconLink = document.querySelector("link[rel*='icon']") as HTMLLinkElement | null;
@@ -57,6 +57,8 @@ const updateDomBrandAssets = (title?: string, logoUrl?: string | null) => {
     iconLink.href = activeIconUrl;
     if (activeIconUrl.endsWith('.svg')) {
       iconLink.type = 'image/svg+xml';
+    } else if (activeIconUrl.endsWith('.png')) {
+      iconLink.type = 'image/png';
     }
 
     // 2. Apple Touch Icon link

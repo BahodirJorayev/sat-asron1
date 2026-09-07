@@ -97,11 +97,11 @@ export const Header: React.FC<Props> = ({
               onClick={() => setActiveTab('landing')}
               className="flex items-center gap-2.5 cursor-pointer select-none"
             >
-              {settings.logo_url ? (
+              {settings.logo_url && settings.logo_url !== '/brand/logo.svg' ? (
                 <img
                   src={settings.logo_url}
                   alt="Logo"
-                  className="w-8 h-8 rounded-lg object-cover border border-slate-200 dark:border-slate-800 shrink-0 shadow-2xs"
+                  className="w-8 h-8 rounded-lg object-contain border border-slate-200 dark:border-slate-800 shrink-0 shadow-2xs"
                 />
               ) : (
                 <AsronLogo size={32} variant="mark-only" />
@@ -145,11 +145,11 @@ export const Header: React.FC<Props> = ({
                 onClick={() => setActiveTab('dashboard')}
                 className="hidden md:flex items-center gap-2.5 cursor-pointer select-none group"
               >
-                {settings.logo_url ? (
+                {settings.logo_url && settings.logo_url !== '/brand/logo.svg' ? (
                   <img
                     src={settings.logo_url}
                     alt="Logo"
-                    className="w-8 h-8 rounded-lg object-cover border border-slate-200 dark:border-slate-800 shrink-0 shadow-2xs"
+                    className="w-8 h-8 rounded-lg object-contain border border-slate-200 dark:border-slate-800 shrink-0 shadow-2xs"
                   />
                 ) : (
                   <AsronLogo size={32} variant="mark-only" />

@@ -189,16 +189,12 @@ export const PwaSplashScreen: React.FC<PwaSplashScreenProps> = ({
               {/* Pulsing Aura */}
               <div className="absolute -inset-4 rounded-3xl bg-[#E07A5F]/20 blur-xl animate-pulse" />
 
-              <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-[#001744] border-2 border-[#E07A5F]/60 flex items-center justify-center shadow-2xl shadow-orange-500/20 overflow-hidden p-2">
-                {settings.logo_url ? (
-                  <img
-                    src={settings.logo_url}
-                    alt="Logo"
-                    className="w-full h-full object-cover rounded-2xl"
-                  />
-                ) : (
-                  <AsronLogo size={64} variant="mark-only" />
-                )}
+              <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-[#03165a] border-2 border-[#E07A5F]/60 flex items-center justify-center shadow-2xl shadow-orange-500/20 overflow-hidden">
+                <img
+                  src={settings.logo_url && settings.logo_url.trim() ? settings.logo_url.trim() : '/logo.png'}
+                  alt="ASRON SAT Logo"
+                  className="w-full h-full object-contain rounded-2xl"
+                />
               </div>
             </motion.div>
 

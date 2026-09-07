@@ -157,16 +157,12 @@ export const PwaInstallPrompt: React.FC = () => {
 
               {/* Left: App Icon & Info */}
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-[#001744] border border-[#0B2B6F] flex items-center justify-center p-1 shrink-0 shadow-xs overflow-hidden">
-                  {settings.logo_url ? (
-                    <img
-                      src={settings.logo_url}
-                      alt="Logo"
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                  ) : (
-                    <AsronLogo size={28} variant="mark-only" />
-                  )}
+                <div className="w-10 h-10 rounded-xl bg-[#03165a] border border-[#0B2B6F] flex items-center justify-center shrink-0 shadow-xs overflow-hidden">
+                  <img
+                    src={settings.logo_url && settings.logo_url.trim() ? settings.logo_url.trim() : '/logo.png'}
+                    alt="ASRON SAT Logo"
+                    className="w-full h-full object-contain rounded-xl"
+                  />
                 </div>
 
                 <div className="min-w-0">

@@ -196,11 +196,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             aria-label="Kengaytirish (Expand sidebar)"
             className="w-10 h-10 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#0F172A] dark:text-white flex items-center justify-center font-extrabold text-sm shadow-xs border border-[#E2E8F0] dark:border-[#1E293B] hover:border-[#E07A5F]/60 transition-all cursor-pointer relative overflow-hidden p-1.5"
           >
-            {settings.logo_url ? (
+            {settings.logo_url && settings.logo_url !== '/brand/logo.svg' ? (
               <img
                 src={settings.logo_url}
                 alt="Logo"
-                className="w-full h-full object-cover rounded-lg transition-all duration-200 group-hover:opacity-0 group-hover:scale-75"
+                className="w-full h-full object-contain rounded-lg transition-all duration-200 group-hover:opacity-0 group-hover:scale-75"
               />
             ) : (
               <span className="transition-all duration-200 group-hover:opacity-0 group-hover:scale-75 w-full h-full flex items-center justify-center">
@@ -223,11 +223,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             className="flex items-center gap-3 cursor-pointer group min-w-0"
             title={`${brandName} - Bosh Sahifa`}
           >
-            {settings.logo_url ? (
+            {settings.logo_url && settings.logo_url !== '/brand/logo.svg' ? (
               <img
                 src={settings.logo_url}
                 alt="Logo"
-                className="w-9 h-9 rounded-xl object-cover border border-[#E2E8F0] dark:border-[#1E293B] shrink-0 shadow-2xs"
+                className="w-9 h-9 rounded-xl object-contain border border-[#E2E8F0] dark:border-[#1E293B] shrink-0 shadow-2xs"
               />
             ) : (
               <AsronLogo size={36} variant="mark-only" />

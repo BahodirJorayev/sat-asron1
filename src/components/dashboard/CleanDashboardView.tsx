@@ -17,6 +17,7 @@ import { VocabTrainerModal } from '../VocabTrainerModal';
 import { MultiplayerArenaModal } from '../MultiplayerArenaModal';
 import { ExamCountdownWidget } from './ExamCountdownWidget';
 import { supabase } from '../../lib/supabase';
+import { useLanguage } from '../../context/LanguageContext';
 
 
 interface Props {
@@ -56,6 +57,7 @@ export const CleanDashboardView: React.FC<Props> = ({
   siteBranding,
 }) => {
   const router = useRouter();
+  const { t } = useLanguage();
   const [isVocabModalOpen, setIsVocabModalOpen] = useState(false);
   const [isArenaModalOpen, setIsArenaModalOpen] = useState(false);
 
@@ -125,7 +127,7 @@ export const CleanDashboardView: React.FC<Props> = ({
       {/* 1. Header Strip: Student Identity & Portal Context */}
       <header className="flex items-center justify-between pb-2 border-b border-[#E2E8F0] dark:border-[#1E293B]">
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#0F172A] dark:text-[#F8FAFC]">
-          Salom, {studentName}
+          {t('home_view.greeting', 'Salom')}, {studentName}
         </h1>
       </header>
 
@@ -141,14 +143,14 @@ export const CleanDashboardView: React.FC<Props> = ({
         <div className="p-3 sm:p-4 md:p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col justify-between transition-colors">
           <div className="flex items-center justify-between">
             <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold truncate">
-              Streak
+              {t('home_view.streak', 'Streak')}
             </span>
             <span className="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#0A0F1D] text-slate-500">
               {streakDays > 0 ? 'Faol' : 'Nol'}
             </span>
           </div>
           <div className="mt-1.5 sm:mt-2 text-xl sm:text-2xl lg:text-3xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC]">
-            {streakDays} <span className="text-[10px] sm:text-xs font-normal text-slate-400">Kun</span>
+            {streakDays} <span className="text-[10px] sm:text-xs font-normal text-slate-400">{t('home_view.daysUnit', 'Kun')}</span>
           </div>
         </div>
 
@@ -156,7 +158,7 @@ export const CleanDashboardView: React.FC<Props> = ({
         <div className="p-3 sm:p-4 md:p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col justify-between transition-colors">
           <div className="flex items-center justify-between">
             <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold truncate">
-              Savollar
+              {t('home_view.questions', 'Savollar')}
             </span>
           </div>
           <div className="mt-1.5 sm:mt-2 text-xl sm:text-2xl lg:text-3xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC] truncate">
@@ -168,7 +170,7 @@ export const CleanDashboardView: React.FC<Props> = ({
         <div className="p-3 sm:p-4 md:p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col justify-between transition-colors">
           <div className="flex items-center justify-between">
             <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold truncate">
-              Aniqlik
+              {t('home_view.accuracy', 'Aniqlik')}
             </span>
           </div>
           <div className="mt-1.5 sm:mt-2 text-xl sm:text-2xl lg:text-3xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC]">
@@ -180,7 +182,7 @@ export const CleanDashboardView: React.FC<Props> = ({
       {/* 4. Quick Launch Modules (Punchy 1-3 Word Badges, Zero Text Clutter) */}
       <section aria-label="Asosiy Modullar" className="space-y-3">
         <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8]">
-          Asosiy Modullar
+          {t('home_view.mainModules', 'Asosiy Modullar')}
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -195,7 +197,10 @@ export const CleanDashboardView: React.FC<Props> = ({
               </div>
               <div className="text-left">
                 <div className="font-bold text-sm text-[#0F172A] dark:text-[#F8FAFC]">
-                  Testlar
+                  {t('nav.mocks', 'Testlar')}
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">
+                  {t('home_view.testsCard')}
                 </div>
               </div>
             </div>
@@ -219,7 +224,10 @@ export const CleanDashboardView: React.FC<Props> = ({
               </div>
               <div className="text-left">
                 <div className="font-bold text-sm text-[#0F172A] dark:text-[#F8FAFC]">
-                  Savollar
+                  {t('nav.questions', 'Savollar')}
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">
+                  {t('home_view.questionsCard')}
                 </div>
               </div>
             </div>
@@ -240,7 +248,10 @@ export const CleanDashboardView: React.FC<Props> = ({
               </div>
               <div className="text-left">
                 <div className="font-bold text-sm text-[#0F172A] dark:text-[#F8FAFC]">
-                  Lug'at
+                  {t('nav.vocabulary', "Lug'at")}
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">
+                  {t('home_view.vocabCard')}
                 </div>
               </div>
             </div>
@@ -264,7 +275,10 @@ export const CleanDashboardView: React.FC<Props> = ({
               </div>
               <div className="text-left">
                 <div className="font-bold text-sm text-[#0F172A] dark:text-[#F8FAFC]">
-                  Hamjamiyat
+                  {t('nav.community', 'Hamjamiyat')}
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">
+                  {t('home_view.communityCard')}
                 </div>
               </div>
             </div>
@@ -280,7 +294,7 @@ export const CleanDashboardView: React.FC<Props> = ({
       {activeResources.length > 0 && (
         <section aria-label="Tavsiya Etiladigan Resurslar" className="space-y-3">
           <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8]">
-            Tavsiya Etiladigan Resurslar & Qo'llanmalar
+            {t('home_view.recommendedResources', "Tavsiya Etiladigan Resurslar & Qo'llanmalar")}
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {activeResources.map((res: any) => (

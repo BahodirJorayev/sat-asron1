@@ -180,7 +180,7 @@ export const ExamCountdownWidget: React.FC<ExamCountdownWidgetProps> = ({
                 {t('timeRemaining', 'Imtihongacha Qolgan Vaqt')}
               </h2>
               <p className="text-[11px] sm:text-xs text-[#64748B] dark:text-[#94A3B8] mt-0.5 leading-relaxed max-w-md hidden xs:block sm:block">
-                College Board rasmiy test sanasiga asoslangan tayyorgarlik rejasi.
+                {t('home_view.examPlanSubtitle', 'College Board rasmiy test sanasiga asoslangan tayyorgarlik rejasi.')}
               </p>
             </div>
           </div>

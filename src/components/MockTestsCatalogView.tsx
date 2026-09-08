@@ -34,6 +34,7 @@ import { PreTestModal } from './PreTestModal';
 import { MockAccessCodeModal } from './MockAccessCodeModal';
 import { FormattedMath } from './WorkoutActiveSession';
 import { supabase } from '../lib/supabase';
+import { useLanguage } from '../context/LanguageContext';
 
 interface MockTestsCatalogViewProps {
   user: User;
@@ -248,6 +249,7 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
   });
 
   // Filter & Search state (Category tab supports dynamic categories)
+  const { t } = useLanguage();
   const [activeCategoryTab, setActiveCategoryTab] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED'>('ALL');
@@ -411,10 +413,10 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-1">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1E1B18] dark:text-[#F8FAFC] tracking-tight">
-              Testlar
+              {t('mocks_view.title', 'Mock Testlar Katalogi')}
             </h1>
-            <div className="text-xs font-mono text-[#78716C] dark:text-[#94A3B8]">
-              {allTests.length} ta rasmiy va moslashuvchan test
+            <div className="text-xs text-[#78716C] dark:text-[#94A3B8] max-w-2xl leading-relaxed">
+              {t('mocks_view.subtitle', 'Haqiqiy Digital SAT formati, adaptiv Module 1 va Module 2 tizimi hamda rasmiy ball hisoblash algoritmi')}
             </div>
           </div>
         </div>
@@ -427,7 +429,7 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
               {stats.completedCount} <span className="text-sm font-normal text-[#78716C] dark:text-[#94A3B8]">/ {stats.totalCount}</span>
             </div>
             <div className="text-[10px] uppercase font-bold text-[#78716C] dark:text-[#94A3B8] tracking-wider mt-0.5">
-              Topshirilgan Testlar
+              {t('mocks_view.testsTaken', 'Topshirilgan Testlar')}
             </div>
           </div>
 
@@ -437,7 +439,7 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
               {stats.highestScore} <span className="text-xs font-normal text-[#78716C] dark:text-[#94A3B8]">/ 1600</span>
             </div>
             <div className="text-[10px] uppercase font-bold text-[#78716C] dark:text-[#94A3B8] tracking-wider mt-0.5">
-              Eng Yuqori Natija
+              {t('mocks_view.highestScore', 'Eng Yuqori Score')}
             </div>
           </div>
 
@@ -447,7 +449,7 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
               {stats.averageScore}
             </div>
             <div className="text-[10px] uppercase font-bold text-[#78716C] dark:text-[#94A3B8] tracking-wider mt-0.5">
-              O'rtacha Ball
+              {t('mocks_view.avgScore', "O'rtacha Score")}
             </div>
           </div>
 
@@ -455,10 +457,10 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
           <div className="p-4 rounded-2xl bg-[#FAF8F5] dark:bg-[#121A2F] border border-[#EBE5DF] dark:border-[#1E293B] flex flex-col items-center justify-center">
             <div className="flex items-center gap-1.5 text-xs font-extrabold text-[#3D405B] dark:text-[#F8FAFC] font-mono">
               <span className="w-2 h-2 rounded-full bg-[#2A9D8F] animate-pulse" />
-              <span>2-Bosqichli MST Faol</span>
+              <span>{t('mocks_view.stage2Status', 'Adaptiv Bosqich')}</span>
             </div>
             <div className="text-[10px] uppercase font-bold text-[#78716C] dark:text-[#94A3B8] tracking-wider mt-1">
-              Rasmiy Bluebook Standarti
+              {t('mocks_view.stage2Desc', 'Module 1 natijangizga qarab Module 2 avtomatik ravishda Hard yoki Easy darajaga moslashadi.')}
             </div>
           </div>
         </div>
@@ -476,7 +478,7 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
                 : 'text-[#78716C] dark:text-[#94A3B8] hover:text-[#1E1B18] dark:hover:text-[#F8FAFC] hover:bg-white/60 dark:hover:bg-[#1E293B]'
             }`}
           >
-            <span>Barcha Testlar</span>
+            <span>{t('mocks_view.allTestsTab', 'Barcha Testlar')}</span>
             <span
               className={`text-[10px] px-1.5 py-0.5 rounded-md ${
                 activeCategoryTab === 'ALL'
@@ -506,7 +508,7 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
                     : 'text-[#78716C] dark:text-[#94A3B8] hover:text-[#1E1B18] dark:hover:text-[#F8FAFC] hover:bg-white/60 dark:hover:bg-[#1E293B]'
                 }`}
               >
-                <span>{tab.name}</span>
+                <span>{tab.slug.includes('official') ? t('mocks_view.officialTab', tab.name) : (tab.slug.includes('course') || tab.slug.includes('private')) ? t('mocks_view.courseMocksTab', tab.name) : tab.slug.includes('diagnostic') ? t('mocks_view.diagnosticTab', tab.name) : tab.name}</span>
                 <span
                   className={`text-[10px] px-1.5 py-0.5 rounded-md ${
                     isActive
@@ -530,7 +532,7 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Test nomi, yili yoki mavzu bo'yicha qidirish..."
+              placeholder={t('mocks_view.searchPlaceholder', "Test nomi yoki kodi bo'yicha qidirish...")}
               className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E5E0D8] dark:border-[#1E293B] text-xs font-medium text-[#1E1B18] dark:text-[#F8FAFC] placeholder-[#78716C]/60 focus:outline-none focus:ring-2 focus:ring-[#E07A5F] focus:border-transparent transition-all shadow-xs"
             />
             {searchQuery && (
@@ -558,7 +560,7 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
                       : 'text-[#78716C] dark:text-[#94A3B8] hover:text-[#1E1B18] dark:hover:text-[#F8FAFC] hover:bg-[#FAF8F5] dark:hover:bg-[#1E293B]'
                   }`}
                 >
-                  {s === 'ALL' ? 'Barchasi' : s === 'NOT_STARTED' ? 'Yangi' : s === 'IN_PROGRESS' ? 'Jarayonda' : 'Tugallangan'}
+                  {s === 'ALL' ? t('mocks_view.statusAll', 'Barchasi') : s === 'NOT_STARTED' ? t('mocks_view.statusNew', 'Yangi') : s === 'IN_PROGRESS' ? t('mocks_view.statusInProgress', 'Jarayonda') : t('mocks_view.statusCompleted', 'Yakunlangan')}
                 </button>
               ))}
             </div>
@@ -567,8 +569,8 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
             <div className="flex items-center gap-1 p-1 bg-white dark:bg-[#121A2F] rounded-xl border border-[#E5E0D8] dark:border-[#1E293B] text-xs">
               <span className="text-[10px] font-bold text-[#78716C] dark:text-[#94A3B8] px-2">Kirish:</span>
               {[
-                { id: 'ALL', label: 'Barchasi' },
-                { id: 'PUBLIC', label: 'Ommaviy' },
+                { id: 'ALL', label: t('mocks_view.accessAll', 'Barchasi') },
+                { id: 'PUBLIC', label: t('mocks_view.accessPublic', 'Ochiq (Public)') },
                 { id: 'PRIVATE', label: 'Maxsus' },
               ].map((a) => (
                 <button
@@ -693,7 +695,7 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
                       onClick={() => setSelectedTestForModal(test)}
                       className="px-4 py-2 rounded-xl text-xs font-extrabold text-white bg-[#1E1B18] dark:bg-[#E07A5F] hover:bg-[#3D405B] dark:hover:bg-[#c96c53] shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
                     >
-                      <span>Boshlash</span>
+                      <span>{t('mocks_view.startBtn', 'Testni Boshlash')}</span>
                       <ArrowRight size={12} />
                     </button>
                   )}

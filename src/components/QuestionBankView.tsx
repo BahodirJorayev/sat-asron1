@@ -30,6 +30,7 @@ import { Question, User, UserQuestionPractice } from '../types';
 import { SAT_DOMAINS_TAXONOMY, OFFICIAL_SQB_QUESTIONS } from '../data/sqbQuestions';
 import { KaTeXRenderer } from './KaTeXRenderer';
 import { QuestionPracticeEngine } from './QuestionPracticeEngine';
+import { useLanguage } from '../context/LanguageContext';
 
 interface Props {
   user: User;
@@ -48,6 +49,7 @@ export const QuestionBankView: React.FC<Props> = ({
   onDepositMistake,
   onOpenPaywall,
 }) => {
+  const { t } = useLanguage();
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState(initialFilter);
   const [selectedSection, setSelectedSection] = useState<'ALL' | 'READING_AND_WRITING' | 'MATH'>('ALL');
@@ -281,11 +283,11 @@ export const QuestionBankView: React.FC<Props> = ({
             <div className="flex flex-wrap items-center gap-2 mb-1.5">
               <span className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-[#E07A5F] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#FAF5F0] dark:bg-[#1E293B] border border-[#FCD9CE] dark:border-[#334155]">
                 <Layers className="w-3.5 h-3.5" />
-                Rasmiy Savollar Banki (SQB)
+                {t('sqb_view.badge', 'Rasmiy Savollar Banki')}
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1E1B18] tracking-tight">
-              Savollar Banki
+              {t('sqb_view.title', 'College Board Standartidagi Savollar Banki')}
             </h1>
           </div>
 
@@ -296,7 +298,7 @@ export const QuestionBankView: React.FC<Props> = ({
               className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#1E1B18] hover:bg-[#3D405B] disabled:opacity-40 text-white text-xs font-extrabold shadow-sm transition-all hover:scale-[1.02] cursor-pointer disabled:cursor-not-allowed"
             >
               <Play size={14} className="fill-white" />
-              <span>To'plamni Boshlash ({filteredQuestions.length})</span>
+              <span>{t('sqb_view.startSetBtn', "Savollar to'plamini boshlash")} ({filteredQuestions.length})</span>
             </button>
           </div>
         </div>
@@ -306,7 +308,7 @@ export const QuestionBankView: React.FC<Props> = ({
           {/* Tile 1: Total Available */}
           <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E5E0D8] shadow-2xs space-y-1">
             <div className="flex items-center justify-between text-[#64748B]">
-              <span className="text-[11px] font-bold uppercase tracking-wider">Total Questions</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider">{t('sqb_view.totalQuestions', 'Jami Savollar')}</span>
               <Layers size={15} className="text-[#3D405B]" />
             </div>
             <div className="text-xl sm:text-2xl font-black text-[#1E1B18] font-mono">
@@ -318,7 +320,7 @@ export const QuestionBankView: React.FC<Props> = ({
           {/* Tile 2: Completed Questions */}
           <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E5E0D8] shadow-2xs space-y-1">
             <div className="flex items-center justify-between text-[#64748B]">
-              <span className="text-[11px] font-bold uppercase tracking-wider">Completed Questions</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider">{t('sqb_view.completedQuestions', 'Tugatilgan')}</span>
               <Target size={15} className="text-[#2A9D8F]" />
             </div>
             <div className="text-xl sm:text-2xl font-black text-[#1E1B18] font-mono">
@@ -333,7 +335,7 @@ export const QuestionBankView: React.FC<Props> = ({
           {/* Tile 3: Overall Accuracy Rate */}
           <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E5E0D8] shadow-2xs space-y-1">
             <div className="flex items-center justify-between text-[#64748B]">
-              <span className="text-[11px] font-bold uppercase tracking-wider">Overall Accuracy</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider">{t('sqb_view.overallAccuracy', 'Aniqlik')}</span>
               <Percent size={15} className="text-[#E07A5F]" />
             </div>
             <div className="text-xl sm:text-2xl font-black text-[#1E1B18] font-mono">
@@ -345,7 +347,7 @@ export const QuestionBankView: React.FC<Props> = ({
           {/* Tile 4: Average Time per Question */}
           <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E5E0D8] shadow-2xs space-y-1">
             <div className="flex items-center justify-between text-[#64748B]">
-              <span className="text-[11px] font-bold uppercase tracking-wider">Avg Time / Question</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider">{t('sqb_view.avgTime', "O'rtacha Vaqt")}</span>
               <Clock size={15} className="text-[#E9C46A]" />
             </div>
             <div className="text-xl sm:text-2xl font-black text-[#1E1B18] font-mono">

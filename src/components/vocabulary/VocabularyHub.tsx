@@ -29,6 +29,7 @@ import {
   saveUserVocabProgressRemote,
 } from '../../lib/vocabApi';
 import { speakWord } from '../../utils/speechUtils';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface VocabularyHubProps {
   user?: User;
@@ -41,6 +42,7 @@ export const VocabularyHub: React.FC<VocabularyHubProps> = ({
   initialBookSlug,
   onOpenPaywall,
 }) => {
+  const { t } = useLanguage();
   const [books, setBooks] = useState<VocabularyBook[]>([]);
   const [words, setWords] = useState<VocabularyWord[]>([]);
   const [selectedBookSlug, setSelectedBookSlug] = useState<string>(
@@ -204,7 +206,7 @@ export const VocabularyHub: React.FC<VocabularyHubProps> = ({
               {stats.knownWordsCount}
             </div>
             <div className="text-[10px] font-mono uppercase font-bold text-[#64748B] dark:text-[#94A3B8] mt-0.5">
-              O'zlashtirildi
+              {t('vocab_view.mastered', "O'zlashtirilgan")}
             </div>
           </div>
 
@@ -213,7 +215,7 @@ export const VocabularyHub: React.FC<VocabularyHubProps> = ({
               {stats.toReviewCount}
             </div>
             <div className="text-[10px] font-mono uppercase font-bold text-[#64748B] dark:text-[#94A3B8] mt-0.5">
-              Takrorlash Kerak
+              {t('vocab_view.dueReview', 'Takrorlash Kerak')}
             </div>
           </div>
 
@@ -222,7 +224,7 @@ export const VocabularyHub: React.FC<VocabularyHubProps> = ({
               {stats.masteryRate}%
             </div>
             <div className="text-[10px] font-mono uppercase font-bold text-[#64748B] dark:text-[#94A3B8] mt-0.5">
-              O'zlashtirish
+              {t('vocab_view.masteryRate', "O'zlashtirish Darajasi")}
             </div>
           </div>
 
@@ -231,7 +233,7 @@ export const VocabularyHub: React.FC<VocabularyHubProps> = ({
               {stats.totalBookWords}
             </div>
             <div className="text-[10px] font-mono uppercase font-bold text-[#64748B] dark:text-[#94A3B8] mt-0.5">
-              Kitobdagi So'zlar
+              {t('vocab_view.totalInBook', "Lug'atdagi Jami So'zlar")}
             </div>
           </div>
         </div>
@@ -294,7 +296,7 @@ export const VocabularyHub: React.FC<VocabularyHubProps> = ({
               className="px-4 py-2 rounded-xl border border-[#E2E8F0] dark:border-[#1E293B] bg-[#F8FAFC] dark:bg-[#0A0F1D] hover:bg-[#FAF5F0] dark:hover:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] text-xs font-mono font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 shadow-xs group"
             >
               <Download size={13} className="text-[#E07A5F] group-hover:translate-y-0.5 transition-transform" />
-              <span>PDF Yuklab Olish</span>
+              <span>{t('vocab_view.downloadPdf', "PDF Lug'atni Yuklab Olish")}</span>
             </button>
           </div>
         )}
@@ -313,7 +315,7 @@ export const VocabularyHub: React.FC<VocabularyHubProps> = ({
             }`}
           >
             <Layers size={13} />
-            <span>Lug'at Kartochkalari (SRS Flashcards)</span>
+            <span>{t('vocab_view.flashcardsTab', 'Fleshkartalar')}</span>
           </button>
 
           <button
@@ -325,7 +327,7 @@ export const VocabularyHub: React.FC<VocabularyHubProps> = ({
             }`}
           >
             <HelpCircle size={13} />
-            <span>Kontekstda Qo'llash (Quiz)</span>
+            <span>{t('vocab_view.quizTab', 'Mini Quiz')}</span>
           </button>
 
           <button
@@ -337,7 +339,7 @@ export const VocabularyHub: React.FC<VocabularyHubProps> = ({
             }`}
           >
             <FileText size={13} />
-            <span>So'zlar Ro'yxati (Table)</span>
+            <span>{t('vocab_view.tableTab', 'Jadval Ko'rinishi')}</span>
           </button>
         </div>
 

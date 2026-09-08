@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import katex from 'katex';
 import { MistakeVaultItem, Question, User } from '../types';
+import { useLanguage } from '../context/LanguageContext';
 
 interface Props {
   mistakes: MistakeVaultItem[];
@@ -95,6 +96,7 @@ export const MistakeVaultView: React.FC<Props> = ({
   onOpenPaywall,
   onUpdateMistakeItem,
 }) => {
+  const { t } = useLanguage();
   // Filter States
   const [selectedStageFilter, setSelectedStageFilter] = useState<'ALL' | 'DUE' | 'LEARNING' | 1 | 2 | 3 | 'MASTERED'>('ALL');
   const [selectedSectionFilter, setSelectedSectionFilter] = useState<'ALL' | 'READING_AND_WRITING' | 'MATH'>('ALL');
@@ -353,7 +355,7 @@ export const MistakeVaultView: React.FC<Props> = ({
         {/* Total Logged */}
         <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200/80 dark:border-slate-800/80 text-center shadow-2xs">
           <div className="text-[10px] font-bold tracking-wider text-slate-500 uppercase truncate">
-            Total Logged
+            {t('mistakes_view.totalLogged', 'Jami Xatolar')}
           </div>
           <div className="text-xl font-bold font-mono text-slate-900 dark:text-white mt-0.5">
             {mistakes.length}
@@ -369,7 +371,7 @@ export const MistakeVaultView: React.FC<Props> = ({
           }`}
         >
           <div className="text-[10px] font-bold tracking-wider uppercase flex items-center justify-center gap-1 truncate text-[#E07A5F]">
-            <Flame className="w-3 h-3 shrink-0" /> Due Today
+            <Flame className="w-3 h-3 shrink-0" /> {t('mistakes_view.dueToday', 'Bugun Qaytadan Yechish Kerak')}
           </div>
           <div className="text-xl font-bold font-mono text-[#E07A5F] mt-0.5">
             {dueCount}
@@ -379,7 +381,7 @@ export const MistakeVaultView: React.FC<Props> = ({
         {/* In Cycle */}
         <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200/80 dark:border-slate-800/80 text-center shadow-2xs">
           <div className="text-[10px] font-bold tracking-wider text-slate-500 uppercase truncate">
-            In Cycle
+            {t('mistakes_view.inCycle', 'Faol Takrorlashda')}
           </div>
           <div className="text-xl font-bold font-mono text-[#3D405B] dark:text-indigo-400 mt-0.5">
             {stage1Count + stage2Count}
@@ -389,7 +391,7 @@ export const MistakeVaultView: React.FC<Props> = ({
         {/* Mastered */}
         <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-[#2A9D8F]/10 border border-[#2A9D8F]/30 text-center shadow-2xs">
           <div className="text-[10px] font-bold tracking-wider text-[#2A9D8F] flex items-center justify-center gap-1 uppercase truncate">
-            <Award className="w-3 h-3 shrink-0 text-[#2A9D8F]" /> Mastered
+            <Award className="w-3 h-3 shrink-0 text-[#2A9D8F]" /> {t('mistakes_view.mastered', "Mukammal O'zlashtirildi")}
           </div>
           <div className="text-xl font-bold font-mono text-[#2A9D8F] mt-0.5">
             {masteredCount}
@@ -402,10 +404,10 @@ export const MistakeVaultView: React.FC<Props> = ({
         {/* Streamlined Review Stage Filters */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
           {[
-            { id: 'ALL', label: `Barchasi (${mistakes.length})` },
-            { id: 'DUE', label: `Takrorlash kerak (${dueCount})`, isDue: true },
-            { id: 'LEARNING', label: `O'rganilmoqda (${stage1Count + stage2Count})` },
-            { id: 'MASTERED', label: `O'zlashtirildi (${masteredCount})`, isMastered: true },
+            { id: 'ALL', label: `${t('mistakes_view.tabAll', 'Barchasi')} (${mistakes.length})` },
+            { id: 'DUE', label: `${t('mistakes_view.tabReview', 'Bugun Qaytarish')} (${dueCount})`, isDue: true },
+            { id: 'LEARNING', label: `${t('mistakes_view.tabLearning', "O'rganilmoqda")} (${stage1Count + stage2Count})` },
+            { id: 'MASTERED', label: `${t('mistakes_view.tabMastered', "O'zlashtirildi")} (${masteredCount})`, isMastered: true },
           ].map((tab) => {
             const isSelected = selectedStageFilter === tab.id;
             return (
@@ -503,10 +505,26 @@ export const MistakeVaultView: React.FC<Props> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search skill, passage, or problem text..."
+              placeholder={t('mistakes_view.searchPlaceholder', "Xato savollar bo'yicha qidiruv...")}
               className="w-full pl-8 pr-3 py-2 bg-[#FAF8F5] dark:bg-[#0A0F1D] border border-slate-200/80 dark:border-slate-800 rounded-xl text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-[#E07A5F]"
             />
           </div>
+        </div>
+      </div>
+
+      
+      {/* Diagnostics & Strategic Insights Banner */}
+      <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#FAF8F5] to-white dark:from-[#121A2F] dark:to-[#1E293B] border border-slate-200/80 dark:border-slate-800/80 shadow-2xs flex items-start gap-3">
+        <div className="p-2 rounded-xl bg-[#E07A5F]/10 text-[#E07A5F] shrink-0 mt-0.5">
+          <BrainCircuit size={18} />
+        </div>
+        <div className="space-y-0.5">
+          <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+            {t('mistakes_view.diagnosticsTitle', "Xatolar Tahlili & Tavsiyalar")}
+          </h3>
+          <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+            {t('mistakes_view.diagnosticsDesc', "Har bir xato qilingan savol ustida ishlab, to'g'ri tahlil qilsangiz, keyingi testlarda ushbu turdagi xatolar 90% ga kamayadi.")}
+          </p>
         </div>
       </div>
 
@@ -519,9 +537,9 @@ export const MistakeVaultView: React.FC<Props> = ({
               <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/10 border border-emerald-500/20 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto shadow-2xs">
                 <CheckCircle2 className="w-6 h-6" />
               </div>
-              <p className="font-bold text-sm text-[#0F172A] dark:text-[#F8FAFC]">Hozircha xatolar mavjud emas</p>
+              <p className="font-bold text-sm text-[#0F172A] dark:text-[#F8FAFC]">{t('mistakes_view.emptyTitle', 'Hozircha xatolar qayd etilmagan')}</p>
               <p className="text-[#64748B] dark:text-[#94A3B8] max-w-sm mx-auto leading-relaxed">
-                Bluebook mock testlari yoki kunlik mashqlarni yechish davomida xato qilgan savollaringiz Leitner tizimi orqali shu yerga avtomatik yig'iladi.
+                {t('mistakes_view.emptyDesc', 'Mock test yoki Savollar Banki yechish jarayonida xato qilgan savollaringiz avtomatik tarzda tahlil qilish uchun shu yerga tushadi.')}
               </p>
             </div>
           ) : (

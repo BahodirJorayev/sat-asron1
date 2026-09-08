@@ -12,6 +12,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { Message } from '../../types';
+import { useLanguage } from '../../context/LanguageContext';
 
 export interface MessageComposerProps {
   value: string;
@@ -50,6 +51,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
   disabled = false,
   placeholder,
 }) => {
+  const { t } = useLanguage();
   const localFileInputRef = useRef<HTMLInputElement | null>(null);
   const activeFileInputRef = fileInputRef || localFileInputRef;
 
@@ -73,7 +75,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
       <footer className="flex-shrink-0 p-3 bg-white dark:bg-[#0B132B] border-t border-slate-200 dark:border-slate-800 text-center text-xs font-mono text-slate-500 dark:text-slate-400 select-none transition-colors z-10">
         <div className="flex items-center justify-center gap-1.5 py-1">
           <Lock className="w-3.5 h-3.5 text-amber-500" />
-          <span>Faqat kanal ma'murlari xabar yuborishi mumkin.</span>
+          <span>{t('community_view.readOnlyNotice', 'Ushbu kanalda faqat administratorlar xabar yoza oladi.')}</span>
         </div>
       </footer>
     );

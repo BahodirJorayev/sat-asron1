@@ -91,6 +91,7 @@ import {
   deleteChatMessage
 } from '../../lib/chatRealtimeService';
 import { supabase } from '../../lib/supabase';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface Props {
   currentUser: User;
@@ -105,6 +106,7 @@ export const CommunityChatHub: React.FC<Props> = ({
   onOpenQuestionInBank,
   onSelectUserProfile,
 }) => {
+  const { t } = useLanguage();
   // 1. Initial State Initialization & Clean Baseline Chats
   const [chats, setChats] = useState<Chat[]>(() => getInitialChats(currentUser));
   const [activeChatId, setActiveChatId] = useState<string>('11111111-1111-1111-1111-111111111111');
@@ -850,7 +852,7 @@ export const CommunityChatHub: React.FC<Props> = ({
               type="text"
               value={globalSearchQuery}
               onChange={(e) => setGlobalSearchQuery(e.target.value)}
-              placeholder="Qidiruv (@username, kanal yoki ism)..."
+              placeholder={t('community_view.searchPlaceholder', 'Kanal, guruh yoki xabarlarni qidirish...')}
               className="w-full pl-9 pr-8 py-1.5 rounded-xl bg-slate-50 dark:bg-[#070D1E] border border-slate-200 dark:border-slate-800 text-xs text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-hidden focus:border-[#E07A5F]"
             />
             {globalSearchQuery && (
@@ -987,11 +989,11 @@ export const CommunityChatHub: React.FC<Props> = ({
             {/* Folder Tabs Strip */}
             <div className="flex-shrink-0 px-3 py-2 bg-white dark:bg-[#0B132B] border-b border-slate-200 dark:border-slate-800 flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs font-mono">
               {[
-                { id: 'ALL', label: 'Barchasi' },
-                { id: 'CHANNELS', label: 'Kanallar' },
-                { id: 'GROUPS', label: 'Guruhlar' },
-                { id: 'DIRECT', label: 'Shaxsiy' },
-                { id: 'SAVED', label: 'Saqlanganlar' },
+                { id: 'ALL', label: t('community_view.tabAll', 'Barchasi') },
+                { id: 'CHANNELS', label: t('community_view.tabChannels', 'Kanallar') },
+                { id: 'GROUPS', label: t('community_view.tabGroups', 'Guruhlar') },
+                { id: 'DIRECT', label: t('community_view.tabDirect', 'Shaxsiy') },
+                { id: 'SAVED', label: t('community_view.tabSaved', 'Saqlanganlar') },
               ].map((tab) => (
                 <button
                   key={tab.id}

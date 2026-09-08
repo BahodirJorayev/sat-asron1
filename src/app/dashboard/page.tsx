@@ -108,14 +108,14 @@ export default function DashboardPage() {
         <div className="p-3 sm:p-4 md:p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col justify-between transition-colors">
           <div className="flex items-center justify-between">
             <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold truncate">
-              {t('streak', 'Streak')}
+              {t('home_view.streak', 'Streak')}
             </span>
             <span className="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#0A0F1D] text-slate-500">
               {stats.streakDays > 0 ? t('active', 'Faol') : t('zero', 'Nol')}
             </span>
           </div>
           <div className="mt-1.5 sm:mt-2 text-xl sm:text-2xl lg:text-3xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC]">
-            {stats.streakDays} <span className="text-[10px] sm:text-xs font-normal text-slate-400">{t('dashboard.days', 'Kun')}</span>
+            {stats.streakDays} <span className="text-[10px] sm:text-xs font-normal text-slate-400">{t('home_view.daysUnit', 'Kun')}</span>
           </div>
         </div>
 
@@ -123,7 +123,7 @@ export default function DashboardPage() {
         <div className="p-3 sm:p-4 md:p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col justify-between transition-colors">
           <div className="flex items-center justify-between">
             <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold truncate">
-              {t('nav.questions', 'Savollar')}
+              {t('home_view.questions', 'Savollar')}
             </span>
           </div>
           <div className="mt-1.5 sm:mt-2 text-xl sm:text-2xl lg:text-3xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC] truncate">
@@ -135,7 +135,7 @@ export default function DashboardPage() {
         <div className="p-3 sm:p-4 md:p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col justify-between transition-colors">
           <div className="flex items-center justify-between">
             <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold truncate">
-              {t('accuracy', 'Aniqlik')}
+              {t('home_view.accuracy', 'Aniqlik')}
             </span>
           </div>
           <div className="mt-1.5 sm:mt-2 text-xl sm:text-2xl lg:text-3xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC]">
@@ -147,7 +147,7 @@ export default function DashboardPage() {
       {/* 5. Quick Launch Modules (Punchy Badges, Zero Text Clutter) */}
       <section aria-label="Asosiy Modullar" className="space-y-2.5 sm:space-y-3">
         <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-          {t('mainSections', 'Asosiy Modullar')}
+          {t('home_view.mainModules', 'Asosiy Modullar')}
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-4">
@@ -163,6 +163,9 @@ export default function DashboardPage() {
               <div>
                 <div className="font-bold text-xs sm:text-sm text-[#0F172A] dark:text-[#F8FAFC]">
                   {t('nav.mocks', 'Testlar')}
+                </div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-1">
+                  {t('home_view.testsCard')}
                 </div>
               </div>
             </div>
@@ -206,6 +209,9 @@ export default function DashboardPage() {
                 <div className="font-bold text-xs sm:text-sm text-[#0F172A] dark:text-[#F8FAFC]">
                   {t('nav.vocabulary', "Lug'at")}
                 </div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-1">
+                  {t('home_view.vocabCard')}
+                </div>
               </div>
             </div>
             <ArrowUpRight
@@ -226,6 +232,9 @@ export default function DashboardPage() {
               <div>
                 <div className="font-bold text-xs sm:text-sm text-[#0F172A] dark:text-[#F8FAFC]">
                   {t('nav.community', 'Hamjamiyat')}
+                </div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-1">
+                  {t('home_view.communityCard')}
                 </div>
               </div>
             </div>

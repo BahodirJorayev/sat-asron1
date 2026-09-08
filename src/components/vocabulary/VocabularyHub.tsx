@@ -339,7 +339,7 @@ export const VocabularyHub: React.FC<VocabularyHubProps> = ({
             }`}
           >
             <FileText size={13} />
-            <span>{t('vocab_view.tableTab', 'Jadval Ko'rinishi')}</span>
+            <span>{t('vocab_view.tableTab', "Jadval Ko'rinishi")}</span>
           </button>
         </div>
 

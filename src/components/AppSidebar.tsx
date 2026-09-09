@@ -96,7 +96,10 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       id: 'dashboard',
       label: t('nav.home', 'Uy'),
       icon: LayoutDashboard,
-      onClick: () => setActiveTab('dashboard'),
+      onClick: () => {
+        setActiveTab('dashboard');
+        if (typeof window !== 'undefined') window.location.hash = '#/dashboard';
+      },
     },
     {
       id: 'qbank',
@@ -108,6 +111,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           return;
         }
         setActiveTab('qbank');
+        if (typeof window !== 'undefined') window.location.hash = '#/qbank';
       },
       isLocked: isModuleLocked('questions'),
     },
@@ -121,6 +125,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           return;
         }
         setActiveTab('bluebook');
+        if (typeof window !== 'undefined') window.location.hash = '#/mocks';
       },
       isLocked: isModuleLocked('mocks'),
     },
@@ -134,6 +139,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           return;
         }
         setActiveTab('vocab');
+        if (typeof window !== 'undefined') window.location.hash = '#/vocab';
       },
       isLocked: isModuleLocked('vocabulary'),
     },
@@ -147,6 +153,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           return;
         }
         setActiveTab('vault');
+        if (typeof window !== 'undefined') window.location.hash = '#/mistakes';
       },
       isLocked: isModuleLocked('mistakes'),
     },
@@ -160,6 +167,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           return;
         }
         setActiveTab('community');
+        if (typeof window !== 'undefined') window.location.hash = '#/community';
       },
       isLocked: isModuleLocked('community'),
     },
@@ -169,7 +177,10 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             id: 'admin',
             label: t('nav.admin', 'Admin'),
             icon: ShieldAlert,
-            onClick: () => setActiveTab('admin'),
+            onClick: () => {
+              setActiveTab('admin');
+              if (typeof window !== 'undefined') window.location.hash = '#/admin';
+            },
             isLocked: false,
           },
         ]
@@ -347,8 +358,14 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         user={user}
         isCollapsed={isCollapsed}
         activeTab={activeTab}
-        onOpenProfile={onOpenProfile || (() => setActiveTab('profile'))}
-        onOpenSettings={onOpenSettings || (() => setActiveTab('settings'))}
+        onOpenProfile={onOpenProfile || (() => {
+          setActiveTab('profile');
+          if (typeof window !== 'undefined') window.location.hash = '#/profile';
+        })}
+        onOpenSettings={onOpenSettings || (() => {
+          setActiveTab('settings');
+          if (typeof window !== 'undefined') window.location.hash = '#/profile';
+        })}
         onOpenPaywall={onOpenPaywall}
         onOpenAdminLogin={onOpenAdminLogin}
         onLogout={onLogout}

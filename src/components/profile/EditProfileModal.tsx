@@ -11,6 +11,9 @@ import {
   Check,
   AlertCircle,
   Sparkles,
+  Camera,
+  Loader2,
+  Upload,
 } from 'lucide-react';
 import { User } from '../../types';
 import { supabase, saveUserProfile } from '../../lib/supabase';
@@ -29,10 +32,11 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   currentUser,
   onSaveSuccess,
 }) => {
-  const { updateProfile } = useUserProfile();
+  const { updateProfile, uploadAvatar } = useUserProfile();
   const [fullName, setFullName] = useState(currentUser.fullName || '');
   const [username, setUsername] = useState(currentUser.username || '');
   const [avatarUrl, setAvatarUrl] = useState(currentUser.avatarUrl || '');
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState(currentUser.phoneNumber || '');
   const [targetScore, setTargetScore] = useState<number>(currentUser.targetScore || 1550);
   const [targetExamDate, setTargetExamDate] = useState<string>(
@@ -69,6 +73,25 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
+
+  const handleModalAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setIsUploadingAvatar(true);
+      setErrorMessage(null);
+      const url = await uploadAvatar(file);
+      if (url) {
+        setAvatarUrl(url);
+      }
+    } catch (err: any) {
+      console.error('Modal avatar upload error:', err);
+      setErrorMessage(err.message || 'Rasm yuklashda xatolik yuz berdi');
+    } finally {
+      setIsUploadingAvatar(false);
+      if (e.target) e.target.value = '';
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -252,24 +275,55 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
             </div>
           )}
 
-          {/* Avatar Preview & URL */}
+          {/* Avatar Preview & Upload */}
           <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-slate-50 dark:bg-[#0A0F1D] border border-slate-200 dark:border-slate-800">
-            <div className="w-12 h-12 rounded-xl bg-slate-200 dark:bg-slate-800 overflow-hidden border border-slate-300 dark:border-slate-700 shrink-0 flex items-center justify-center">
+            <div className="relative w-14 h-14 rounded-2xl bg-slate-200 dark:bg-slate-800 overflow-hidden border border-slate-300 dark:border-slate-700 shrink-0 flex items-center justify-center group shadow-2xs">
               {avatarUrl ? (
                 <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
                 <UserIcon className="w-6 h-6 text-slate-400" />
               )}
-            </div>
-            <div className="flex-1 min-w-0 space-y-1">
-              <label className="text-[11px] font-mono text-slate-500 dark:text-slate-400 font-medium">
-                Avatar URL (yoki DiceBear)
+              {isUploadingAvatar && (
+                <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white z-10">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                </div>
+              )}
+              <label
+                htmlFor="modal-avatar-input"
+                title="Rasm yuklash"
+                className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white cursor-pointer transition-opacity z-10"
+              >
+                <Camera size={18} />
               </label>
+              <input
+                type="file"
+                id="modal-avatar-input"
+                accept="image/png, image/jpeg, image/webp"
+                className="hidden"
+                disabled={isUploadingAvatar}
+                onChange={handleModalAvatarUpload}
+              />
+            </div>
+            <div className="flex-1 min-w-0 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-mono text-slate-500 dark:text-slate-400 font-medium">
+                  Avatar Rasmi
+                </label>
+                <button
+                  type="button"
+                  onClick={() => document.getElementById('modal-avatar-input')?.click()}
+                  disabled={isUploadingAvatar}
+                  className="inline-flex items-center gap-1 text-[11px] font-mono text-[#E07A5F] hover:underline cursor-pointer disabled:opacity-50"
+                >
+                  <Upload size={11} />
+                  <span>{isUploadingAvatar ? 'Yuklanmoqda...' : 'Fayldan yuklash'}</span>
+                </button>
+              </div>
               <input
                 type="text"
                 value={avatarUrl}
                 onChange={(e) => setAvatarUrl(e.target.value)}
-                placeholder="https://... avatar rasm havolasi"
+                placeholder="https://... rasm havolasi yoki yuqoridagi tugma"
                 className="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-slate-700 text-xs font-mono text-slate-900 dark:text-white focus:outline-hidden focus:border-[#E07A5F]"
               />
             </div>

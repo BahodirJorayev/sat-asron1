@@ -126,7 +126,10 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           <button
             key={item.id}
             type="button"
-            onClick={() => setActiveTab(item.id)}
+            onClick={() => {
+              setActiveTab(item.id);
+              if (typeof window !== 'undefined') window.location.hash = `#/${item.id}`;
+            }}
             className="group flex-1 flex flex-col items-center justify-center py-0.5 cursor-pointer active:scale-95 transition-transform"
           >
             <div className="relative">

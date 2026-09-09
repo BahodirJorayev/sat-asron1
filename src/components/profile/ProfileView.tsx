@@ -22,6 +22,9 @@ import {
   Sun,
   Moon,
   Trash2,
+  Camera,
+  Loader2,
+  Upload,
 } from 'lucide-react';
 import { User } from '../../types';
 import { supabase, saveUserProfile } from '../../lib/supabase';
@@ -96,7 +99,34 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
   // Apple-grade Theme state
   const { resolvedTheme, setTheme } = useTheme();
-  const { updateProfile } = useUserProfile();
+  const { profile, updateProfile, uploadAvatar } = useUserProfile();
+
+  // Avatar Upload State
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState<boolean>(false);
+  const [avatarUploadError, setAvatarUploadError] = useState<string | null>(null);
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      setIsUploadingAvatar(true);
+      setAvatarUploadError(null);
+
+      const publicUrl = await uploadAvatar(file);
+
+      if (publicUrl) {
+        setUser((prev) => ({ ...prev, avatarUrl: publicUrl }));
+        onUpdateUser?.({ ...user, avatarUrl: publicUrl });
+      }
+    } catch (err: any) {
+      console.error('Avatar upload error:', err);
+      setAvatarUploadError(err.message || "Rasm yuklashda xatolik yuz berdi.");
+    } finally {
+      setIsUploadingAvatar(false);
+      if (event.target) event.target.value = '';
+    }
+  };
 
   // Load active user profile from Supabase profiles table
   useEffect(() => {
@@ -123,6 +153,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               email: activeUser.email || '',
               fullName: dbProfile?.full_name || meta.full_name || meta.name || user.fullName || 'Talaba',
               username: dbProfile?.username || meta.username || activeUser.email?.split('@')[0] || user.username || 'talaba',
+              avatarUrl: dbProfile?.avatar_url || meta.avatar_url || meta.picture || user.avatarUrl || profile?.avatarUrl || '',
               phoneNumber: meta.phone || meta.phoneNumber || user.phoneNumber || '',
               planTier: (meta.plan_tier as any) || user.planTier || 'STANDARD',
               role: (meta.role as any) || user.role || 'STUDENT',
@@ -457,9 +488,42 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       <div className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-2xs transition-colors">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            {/* Clean Avatar */}
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#E07A5F] text-white flex items-center justify-center font-mono text-xl sm:text-2xl font-bold shrink-0 shadow-2xs">
-              {initialLetter}
+            {/* Interactive Avatar with Camera Upload Overlay */}
+            <div className="relative group shrink-0">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-[#E07A5F] text-white flex items-center justify-center font-mono text-xl sm:text-2xl font-bold overflow-hidden shadow-sm border-2 border-white dark:border-[#1E293B] transition-transform group-hover:scale-102">
+                {profile?.avatarUrl || user.avatarUrl ? (
+                  <img
+                    src={profile?.avatarUrl || user.avatarUrl}
+                    alt={fullName || user.fullName}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span>{initialLetter}</span>
+                )}
+                {/* Upload Spinner Overlay */}
+                {isUploadingAvatar && (
+                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white z-10">
+                    <Loader2 className="w-6 h-6 animate-spin text-white" />
+                  </div>
+                )}
+              </div>
+
+              {/* Camera Icon Overlay Trigger */}
+              <label
+                htmlFor="avatar-input"
+                title="Rasm yuklash / O'zgartirish"
+                className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md hover:scale-110 active:scale-95 transition-all cursor-pointer border-2 border-white dark:border-[#121A2F] z-20 flex items-center justify-center"
+              >
+                <Camera size={13} strokeWidth={2.4} />
+                <input
+                  type="file"
+                  id="avatar-input"
+                  accept="image/png, image/jpeg, image/webp"
+                  className="hidden"
+                  disabled={isUploadingAvatar}
+                  onChange={handleAvatarUpload}
+                />
+              </label>
             </div>
 
             {/* Clean User Credentials (Zero Badges) */}
@@ -486,6 +550,30 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   <span>{email}</span>
                 </p>
               )}
+              {/* Upload Photo Button & Error Display */}
+              <div className="pt-1.5 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => document.getElementById('avatar-input')?.click()}
+                  disabled={isUploadingAvatar}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono font-medium text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {isUploadingAvatar ? (
+                    <>
+                      <Loader2 size={12} className="animate-spin text-[#E07A5F]" />
+                      <span>Yuklanmoqda...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload size={12} />
+                      <span>Rasm yuklash</span>
+                    </>
+                  )}
+                </button>
+                {avatarUploadError && (
+                  <span className="text-[11px] text-rose-500">{avatarUploadError}</span>
+                )}
+              </div>
             </div>
           </div>
 

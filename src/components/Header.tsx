@@ -150,7 +150,10 @@ export const Header: React.FC<Props> = ({
 
               {/* Desktop Viewport: Brand Logo & Mark (Hidden on Mobile) */}
               <div
-                onClick={() => setActiveTab('dashboard')}
+                onClick={() => {
+                  setActiveTab('dashboard');
+                  if (typeof window !== 'undefined') window.location.hash = '#/dashboard';
+                }}
                 className="hidden md:flex items-center gap-2.5 cursor-pointer select-none group"
               >
                 {settings.logo_url && settings.logo_url !== '/brand/logo.svg' ? (
@@ -174,7 +177,10 @@ export const Header: React.FC<Props> = ({
         {isLandingOrBlog && (
           <div className="hidden lg:flex items-center gap-6 text-xs font-semibold text-[#57534E] dark:text-[#94A3B8]">
             <button
-              onClick={() => setActiveTab('landing')}
+              onClick={() => {
+                setActiveTab('landing');
+                if (typeof window !== 'undefined') window.location.hash = '#/landing';
+              }}
               className={`hover:text-[#2563EB] dark:hover:text-[#4EA8DE] transition-colors cursor-pointer ${
                 activeTab === 'landing' ? 'text-[#2563EB] dark:text-[#4EA8DE] font-bold' : ''
               }`}
@@ -182,7 +188,10 @@ export const Header: React.FC<Props> = ({
               {t('overviewFeatures', 'Overview & Features')}
             </button>
             <button
-              onClick={() => setActiveTab('blog')}
+              onClick={() => {
+                setActiveTab('blog');
+                if (typeof window !== 'undefined') window.location.hash = '#/blog';
+              }}
               className={`flex items-center gap-1 hover:text-[#2563EB] dark:hover:text-[#4EA8DE] transition-colors cursor-pointer ${
                 activeTab === 'blog' ? 'text-[#2563EB] dark:text-[#4EA8DE] font-bold' : ''
               }`}
@@ -228,7 +237,10 @@ export const Header: React.FC<Props> = ({
               {/* Dedicated Mobile-only Hamjamiyat (Community) Action Button (Navigates to /chat or community tab) */}
               <button
                 type="button"
-                onClick={() => setActiveTab('community')}
+                onClick={() => {
+                  setActiveTab('community');
+                  if (typeof window !== 'undefined') window.location.hash = '#/community';
+                }}
                 aria-label="Hamjamiyat"
                 title="Hamjamiyat"
                 className="flex md:hidden w-9 h-9 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white border border-slate-200/50 dark:border-slate-700/50 active:scale-95 transition-transform cursor-pointer"
@@ -259,7 +271,10 @@ export const Header: React.FC<Props> = ({
             <>
               {/* Desktop Current User Quick Profile Capsule */}
               <div
-                onClick={onOpenCurrentUserProfile}
+                onClick={() => {
+                  onOpenCurrentUserProfile?.();
+                  if (typeof window !== 'undefined') window.location.hash = '#/profile';
+                }}
                 className="hidden md:flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] border border-slate-200 dark:border-[#1E293B] hover:border-[#E07A5F]/50 transition-all cursor-pointer shadow-2xs"
                 title="Mening Profilim sahifasini ochish"
               >

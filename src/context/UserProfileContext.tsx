@@ -24,6 +24,7 @@ export interface UserProfileContextValue {
   profile: UserProfileData | null;
   isLoading: boolean;
   updateProfile: (updates: Partial<UserProfileData>) => Promise<boolean>;
+  uploadAvatar: (file: File) => Promise<string | null>;
   refreshProfile: () => Promise<void>;
 }
 
@@ -317,12 +318,87 @@ export const UserProfileProvider: React.FC<UserProfileProviderProps> = ({
     [profile?.id]
   );
 
+  // Upload Avatar to Supabase 'avatars' storage bucket with fallback
+  const uploadAvatar = useCallback(
+    async (file: File): Promise<string | null> => {
+      try {
+        const { data: authData } = await supabase.auth.getUser();
+        const activeUser = authData?.user;
+        const activeId = activeUser?.id || profile?.id;
+        if (!activeId) throw new Error('Foydalanuvchi tizimga kirmagan.');
+
+        const fileExt = file.name.split('.').pop() || 'jpg';
+        const filePath = `${activeId}/${Date.now()}.${fileExt}`;
+
+        let publicUrl: string | null = null;
+
+        // 1. Upload to Supabase 'avatars' bucket
+        try {
+          const { error: uploadError } = await supabase.storage
+            .from('avatars')
+            .upload(filePath, file, { upsert: true, contentType: file.type });
+
+          if (!uploadError) {
+            const { data: urlData } = supabase.storage
+              .from('avatars')
+              .getPublicUrl(filePath);
+            publicUrl = urlData.publicUrl;
+          } else {
+            console.warn('Storage upload notice:', uploadError.message);
+          }
+        } catch (storageErr) {
+          console.warn('Storage bucket upload notice:', storageErr);
+        }
+
+        // Resilient fallback: Convert file to Base64 data URI if bucket upload failed
+        if (!publicUrl) {
+          publicUrl = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+        }
+
+        if (publicUrl) {
+          // 2. Persist to public.profiles table
+          await supabase
+            .from('profiles')
+            .update({ avatar_url: publicUrl, updated_at: new Date().toISOString() })
+            .eq('id', activeId);
+
+          // 3. Update Auth user metadata
+          try {
+            await supabase.auth.updateUser({
+              data: { avatar_url: publicUrl },
+            });
+          } catch (e) {}
+
+          // 4. Update local profile state and broadcast globally
+          await updateProfile({ avatarUrl: publicUrl });
+
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('profileUpdated', { detail: { avatar_url: publicUrl, avatarUrl: publicUrl } }));
+            window.dispatchEvent(new CustomEvent('asron_profile_updated', { detail: { avatar_url: publicUrl, avatarUrl: publicUrl } }));
+          }
+        }
+
+        return publicUrl;
+      } catch (err) {
+        console.error('Avatar upload error:', err);
+        throw err;
+      }
+    },
+    [profile?.id, updateProfile]
+  );
+
   return (
     <UserProfileContext.Provider
       value={{
         profile,
         isLoading,
         updateProfile,
+        uploadAvatar,
         refreshProfile: fetchProfile,
       }}
     >
@@ -339,6 +415,7 @@ export const useUserProfile = (): UserProfileContextValue => {
       profile: null,
       isLoading: false,
       updateProfile: async () => false,
+      uploadAvatar: async () => null,
       refreshProfile: async () => {},
     };
   }

@@ -1711,69 +1711,50 @@ export default function App() {
     });
   };
 
-  // Exhaustive Central View Switcher & Route Resolver
-  // Matches all aliases across activeTab, window.location.hash, and window.location.pathname
-  const resolveViewKey = (tabName: string, url: string): string => {
-    const t = (tabName || '').toLowerCase().trim();
-    if (t === 'qbank' || t === 'questions' || t === 'sqb' || t === 'practice') return 'qbank';
-    if (t === 'mock' || t === 'mocks' || t === 'test' || t === 'bluebook') return 'bluebook';
-    if (t === 'vocab' || t === 'vocabulary' || t === 'word' || t === 'lug') return 'vocab';
-    if (t === 'vault' || t === 'mistakes' || t === 'mistake' || t === 'error' || t === 'xato') return 'vault';
-    if (t === 'community' || t === 'chat' || t === 'hamjamiyat') return 'community';
-    if (t === 'admin') return 'admin';
-    if (t === 'profile' || t === 'settings' || t === 'setting') return 'profile';
-    if (t === 'arena') return 'arena';
-    if (t === 'ai-tutor' || t === 'tutor') return 'ai-tutor';
-    if (t === 'roadmap') return 'roadmap';
-    if (t === 'daily-workout' || t === 'workout') return 'daily-workout';
-    if (t === 'blog') return 'blog';
-    if (t === 'landing') return 'landing';
-    if (t === 'dashboard') return 'dashboard';
-
-    // Fallback to URL aliases if activeTab is not explicitly matched
-    const u = (url || '').toLowerCase();
-    if (u.includes('qbank') || u.includes('question') || u.includes('sqb') || u.includes('practice')) return 'qbank';
-    if (u.includes('mock') || u.includes('test') || u.includes('bluebook')) return 'bluebook';
-    if (u.includes('vocab') || u.includes('word') || u.includes('lug')) return 'vocab';
-    if (u.includes('mistake') || u.includes('error') || u.includes('xato') || u.includes('vault')) return 'vault';
-    if (u.includes('community') || u.includes('chat') || u.includes('hamjamiyat')) return 'community';
-    if (u.includes('admin')) return 'admin';
-    if (u.includes('profile') || u.includes('setting')) return 'profile';
-    if (u.includes('arena')) return 'arena';
-    if (u.includes('ai-tutor') || u.includes('tutor')) return 'ai-tutor';
-    if (u.includes('roadmap')) return 'roadmap';
-    if (u.includes('daily-workout') || u.includes('workout')) return 'daily-workout';
-    if (u.includes('blog')) return 'blog';
-    if (u.includes('landing')) return 'landing';
-    if (u.includes('dashboard')) return 'dashboard';
-
+  // Bulletproof Routing & View Transition Engine
+  const getActiveView = (hashOrPath: string): string => {
+    const clean = hashOrPath.replace(/^#\/?/, '').toLowerCase().split('?')[0].trim();
+    if (clean === '' || clean.startsWith('landing')) return 'landing';
+    if (clean.startsWith('dash') || clean.startsWith('home') || clean === 'app') return 'dashboard';
+    if (clean.startsWith('qbank') || clean.startsWith('question') || clean.startsWith('sqb') || clean.startsWith('practice')) return 'qbank';
+    if (clean.startsWith('mock') || clean.startsWith('test') || clean.startsWith('bluebook')) return 'bluebook';
+    if (clean.startsWith('vocab') || clean.startsWith('word') || clean.startsWith('lug')) return 'vocab';
+    if (clean.startsWith('mistake') || clean.startsWith('error') || clean.startsWith('xato') || clean.startsWith('vault')) return 'vault';
+    if (clean.startsWith('communit') || clean.startsWith('chat') || clean.startsWith('hamjam')) return 'community';
+    if (clean.startsWith('admin')) return 'admin';
+    if (clean.startsWith('profile') || clean.startsWith('setting')) return 'profile';
+    if (clean.startsWith('arena')) return 'arena';
+    if (clean.startsWith('ai-tutor') || clean.startsWith('tutor')) return 'ai-tutor';
+    if (clean.startsWith('roadmap')) return 'roadmap';
+    if (clean.startsWith('daily-workout') || clean.startsWith('workout')) return 'daily-workout';
+    if (clean.startsWith('blog')) return 'blog';
     return 'dashboard';
   };
 
   // Sync route changes from URL hash/popstate
   useEffect(() => {
-    const handleHashAndRoute = () => {
+    const handleRoute = () => {
       if (typeof window === 'undefined') return;
-      const hash = window.location.hash.replace(/^#\/?/, '').trim();
-      const pathname = window.location.pathname;
-      const key = resolveViewKey('', `${hash} ${pathname}`);
-      if (key && key !== activeTab) {
-        setActiveTab(key);
+      const hash = window.location.hash || window.location.pathname || '#/dashboard';
+      const target = getActiveView(hash);
+      if (target && target !== activeTab) {
+        setActiveTab(target);
       }
     };
 
-    window.addEventListener('hashchange', handleHashAndRoute);
-    window.addEventListener('popstate', handleHashAndRoute);
+    window.addEventListener('hashchange', handleRoute);
+    window.addEventListener('popstate', handleRoute);
+    handleRoute();
     return () => {
-      window.removeEventListener('hashchange', handleHashAndRoute);
-      window.removeEventListener('popstate', handleHashAndRoute);
+      window.removeEventListener('hashchange', handleRoute);
+      window.removeEventListener('popstate', handleRoute);
     };
   }, [activeTab]);
 
   const renderCurrentView = () => {
     const hash = typeof window !== 'undefined' ? window.location.hash : '';
     const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
-    const viewKey = resolveViewKey(activeTab, `${hash} ${pathname}`);
+    const viewKey = activeTab || getActiveView(`${hash} ${pathname}`);
     const raw = `${hash} ${pathname} ${activeTab}`.toLowerCase();
 
     // 1. Question Bank aliases: qbank, question, sqb, practice

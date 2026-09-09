@@ -158,32 +158,52 @@ export default function App() {
       const hash = window.location.hash.replace('#/', '').replace('#', '').trim();
       const pathname = window.location.pathname;
       const search = window.location.search;
-      const hasSavedUser = !!localStorage.getItem('aurasat_user_profile');
+      const cleanHash = hash.split('?')[0];
 
-      // Direct URL / Deep link handling for Community & Chat
+      // 1. Check direct hash first
+      if (cleanHash) {
+        if (cleanHash === 'dashboard') return 'dashboard';
+        if (cleanHash === 'questions' || cleanHash === 'qbank' || cleanHash === 'practice') return 'qbank';
+        if (cleanHash === 'mocks' || cleanHash === 'bluebook') return 'bluebook';
+        if (cleanHash === 'vocabulary' || cleanHash === 'vocab') return 'vocab';
+        if (cleanHash === 'mistakes' || cleanHash === 'vault') return 'vault';
+        if (cleanHash === 'community' || cleanHash === 'chat') return 'community';
+        if (cleanHash === 'profile' || cleanHash === 'settings') return 'profile';
+        if (cleanHash === 'admin') return 'admin';
+        if (cleanHash === 'arena') return 'arena';
+        if (cleanHash === 'daily-workout') return 'daily-workout';
+        if (cleanHash === 'roadmap') return 'roadmap';
+        if (cleanHash === 'blog') return 'blog';
+        if (cleanHash === 'landing') return 'landing';
+      }
+
+      // 2. Check URL Pathname (direct page visits on Vercel / Next.js / Vite)
+      if (pathname.includes('/dashboard')) return 'dashboard';
+      if (pathname.includes('/questions')) return 'qbank';
+      if (pathname.includes('/mocks')) return 'bluebook';
+      if (pathname.includes('/vocabulary')) return 'vocab';
+      if (pathname.includes('/mistakes')) return 'vault';
       if (
         pathname.startsWith('/chat') ||
         pathname.startsWith('/community') ||
+        pathname.includes('/community') ||
+        pathname.includes('/chat') ||
         search.includes('c=') ||
         search.includes('join=') ||
-        search.includes('dm=') ||
-        hash === 'chat' ||
-        hash.startsWith('chat?') ||
-        hash === 'community' ||
-        hash.startsWith('community?')
+        search.includes('dm=')
       ) {
         return 'community';
       }
+      if (pathname.includes('/profile') || pathname.includes('/settings')) return 'profile';
+      if (pathname.includes('/admin')) return 'admin';
+      if (pathname.includes('/arena')) return 'arena';
+      if (pathname.includes('/daily-workout')) return 'daily-workout';
+      if (pathname.includes('/roadmap')) return 'roadmap';
+      if (pathname.includes('/blog')) return 'blog';
+      if (pathname.includes('/landing')) return 'landing';
 
-      if (['dashboard', 'daily-workout', 'vault', 'bluebook', 'qbank', 'community', 'arena', 'roadmap', 'profile', 'admin', 'blog', 'vocab'].includes(hash)) {
-        return hash;
-      }
-      if (hash === 'vocabulary') return 'vocab';
-      if (hash === 'landing') return 'landing';
-      // Auto-route authenticated user to dashboard
-      if (hasSavedUser) {
-        return 'dashboard';
-      }
+      const hasSavedUser = !!localStorage.getItem('aurasat_user_profile');
+      return hasSavedUser ? 'dashboard' : 'landing';
     }
     const hasSavedUser = typeof localStorage !== 'undefined' && !!localStorage.getItem('aurasat_user_profile');
     return hasSavedUser ? 'dashboard' : 'landing';
@@ -1050,6 +1070,32 @@ export default function App() {
     }
   }, []);
 
+  // Catch Pathname Routes & Normalize to Hash/Views on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const pathname = window.location.pathname;
+    const hash = window.location.hash;
+
+    // If user lands on /dashboard, /questions, /community directly via URL pathname:
+    if (pathname.includes('/dashboard') && !hash.includes('dashboard')) {
+      window.location.hash = '#/dashboard';
+    } else if (pathname.includes('/questions') && !hash.includes('questions') && !hash.includes('qbank')) {
+      window.location.hash = '#/questions';
+    } else if (pathname.includes('/mocks') && !hash.includes('mocks') && !hash.includes('bluebook')) {
+      window.location.hash = '#/mocks';
+    } else if ((pathname.includes('/community') || pathname.includes('/chat')) && !hash.includes('community') && !hash.includes('chat')) {
+      window.location.hash = '#/community';
+    } else if (pathname.includes('/vocabulary') && !hash.includes('vocab') && !hash.includes('vocabulary')) {
+      window.location.hash = '#/vocabulary';
+    } else if (pathname.includes('/mistakes') && !hash.includes('mistakes') && !hash.includes('vault')) {
+      window.location.hash = '#/mistakes';
+    } else if (pathname.includes('/profile') && !hash.includes('profile')) {
+      window.location.hash = '#/profile';
+    } else if (pathname.includes('/admin') && !hash.includes('admin')) {
+      window.location.hash = '#/admin';
+    }
+  }, []);
+
   // Sync activeTab state to URL Hash & Handle browser history navigation
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -1060,6 +1106,7 @@ export default function App() {
   // Listen to hash and pushState route changes (back/forward navigation, direct deep links)
   useEffect(() => {
     const handleRouteSync = (e?: any) => {
+      if (typeof window === 'undefined') return;
       const customPath = e?.detail?.path;
       const hash = window.location.hash.replace('#/', '').replace('#', '').trim();
       const pathname = customPath || window.location.pathname;
@@ -1101,6 +1148,7 @@ export default function App() {
         chat: 'community',
         community: 'community',
         profile: 'profile',
+        settings: 'profile',
         admin: 'admin',
         arena: 'arena',
         'daily-workout': 'daily-workout',
@@ -1112,49 +1160,51 @@ export default function App() {
 
       if (cleanHash && hashTabMap[cleanHash]) {
         const mappedTab = hashTabMap[cleanHash];
-        if (['dashboard', 'vault', 'bluebook', 'qbank', 'daily-workout', 'arena', 'ai-tutor', 'profile', 'admin'].includes(mappedTab) && !authenticated) {
+        setActiveTab(mappedTab);
+        if (['vault', 'profile', 'admin'].includes(mappedTab) && !authenticated) {
           setAuthModalMode('signin');
           setIsAuthModalOpen(true);
-        } else {
-          setActiveTab(mappedTab);
         }
         return;
       }
 
       // Fallback to pathname-based tabs
-      if (pathname === '/questions') {
+      if (pathname.includes('/questions')) {
         setActiveTab('qbank');
         return;
       }
-      if (pathname === '/mocks') {
+      if (pathname.includes('/mocks')) {
         setActiveTab('bluebook');
         return;
       }
-      if (pathname === '/vocabulary') {
+      if (pathname.includes('/vocabulary')) {
         setActiveTab('vocab');
         return;
       }
-      if (pathname === '/mistakes') {
+      if (pathname.includes('/mistakes')) {
         setActiveTab('vault');
         return;
       }
-      if (pathname.startsWith('/chat') || pathname.startsWith('/community')) {
+      if (pathname.includes('/chat') || pathname.includes('/community')) {
         setActiveTab('community');
         return;
       }
-      if (pathname === '/profile') {
+      if (pathname.includes('/profile')) {
         setActiveTab('profile');
         return;
       }
-      if (pathname === '/admin') {
+      if (pathname.includes('/admin')) {
         setActiveTab('admin');
         return;
       }
-      if (pathname === '/dashboard') {
+      if (pathname.includes('/dashboard')) {
         setActiveTab('dashboard');
         return;
       }
     };
+
+    // Run on initial mount to sync active URL state immediately
+    handleRouteSync();
 
     window.addEventListener('hashchange', handleRouteSync);
     window.addEventListener('popstate', handleRouteSync);
@@ -1541,7 +1591,7 @@ export default function App() {
       )}
 
       {/* 2. Main Content Area */}
-      <div className={`flex-1 flex flex-col min-w-0 ${activeTab === 'community' ? 'h-[100dvh] md:h-screen overflow-hidden overflow-x-hidden overflow-y-hidden' : 'overflow-x-hidden'}`}>
+      <div className={`flex-1 flex flex-col min-w-0 ${activeTab === 'community' || activeTab === 'chat' ? 'h-[100dvh] md:h-screen overflow-hidden overflow-x-hidden overflow-y-hidden' : 'overflow-x-hidden'}`}>
         {/* Maintenance Mode Alert if enabled and student is logged in */}
         {globalSettings.isMaintenance && currentUser.role !== 'ADMIN' && currentUser.role !== 'SUPER_ADMIN' && (
           <div className="w-full bg-rose-950/80 border-b border-rose-800/60 px-4 py-2 text-xs font-mono text-rose-200 flex items-center justify-between z-50 shrink-0">
@@ -1556,7 +1606,7 @@ export default function App() {
         )}
 
         {/* Top Header with Quick Actions */}
-        <div className={activeTab === 'community' ? 'hidden md:block shrink-0' : 'shrink-0'}>
+        <div className={activeTab === 'community' || activeTab === 'chat' ? 'hidden md:block shrink-0' : 'shrink-0'}>
           <Header
             user={currentUser}
             activeTab={activeTab}
@@ -1580,7 +1630,7 @@ export default function App() {
         </div>
 
         {/* Main Routed Views */}
-        <main className={`flex-1 ${activeTab === 'community' ? 'h-[100dvh] md:h-[calc(100dvh-64px)] overflow-hidden overflow-x-hidden overflow-y-hidden pb-0' : 'pb-16'}`}>
+        <main className={`flex-1 ${activeTab === 'community' || activeTab === 'chat' ? 'h-[100dvh] md:h-[calc(100dvh-64px)] overflow-hidden overflow-x-hidden overflow-y-hidden pb-0' : 'pb-16'}`}>
           {activeTab === 'landing' && (
             <LandingView
               user={currentUser}
@@ -1628,7 +1678,7 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'vocab' && (
+          {(activeTab === 'vocab' || activeTab === 'vocabulary') && (
             <VocabularyHub
               user={currentUser}
               onOpenPaywall={() => setIsPaywallOpen(true)}
@@ -1649,7 +1699,29 @@ export default function App() {
             </div>
           )}
 
-          {activeTab === 'dashboard' && (
+          {(activeTab === 'dashboard' ||
+            ![
+              'landing',
+              'blog',
+              'profile',
+              'settings',
+              'vocab',
+              'vocabulary',
+              'daily-workout',
+              'vault',
+              'mistakes',
+              'bluebook',
+              'mocks',
+              'qbank',
+              'questions',
+              'practice',
+              'community',
+              'chat',
+              'arena',
+              'ai-tutor',
+              'roadmap',
+              'admin',
+            ].includes(activeTab)) && (
             <DashboardView
               user={currentUser}
               mistakes={mistakes}
@@ -1671,7 +1743,7 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'vault' && (
+          {(activeTab === 'vault' || activeTab === 'mistakes') && (
             <MistakeVaultView
               mistakes={mistakes}
               user={currentUser}
@@ -1681,7 +1753,7 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'bluebook' && (
+          {(activeTab === 'bluebook' || activeTab === 'mocks') && (
             <MockTestsCatalogView
               user={currentUser}
               mockTests={mockTests}
@@ -1692,7 +1764,7 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'qbank' && (
+          {(activeTab === 'qbank' || activeTab === 'questions' || activeTab === 'practice') && (
             <QuestionBankView
               user={currentUser}
               questions={questions}
@@ -1703,7 +1775,7 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'community' && (
+          {(activeTab === 'community' || activeTab === 'chat') && (
             <CommunityView
               user={currentUser}
               usersList={usersList}
@@ -1815,7 +1887,7 @@ export default function App() {
       </div>
 
       {/* Mobile Bottom Navigation Bar (Visible only on < 768px in student/dashboard views) */}
-      {activeTab !== 'landing' && activeTab !== 'blog' && activeTab !== 'community' && !activeBluebookTest && (
+      {activeTab !== 'landing' && activeTab !== 'blog' && activeTab !== 'community' && activeTab !== 'chat' && !activeBluebookTest && (
         <MobileBottomNav
           activeTab={activeTab}
           setActiveTab={setActiveTab}

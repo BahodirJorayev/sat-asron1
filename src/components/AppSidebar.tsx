@@ -261,7 +261,36 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
 
         {navigationItems.map((item) => {
           const Icon = item.icon;
-          const isActive = activeTab === item.id;
+          const isActive =
+            activeTab === item.id ||
+            (item.id === 'dashboard' &&
+              ![
+                'landing',
+                'blog',
+                'profile',
+                'settings',
+                'vocab',
+                'vocabulary',
+                'daily-workout',
+                'vault',
+                'mistakes',
+                'bluebook',
+                'mocks',
+                'qbank',
+                'questions',
+                'practice',
+                'community',
+                'chat',
+                'arena',
+                'ai-tutor',
+                'roadmap',
+                'admin',
+              ].includes(activeTab)) ||
+            (item.id === 'qbank' && (activeTab === 'questions' || activeTab === 'practice')) ||
+            (item.id === 'bluebook' && activeTab === 'mocks') ||
+            (item.id === 'vocab' && activeTab === 'vocabulary') ||
+            (item.id === 'vault' && activeTab === 'mistakes') ||
+            (item.id === 'community' && activeTab === 'chat');
 
           return (
             <div key={item.id} className="relative group">

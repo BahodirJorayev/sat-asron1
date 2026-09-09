@@ -4,6 +4,7 @@ import '../index.css';
 import '../lib/supabase';
 import { LanguageProvider } from '../context/LanguageContext';
 import { PlatformSettingsProvider } from '../contexts/PlatformSettingsContext';
+import { PathnameNormalizer } from '../components/navigation/PathnameNormalizer';
 
 export const metadata: Metadata = {
   title: 'ASRON SAT • Digital SAT Intelligence Platform',
@@ -76,6 +77,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" sizes="180x180" href="/logo.png" />
       </head>
       <body className="bg-[#0A0F1D] text-[#F8FAFC] antialiased min-h-screen">
+        <PathnameNormalizer />
         <PlatformSettingsProvider>
           <LanguageProvider>
             {children}

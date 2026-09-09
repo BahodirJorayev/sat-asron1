@@ -336,62 +336,7 @@ export default function App() {
     };
   }, []);
 
-  // Permanent Google OAuth redirect & auto-session routing
-  useEffect(() => {
-    const handleAuthenticatedUser = async (user: any) => {
-      try {
-        const { data: existingProfile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .maybeSingle();
 
-        if (!existingProfile) {
-          // Create profile row ONLY if it doesn't exist yet (Absolute no-duplicate enforcement)
-          await supabase.from('profiles').insert({
-            id: user.id,
-            email: user.email,
-            full_name: user.user_metadata?.full_name || user.user_metadata?.name || 'Talaba',
-            username: user.email?.split('@')[0] || `user_${user.id.slice(0, 5)}`,
-            avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
-          });
-        }
-      } catch (err) {
-        console.warn('Profile existence check warning:', err);
-      }
-
-      // If user is authenticated and currently on landing/login/register, force immediate route to dashboard
-      if (typeof window !== 'undefined') {
-        const currentPath = window.location.hash || window.location.pathname;
-        if (
-          currentPath === '' ||
-          currentPath === '/' ||
-          currentPath.includes('landing') ||
-          currentPath.includes('login') ||
-          currentPath.includes('register')
-        ) {
-          window.location.hash = '#/dashboard';
-          setActiveTab('dashboard');
-        }
-      }
-    };
-
-    // 1. Listen for instant auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
-        handleAuthenticatedUser(session.user);
-      }
-    });
-
-    // 2. Initial session check on mount
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        handleAuthenticatedUser(session.user);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   // Live Supabase public.profiles fetch and Realtime sync across PC & Mobile devices
   useEffect(() => {
@@ -1045,57 +990,158 @@ export default function App() {
   // Check Supabase session on mount, handle OAuth redirect, and listen to auth changes
   useEffect(() => {
     const supabase = getSupabaseClient();
-    if (supabase) {
-      // 1. Initial session check
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session?.user) {
-          const appUser = mapSupabaseUserToAppUser(session.user);
-          setUsersList((prev) => {
-            const idx = prev.findIndex((u) => u.email.toLowerCase() === appUser.email.toLowerCase() || u.id === appUser.id);
-            if (idx >= 0) {
-              const updated = [...prev];
-              updated[idx] = { ...updated[idx], ...appUser };
-              return updated;
-            }
-            return [appUser, ...prev];
+    if (!supabase) return;
+
+    let isMounted = true;
+
+    const handleAuthenticatedUser = async (user: any) => {
+      try {
+        const authIntent = typeof window !== 'undefined' ? localStorage.getItem('asron_auth_intent') : null;
+
+        // Fetch existing profile by ID
+        const { data: existingProfile } = await supabase
+          .from('profiles')
+          .select('id, full_name, username, avatar_url, target_score, email')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        let profile = existingProfile;
+        if (!profile && user.email) {
+          const { data: profileByEmail } = await supabase
+            .from('profiles')
+            .select('id, full_name, username, avatar_url, target_score, email')
+            .eq('email', user.email)
+            .maybeSingle();
+          if (profileByEmail) {
+            profile = profileByEmail;
+          }
+        }
+
+        // STRICT GOOGLE OAUTH GUARD 1:
+        // Initiated from Sign Up, but account ALREADY EXISTS in profiles:
+        if (authIntent === 'signup' && profile) {
+          localStorage.removeItem('asron_auth_intent');
+          await supabase.auth.signOut();
+          const notice = {
+            type: 'warning' as const,
+            message: "Sizda allaqachon akkaunt mavjud. Iltimos, Kirish (Log In) orqali kiring.",
+            targetTab: 'signin' as const,
+          };
+          localStorage.setItem('asron_auth_notice', JSON.stringify(notice));
+          window.dispatchEvent(new CustomEvent('asron_auth_notice', { detail: notice }));
+          setAuthModalMode('signin');
+          setIsAuthModalOpen(true);
+          return;
+        }
+
+        // STRICT GOOGLE OAUTH GUARD 2:
+        // Initiated from Log In, but NO account exists in profiles:
+        if (authIntent === 'signin' && !profile) {
+          localStorage.removeItem('asron_auth_intent');
+          await supabase.auth.signOut();
+          const notice = {
+            type: 'error' as const,
+            message: "Bunday akkaunt topilmadi. Iltimos, avval ro'yxatdan o'ting.",
+            targetTab: 'signup' as const,
+          };
+          localStorage.setItem('asron_auth_notice', JSON.stringify(notice));
+          window.dispatchEvent(new CustomEvent('asron_auth_notice', { detail: notice }));
+          setAuthModalMode('signup');
+          setIsAuthModalOpen(true);
+          return;
+        }
+
+        // Genuine new registration via Google OAuth:
+        if (authIntent === 'signup' && !profile) {
+          localStorage.removeItem('asron_auth_intent');
+          localStorage.removeItem('asron_auth_notice');
+          await supabase.from('profiles').insert({
+            id: user.id,
+            email: user.email,
+            full_name: user.user_metadata?.full_name || user.user_metadata?.name || 'Talaba',
+            username: user.email?.split('@')[0] || `user_${user.id.slice(0, 5)}`,
+            avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
           });
-          setCurrentUserIndex(0);
-          localStorage.setItem('aurasat_user_profile', JSON.stringify(appUser));
-          
-          // Auto-route to dashboard on login if currently on landing/login
-          if (activeTab === 'landing') {
+        } else if (authIntent === 'signin') {
+          localStorage.removeItem('asron_auth_intent');
+          localStorage.removeItem('asron_auth_notice');
+        } else if (!profile) {
+          // Fallback auto-provision if neither intent was stored
+          await supabase.from('profiles').insert({
+            id: user.id,
+            email: user.email,
+            full_name: user.user_metadata?.full_name || user.user_metadata?.name || 'Talaba',
+            username: user.email?.split('@')[0] || `user_${user.id.slice(0, 5)}`,
+            avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
+          });
+        }
+
+        if (!isMounted) return;
+
+        // Hydrate the application user with full profile data
+        const appUser = mapSupabaseUserToAppUser(user, {
+          fullName: profile?.full_name,
+          username: profile?.username,
+          avatarUrl: profile?.avatar_url,
+          targetScore: profile?.target_score,
+        });
+
+        setUsersList((prev) => {
+          const idx = prev.findIndex((u) => u.email.toLowerCase() === appUser.email.toLowerCase() || u.id === appUser.id);
+          if (idx >= 0) {
+            const updated = [...prev];
+            updated[idx] = { ...updated[idx], ...appUser };
+            return updated;
+          }
+          return [appUser, ...prev];
+        });
+        setCurrentUserIndex(0);
+        localStorage.setItem('aurasat_user_profile', JSON.stringify(appUser));
+        localStorage.setItem('aura_sat_auth_user', JSON.stringify(appUser));
+
+        // Auto-route to dashboard on successful login if currently on landing/login/register
+        if (typeof window !== 'undefined') {
+          const currentPath = window.location.hash || window.location.pathname;
+          if (
+            currentPath === '' ||
+            currentPath === '/' ||
+            currentPath.includes('landing') ||
+            currentPath.includes('login') ||
+            currentPath.includes('register')
+          ) {
             setActiveTab('dashboard');
             window.location.hash = '#/dashboard';
           }
         }
-      });
+      } catch (err) {
+        console.error('handleAuthenticatedUser error:', err);
+      }
+    };
 
-      // 2. Realtime auth change listener
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-        if (session?.user) {
-          const appUser = mapSupabaseUserToAppUser(session.user);
-          setUsersList((prev) => {
-            const idx = prev.findIndex((u) => u.email.toLowerCase() === appUser.email.toLowerCase() || u.id === appUser.id);
-            if (idx >= 0) {
-              const updated = [...prev];
-              updated[idx] = { ...updated[idx], ...appUser };
-              return updated;
-            }
-            return [appUser, ...prev];
-          });
-          setCurrentUserIndex(0);
-          localStorage.setItem('aurasat_user_profile', JSON.stringify(appUser));
+    // 1. Initial session check
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user && isMounted) {
+        await handleAuthenticatedUser(session.user);
+      }
+    });
 
-          if (event === 'SIGNED_IN') {
-            setActiveTab((current) => (current === 'landing' ? 'dashboard' : current));
-          }
-        }
-      });
+    // 2. Realtime auth change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT') {
+        localStorage.removeItem('aurasat_user_profile');
+        localStorage.removeItem('aura_sat_auth_user');
+        setCurrentUserIndex(0);
+        return;
+      }
+      if (session?.user && isMounted) {
+        await handleAuthenticatedUser(session.user);
+      }
+    });
 
-      return () => {
-        subscription.unsubscribe();
-      };
-    }
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Realtime Presence: Track active connected user/visitor across platform

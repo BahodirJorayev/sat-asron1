@@ -28,14 +28,48 @@ export const AuthModal: React.FC<Props> = ({
   const [username, setUsername] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [authNotice, setAuthNotice] = useState<{
+    type: 'warning' | 'error' | 'info';
+    message: string;
+    targetTab?: 'signin' | 'signup';
+  } | null>(null);
 
-  // Sync mode whenever initialMode or isOpen changes
+  // Sync mode whenever initialMode or isOpen changes, and check stored notice
   useEffect(() => {
     if (isOpen) {
       setMode(initialMode);
       setErrorMessage(null);
+
+      try {
+        const stored = typeof window !== 'undefined' ? localStorage.getItem('asron_auth_notice') : null;
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed?.message) {
+            setAuthNotice(parsed);
+            if (parsed.targetTab === 'signin' || parsed.targetTab === 'signup') {
+              setMode(parsed.targetTab);
+            }
+          }
+          localStorage.removeItem('asron_auth_notice');
+        }
+      } catch {}
     }
   }, [isOpen, initialMode]);
+
+  // Global listener for dynamic auth notice alerts
+  useEffect(() => {
+    const handleAuthNotice = (e: any) => {
+      const detail = e.detail;
+      if (detail?.message) {
+        setAuthNotice(detail);
+        if (detail.targetTab === 'signin' || detail.targetTab === 'signup') {
+          setMode(detail.targetTab);
+        }
+      }
+    };
+    window.addEventListener('asron_auth_notice' as any, handleAuthNotice);
+    return () => window.removeEventListener('asron_auth_notice' as any, handleAuthNotice);
+  }, []);
 
   // Handle ESC key to close modal
   useEffect(() => {
@@ -55,6 +89,13 @@ export const AuthModal: React.FC<Props> = ({
     try {
       setIsLoading(true);
       setErrorMessage(null);
+      setAuthNotice(null);
+
+      // Track whether this OAuth session is intended for signin or signup
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('asron_auth_intent', mode);
+      }
+
       const origin = typeof window !== 'undefined' ? window.location.origin : '';
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -183,6 +224,7 @@ export const AuthModal: React.FC<Props> = ({
               onClick={() => {
                 setMode('signin');
                 setErrorMessage(null);
+                setAuthNotice(null);
               }}
               className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 mode === 'signin'
@@ -197,6 +239,7 @@ export const AuthModal: React.FC<Props> = ({
               onClick={() => {
                 setMode('signup');
                 setErrorMessage(null);
+                setAuthNotice(null);
               }}
               className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 mode === 'signup'
@@ -207,6 +250,32 @@ export const AuthModal: React.FC<Props> = ({
               Ro'yxatdan O'tish
             </button>
           </div>
+
+          {/* Explicit Auth Notice Banner (Google OAuth existence checks) */}
+          {authNotice && (
+            <div
+              className={`p-3 rounded-xl border text-xs flex items-start gap-2.5 animate-in fade-in zoom-in-95 duration-150 ${
+                authNotice.type === 'warning'
+                  ? 'bg-amber-50 border-amber-300 text-amber-900 dark:bg-amber-950/40 dark:border-amber-700/60 dark:text-amber-200'
+                  : 'bg-rose-50 border-rose-300 text-rose-850 dark:bg-rose-950/40 dark:border-rose-700/60 dark:text-rose-200'
+              }`}
+            >
+              <AlertCircle
+                className={`w-4 h-4 shrink-0 mt-0.5 ${
+                  authNotice.type === 'warning' ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'
+                }`}
+              />
+              <div className="flex-1 font-medium leading-relaxed">{authNotice.message}</div>
+              <button
+                type="button"
+                onClick={() => setAuthNotice(null)}
+                className="text-stone-400 hover:text-stone-600 dark:text-stone-500 dark:hover:text-stone-300 cursor-pointer p-0.5"
+                title="Yopish"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
 
           {/* Error notification if any */}
           {errorMessage && (

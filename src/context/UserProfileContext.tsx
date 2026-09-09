@@ -193,11 +193,23 @@ export const UserProfileProvider: React.FC<UserProfileProviderProps> = ({
 
     // Listen to local window events and cross-tab BroadcastChannel
     const handleLocalProfileUpdate = (e: any) => {
-      if (e.detail && isMounted) {
-        setProfile((prev) => ({ ...(prev || {}), ...e.detail }));
+      if (e && e.detail && isMounted) {
+        const u = e.detail;
+        setProfile((prev) => ({
+          ...(prev || { id: u.id || '' }),
+          fullName: u.fullName || u.full_name || prev?.fullName || 'Talaba',
+          username: u.username || prev?.username || 'talaba',
+          avatarUrl: u.avatarUrl !== undefined ? u.avatarUrl : (u.avatar_url !== undefined ? u.avatar_url : prev?.avatarUrl),
+          targetScore: u.targetScore || u.target_score || prev?.targetScore,
+          phoneNumber: u.phoneNumber || u.phone_number || prev?.phoneNumber,
+        }));
+      } else if (isMounted) {
+        // Plain Event('profileUpdated') - re-fetch profile directly from Supabase
+        fetchProfile();
       }
     };
 
+    window.addEventListener('profileUpdated', handleLocalProfileUpdate);
     window.addEventListener('asron_profile_updated', handleLocalProfileUpdate);
     window.addEventListener('profile_updated', handleLocalProfileUpdate);
 
@@ -208,7 +220,7 @@ export const UserProfileProvider: React.FC<UserProfileProviderProps> = ({
         if (event.data?.type === 'profile_updated' && event.data?.user && isMounted) {
           const u = event.data.user;
           setProfile((prev) => ({
-            ...(prev || {}),
+            ...(prev || { id: u.id || '' }),
             fullName: u.fullName || u.full_name || prev?.fullName || 'Talaba',
             username: u.username || prev?.username || 'talaba',
             avatarUrl: u.avatarUrl || u.avatar_url || prev?.avatarUrl,
@@ -221,6 +233,7 @@ export const UserProfileProvider: React.FC<UserProfileProviderProps> = ({
     return () => {
       isMounted = false;
       if (realtimeChannel) supabase.removeChannel(realtimeChannel);
+      window.removeEventListener('profileUpdated', handleLocalProfileUpdate);
       window.removeEventListener('asron_profile_updated', handleLocalProfileUpdate);
       window.removeEventListener('profile_updated', handleLocalProfileUpdate);
       if (bc) bc.close();

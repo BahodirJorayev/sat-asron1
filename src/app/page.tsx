@@ -14,62 +14,101 @@ export default function RootPage() {
   useEffect(() => {
     let isMounted = true;
 
+    const processAuthUser = async (user: any) => {
+      try {
+        const authIntent = typeof window !== 'undefined' ? localStorage.getItem('asron_auth_intent') : null;
+
+        const { data: existingProfile } = await supabase
+          .from('profiles')
+          .select('id, email, username, full_name')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        let profile = existingProfile;
+        if (!profile && user.email) {
+          const { data: profileByEmail } = await supabase
+            .from('profiles')
+            .select('id, email, username, full_name')
+            .eq('email', user.email)
+            .maybeSingle();
+          if (profileByEmail) profile = profileByEmail;
+        }
+
+        // Sign Up guard: account already exists
+        if (authIntent === 'signup' && profile) {
+          localStorage.removeItem('asron_auth_intent');
+          await supabase.auth.signOut();
+          const notice = {
+            type: 'warning',
+            message: "Sizda allaqachon akkaunt mavjud. Iltimos, Kirish (Log In) orqali kiring.",
+            targetTab: 'signin',
+          };
+          localStorage.setItem('asron_auth_notice', JSON.stringify(notice));
+          router.push('/login');
+          return;
+        }
+
+        // Log In guard: account not found
+        if (authIntent === 'signin' && !profile) {
+          localStorage.removeItem('asron_auth_intent');
+          await supabase.auth.signOut();
+          const notice = {
+            type: 'error',
+            message: "Bunday akkaunt topilmadi. Iltimos, avval ro'yxatdan o'ting.",
+            targetTab: 'signup',
+          };
+          localStorage.setItem('asron_auth_notice', JSON.stringify(notice));
+          router.push('/register');
+          return;
+        }
+
+        // Valid new sign up
+        if (authIntent === 'signup' && !profile) {
+          localStorage.removeItem('asron_auth_intent');
+          localStorage.removeItem('asron_auth_notice');
+          await supabase.from('profiles').insert({
+            id: user.id,
+            email: user.email,
+            full_name: user.user_metadata?.full_name || user.user_metadata?.name || 'Talaba',
+            username: user.email?.split('@')[0] || `user_${user.id.slice(0, 5)}`,
+            avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
+          });
+        } else if (authIntent === 'signin') {
+          localStorage.removeItem('asron_auth_intent');
+          localStorage.removeItem('asron_auth_notice');
+        } else if (!profile) {
+          await supabase.from('profiles').insert({
+            id: user.id,
+            email: user.email,
+            full_name: user.user_metadata?.full_name || user.user_metadata?.name || 'Talaba',
+            username: user.email?.split('@')[0] || `user_${user.id.slice(0, 5)}`,
+            avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
+          });
+        }
+
+        if (isMounted) {
+          router.push('/dashboard');
+          router.refresh();
+          if (typeof window !== 'undefined') {
+            window.location.href = '/dashboard';
+          }
+        }
+      } catch (err) {
+        console.error('Error processing auth user on root page:', err);
+      }
+    };
+
     // 1. Listen for instant auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user && isMounted) {
-        // Enforce 1 user = 1 profile
-        try {
-          const { data: existingProfile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .maybeSingle();
-
-          if (!existingProfile) {
-            await supabase.from('profiles').insert({
-              id: session.user.id,
-              email: session.user.email,
-              full_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'Talaba',
-              username: session.user.email?.split('@')[0] || `user_${session.user.id.slice(0, 5)}`,
-              avatar_url: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture || '',
-            });
-          }
-        } catch {}
-
-        router.push('/dashboard');
-        router.refresh();
-        if (typeof window !== 'undefined') {
-          window.location.href = '/dashboard';
-        }
+        await processAuthUser(session.user);
       }
     });
 
     // 2. Initial session check on mount
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user && isMounted) {
-        try {
-          const { data: existingProfile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .maybeSingle();
-
-          if (!existingProfile) {
-            await supabase.from('profiles').insert({
-              id: session.user.id,
-              email: session.user.email,
-              full_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'Talaba',
-              username: session.user.email?.split('@')[0] || `user_${session.user.id.slice(0, 5)}`,
-              avatar_url: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture || '',
-            });
-          }
-        } catch {}
-
-        router.push('/dashboard');
-        router.refresh();
-        if (typeof window !== 'undefined') {
-          window.location.href = '/dashboard';
-        }
+        await processAuthUser(session.user);
       } else if (isMounted) {
         setChecking(false);
       }

@@ -82,7 +82,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
     fetchRecentScholars();
 
     // 3. Supabase Realtime Presence Channel for Currently Online Users
-    const presenceChannel = supabase.channel('asron-online-presence', {
+    const presenceChannel = supabase.channel('online-presence', {
       config: { presence: { key: `admin-view-${Math.random().toString(36).substring(2, 9)}` } },
     });
 

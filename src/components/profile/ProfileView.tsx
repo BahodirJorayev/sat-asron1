@@ -26,6 +26,7 @@ import {
 import { User } from '../../types';
 import { supabase, saveUserProfile } from '../../lib/supabase';
 import { useTheme } from '../../context/ThemeContext';
+import { useUserProfile } from '../../hooks/useUserProfile';
 import { EditProfileModal } from './EditProfileModal';
 
 interface ProfileViewProps {
@@ -95,6 +96,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
   // Apple-grade Theme state
   const { resolvedTheme, setTheme } = useTheme();
+  const { updateProfile } = useUserProfile();
 
   // Load active user profile from Supabase profiles table
   useEffect(() => {
@@ -278,6 +280,23 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
         setUser(updatedUser);
         await saveUserProfile(updatedUser);
+
+        // 3. Update global reactive profile state & broadcast local events
+        await updateProfile({
+          fullName: cleanFullName,
+          username: cleanUsername,
+          targetScore: targetScore,
+          phoneNumber: cleanPhone,
+          targetExamDate: targetExamDate,
+        });
+
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('profileUpdated'));
+          window.dispatchEvent(new CustomEvent('profileUpdated', { detail: updatedUser }));
+          window.dispatchEvent(new CustomEvent('asron_profile_updated', { detail: updatedUser }));
+          window.dispatchEvent(new CustomEvent('profile_updated', { detail: updatedUser }));
+        }
+
         onUpdateUser?.(updatedUser);
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 3000);

@@ -20,6 +20,7 @@ import {
 import { User } from '../types';
 import { supabase, signOutUser } from '../lib/supabase';
 import { useLanguage } from '../context/LanguageContext';
+import { useUserProfile } from '../hooks/useUserProfile';
 
 export interface SidebarFooterProps {
   user: User;
@@ -113,11 +114,20 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
     }
   };
 
+  const { profile } = useUserProfile();
+
+  const effectiveFullName = profile?.fullName || user.fullName || 'Student';
+  const effectiveUsername = profile?.username || user.username || 'user';
+  const effectiveAvatarUrl =
+    profile?.avatarUrl !== undefined
+      ? profile.avatarUrl
+      : user.avatarUrl;
+
   // Avatar source fallback
   const avatarSrc =
-    user.avatarUrl ||
+    effectiveAvatarUrl ||
     `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(
-      user.id || user.username || 'Student'
+      user.id || effectiveUsername || 'Student'
     )}`;
 
   // =========================================================================
@@ -136,7 +146,7 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
               >
                 <img
                   src={avatarSrc}
-                  alt={user.fullName || 'User'}
+                  alt={effectiveFullName}
                   className="w-full h-full rounded-xl object-cover"
                 />
                 {/* Green Online Status Dot */}
@@ -149,10 +159,10 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
               <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1.5 bg-[#1E1B18] dark:bg-[#181B26] text-white text-xs font-medium rounded-lg shadow-xl whitespace-nowrap z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-150 -translate-x-1 group-hover:translate-x-0 border border-[#3D405B]/30 dark:border-[#262B3D] flex items-center gap-1.5">
                 <div className="text-left">
                   <div className="font-semibold text-white leading-tight">
-                    {user.fullName || 'Student'}
+                    {effectiveFullName}
                   </div>
                   <div className="text-[10px] text-[#A8A29E] dark:text-[#94A3B8] font-mono">
-                    @{user.username || 'user'}
+                    @{effectiveUsername}
                   </div>
                 </div>
                 <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-[#1E1B18] dark:border-r-[#181B26]" />
@@ -169,10 +179,10 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
           >
             <div className="px-2.5 py-2 border-b border-[#EBE5DF]/80 dark:border-[#262B3D] mb-1">
               <div className="font-semibold text-xs text-[#1E1B18] dark:text-[#EAEBED] truncate">
-                {user.fullName || 'Student'}
+                {effectiveFullName}
               </div>
               <div className="text-[10px] text-[#A8A29E] dark:text-[#94A3B8] font-mono truncate">
-                @{user.username || 'user'}
+                @{effectiveUsername}
               </div>
             </div>
 
@@ -224,7 +234,7 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
           <div className="relative shrink-0 mr-2.5">
             <img
               src={avatarSrc}
-              alt={user.fullName || 'User'}
+              alt={effectiveFullName}
               className="w-8 h-8 rounded-xl object-cover border border-[#E2E8F0] dark:border-[#1E293B] bg-white dark:bg-[#0A0F1D] shadow-2xs"
             />
             {/* Clean Green Online Status Dot */}
@@ -235,12 +245,12 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
           <div className="flex-1 min-w-0 text-left leading-tight pr-1">
             <div className="flex items-center gap-1.5 min-w-0">
               <span className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] truncate group-hover:text-[#E07A5F] transition-colors">
-                {user.fullName || 'Student'}
+                {effectiveFullName}
               </span>
             </div>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-mono truncate">
-                @{user.username || 'user'}
+                @{effectiveUsername}
               </span>
             </div>
           </div>
@@ -270,10 +280,10 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
         >
           <div className="px-2.5 py-2 border-b border-[#EBE5DF]/80 dark:border-[#262B3D] mb-1">
             <div className="font-semibold text-xs text-[#1E1B18] dark:text-[#EAEBED] truncate">
-              {user.fullName || 'Student'}
+              {effectiveFullName}
             </div>
             <div className="text-[10px] text-[#A8A29E] dark:text-[#94A3B8] font-mono truncate">
-              {user.email || 'student@asronsat.uz'}
+              {profile?.email || user.email || `${effectiveUsername}@asronsat.uz`}
             </div>
           </div>
 

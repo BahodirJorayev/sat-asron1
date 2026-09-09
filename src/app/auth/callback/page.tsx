@@ -28,6 +28,8 @@ export default function AuthCallbackPage() {
         const user = sessionData?.session?.user;
 
         if (user) {
+          const authIntent = typeof window !== 'undefined' ? localStorage.getItem('asron_auth_intent') : null;
+
           // Strictly enforce One User = One Profile (no duplicate creation or overwrite)
           const { data: existingProfile } = await supabase
             .from('profiles')
@@ -35,8 +37,59 @@ export default function AuthCallbackPage() {
             .eq('id', user.id)
             .maybeSingle();
 
-          if (!existingProfile) {
-            // Create profile row ONLY if it doesn't exist yet
+          let profile = existingProfile;
+          if (!profile && user.email) {
+            const { data: profileByEmail } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('email', user.email)
+              .maybeSingle();
+            if (profileByEmail) profile = profileByEmail;
+          }
+
+          // Strict Guard 1: Sign up attempt with existing account
+          if (authIntent === 'signup' && profile) {
+            localStorage.removeItem('asron_auth_intent');
+            await supabase.auth.signOut();
+            const notice = {
+              type: 'warning',
+              message: "Sizda allaqachon akkaunt mavjud. Iltimos, Kirish (Log In) orqali kiring.",
+              targetTab: 'signin',
+            };
+            localStorage.setItem('asron_auth_notice', JSON.stringify(notice));
+            if (isMounted) {
+              router.push('/login');
+              window.location.href = '/login';
+            }
+            return;
+          }
+
+          // Strict Guard 2: Log in attempt with non-existing account
+          if (authIntent === 'signin' && !profile) {
+            localStorage.removeItem('asron_auth_intent');
+            await supabase.auth.signOut();
+            const notice = {
+              type: 'error',
+              message: "Bunday akkaunt topilmadi. Iltimos, avval ro'yxatdan o'ting.",
+              targetTab: 'signup',
+            };
+            localStorage.setItem('asron_auth_notice', JSON.stringify(notice));
+            if (isMounted) {
+              router.push('/register');
+              window.location.href = '/register';
+            }
+            return;
+          }
+
+          if (authIntent === 'signup' && !profile) {
+            await supabase.from('profiles').insert({
+              id: user.id,
+              email: user.email,
+              full_name: user.user_metadata?.full_name || user.user_metadata?.name || 'Talaba',
+              username: user.email?.split('@')[0] || `user_${user.id.slice(0, 5)}`,
+              avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
+            });
+          } else if (!profile) {
             await supabase.from('profiles').insert({
               id: user.id,
               email: user.email,
@@ -46,10 +99,13 @@ export default function AuthCallbackPage() {
             });
           }
 
+          localStorage.removeItem('asron_auth_intent');
+          localStorage.removeItem('asron_auth_notice');
+
           const appUser = mapSupabaseUserToAppUser(user, {
-            fullName: existingProfile?.full_name,
-            username: existingProfile?.username,
-            avatarUrl: existingProfile?.avatar_url,
+            fullName: profile?.full_name,
+            username: profile?.username,
+            avatarUrl: profile?.avatar_url,
           });
 
           setAuthCookie(appUser);

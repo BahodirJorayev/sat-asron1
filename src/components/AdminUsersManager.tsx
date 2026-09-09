@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { 
   Users, Search, ShieldCheck, 
   Calendar, Check, X, AlertTriangle, RefreshCw, 
@@ -6,6 +6,7 @@ import {
   ExternalLink, RotateCcw, Clock, Lock, Sparkles, Filter
 } from 'lucide-react';
 import { User, PlanTier } from '../types';
+import { supabase } from '../lib/supabase';
 
 interface AdminUsersManagerProps {
   users: User[];
@@ -20,11 +21,71 @@ export const AdminUsersManager: React.FC<AdminUsersManagerProps> = ({
   onDeleteUser,
   adminTelegram = '@rcmnx',
 }) => {
+  const [liveUsers, setLiveUsers] = useState<User[]>(() => users);
+  const [isLiveLoading, setIsLiveLoading] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [tierFilter, setTierFilter] = useState<'ALL' | PlanTier | 'BANNED'>('ALL');
   const [selectedUserForGrant, setSelectedUserForGrant] = useState<User | null>(null);
   const [selectedUserForRescue, setSelectedUserForRescue] = useState<User | null>(null);
   const [actionSuccessMsg, setActionSuccessMsg] = useState<string | null>(null);
+
+  // Fetch real registered scholars from Supabase public.profiles
+  const fetchLiveProfiles = useCallback(async () => {
+    try {
+      setIsLiveLoading(true);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!error && data && data.length > 0) {
+        const mappedUsers: User[] = data.map((p: any) => ({
+          id: p.id,
+          email: p.email || `${p.username || 'user'}@asron.sat`,
+          username: p.username || 'user',
+          fullName: p.full_name || p.username || 'Talaba',
+          role: (p.role === 'ADMIN' ? 'ADMIN' : 'STUDENT') as any,
+          planTier: (p.plan_tier || 'FREE') as any,
+          avatarUrl: p.avatar_url,
+          streakDays: p.streak_days || 0,
+          targetScore: p.target_score || 1550,
+          streakFreezes: p.streak_freezes || 0,
+          xpPoints: p.xp_points || 0,
+          createdAt: p.created_at || new Date().toISOString(),
+          isBanned: !!p.is_banned,
+          phoneNumber: p.phone_number,
+          institution: p.institution,
+          targetUniversity: p.target_university,
+        }));
+        setLiveUsers(mappedUsers);
+      }
+    } catch (err) {
+      console.error('Failed to fetch live profiles:', err);
+    } finally {
+      setIsLiveLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetchLiveProfiles();
+
+    const profilesSubscription = supabase
+      .channel('admin_users_manager_realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles' },
+        () => {
+          if (isMounted) fetchLiveProfiles();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(profilesSubscription);
+    };
+  }, [fetchLiveProfiles]);
 
   // Grant Subscription Modal State
   const [selectedTier, setSelectedTier] = useState<PlanTier>('PRO');
@@ -35,9 +96,11 @@ export const AdminUsersManager: React.FC<AdminUsersManagerProps> = ({
     setTimeout(() => setActionSuccessMsg(null), 3500);
   };
 
+  const effectiveUsers = liveUsers.length > 0 ? liveUsers : users;
+
   const filteredUsers = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
-    return users.filter((u) => {
+    return effectiveUsers.filter((u) => {
       const matchesSearch = 
         (u.fullName || '').toLowerCase().includes(q) ||
         (u.username || '').toLowerCase().includes(q) ||
@@ -50,7 +113,7 @@ export const AdminUsersManager: React.FC<AdminUsersManagerProps> = ({
       if (tierFilter === 'BANNED') return !!u.isBanned;
       return u.planTier === tierFilter && !u.isBanned;
     });
-  }, [users, searchQuery, tierFilter]);
+  }, [effectiveUsers, searchQuery, tierFilter]);
 
   const handleOpenGrantModal = (user: User) => {
     setSelectedUserForGrant(user);
@@ -58,7 +121,7 @@ export const AdminUsersManager: React.FC<AdminUsersManagerProps> = ({
     setDurationOption('3_MONTHS');
   };
 
-  const handleSaveTierGrant = () => {
+  const handleSaveTierGrant = async () => {
     if (!selectedUserForGrant) return;
 
     let expiresAt: string | undefined = undefined;
@@ -96,18 +159,48 @@ export const AdminUsersManager: React.FC<AdminUsersManagerProps> = ({
       },
     };
 
+    setLiveUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
     onUpdateUser(updated);
+
+    // Sync to Supabase public.profiles
+    try {
+      await supabase
+        .from('profiles')
+        .update({
+          plan_tier: selectedTier,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', updated.id);
+    } catch (err) {
+      console.error('Failed to sync plan tier to Supabase:', err);
+    }
+
     setSelectedUserForGrant(null);
     showNotification(`Subscription upgraded to ${selectedTier} for @${updated.username}. 3D Gold Pass armed.`);
   };
 
-  const handleToggleBan = (user: User) => {
+  const handleToggleBan = async (user: User) => {
     const isBanned = !user.isBanned;
     const updated: User = {
       ...user,
       isBanned,
     };
+    setLiveUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
     onUpdateUser(updated);
+
+    // Sync to Supabase public.profiles
+    try {
+      await supabase
+        .from('profiles')
+        .update({
+          is_banned: isBanned,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id);
+    } catch (err) {
+      console.error('Failed to sync ban state to Supabase:', err);
+    }
+
     showNotification(isBanned ? `User @${user.username} has been suspended.` : `User @${user.username} access restored.`);
   };
 
@@ -213,7 +306,7 @@ export const AdminUsersManager: React.FC<AdminUsersManagerProps> = ({
                   : 'text-[#64748B] hover:text-[#94A3B8]'
               }`}
             >
-              {filter === 'ALL' ? `All (${users.length})` : filter}
+              {filter === 'ALL' ? `All (${effectiveUsers.length})` : filter}
             </button>
           ))}
         </div>

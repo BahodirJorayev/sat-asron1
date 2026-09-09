@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   Users, BookOpen, HelpCircle, CheckCircle2, 
   RefreshCw, Radio, ArrowUpRight, Terminal, 
@@ -6,6 +6,7 @@ import {
   Sparkles, Settings, Eye
 } from 'lucide-react';
 import { User, Question, MockTest, PaymentReceipt, GlobalPlatformSettings } from '../types';
+import { supabase } from '../lib/supabase';
 
 interface AdminDashboardViewProps {
   users: User[];
@@ -27,21 +28,101 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   onNavigateTab,
 }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [activeOnlineCount, setActiveOnlineCount] = useState(() => Math.floor(Math.random() * 8) + 14);
+  const [totalStudents, setTotalStudents] = useState<number>(() => users.length);
+  const [activeOnlineCount, setActiveOnlineCount] = useState<number>(1);
+  const [recentScholars, setRecentScholars] = useState<any[]>([]);
 
   // Exact 4 KPI Metrics requested
-  const totalUsersCount = users.length;
+  const totalUsersCount = totalStudents;
   const activePublishedMocksCount = mockTests.filter((m) => m.isPublished).length;
   const totalQuestionsCount = questions.length;
   const totalSubmissionsCount = mockTests.reduce((acc, t) => acc + (t.attemptsCount || 0), 0);
 
-  const handleRefreshPulse = () => {
+  // 1. Live Total Users Count from Supabase public.profiles
+  const fetchTotalUsersCount = useCallback(async () => {
+    try {
+      const { count, error } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+
+      if (!error && count !== null) {
+        setTotalStudents(count);
+      }
+    } catch (err) {
+      console.error('Failed to fetch total users count:', err);
+    }
+  }, []);
+
+  // 2. Live Recent Scholars list from public.profiles
+  const fetchRecentScholars = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, username, created_at, plan_tier, role, avatar_url')
+        .order('created_at', { ascending: false })
+        .limit(6);
+
+      if (!error && data) {
+        setRecentScholars(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch recent scholars:', err);
+    }
+  }, []);
+
+  const handleRefreshPulse = async () => {
     setIsRefreshing(true);
-    setTimeout(() => {
-      setActiveOnlineCount(Math.floor(Math.random() * 6) + 16);
-      setIsRefreshing(false);
-    }, 500);
+    await Promise.all([fetchTotalUsersCount(), fetchRecentScholars()]);
+    setIsRefreshing(false);
   };
+
+  useEffect(() => {
+    let isMounted = true;
+    fetchTotalUsersCount();
+    fetchRecentScholars();
+
+    // 3. Supabase Realtime Presence Channel for Currently Online Users
+    const presenceChannel = supabase.channel('asron-online-presence', {
+      config: { presence: { key: `admin-view-${Math.random().toString(36).substring(2, 9)}` } },
+    });
+
+    presenceChannel
+      .on('presence', { event: 'sync' }, () => {
+        if (!isMounted) return;
+        const state = presenceChannel.presenceState();
+        const activeKeys = Object.keys(state);
+        setActiveOnlineCount(Math.max(1, activeKeys.length));
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await presenceChannel.track({
+            role: 'admin',
+            online_at: new Date().toISOString(),
+          });
+        }
+      });
+
+    // 4. Supabase Postgres Changes for real-time count & scholar updates
+    const profilesSyncChannel = supabase
+      .channel('admin_dashboard_profiles_sync')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles' },
+        () => {
+          if (isMounted) {
+            fetchTotalUsersCount();
+            fetchRecentScholars();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(presenceChannel);
+      supabase.removeChannel(profilesSyncChannel);
+    };
+  }, [fetchTotalUsersCount, fetchRecentScholars]);
 
   // Recent system logs in Uzbek (Executive Minimalism, no cartoon emojis)
   const [activityLogs] = useState([
@@ -86,6 +167,22 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
       badgeClass: 'text-amber-400 bg-amber-500/10 border-amber-500/30',
     },
   ]);
+
+  // Combine live registered users with mock logs
+  const dynamicLogs = useMemo(() => {
+    if (recentScholars && recentScholars.length > 0) {
+      const realUserLogs = recentScholars.map((u) => ({
+        id: `real-user-${u.id}`,
+        type: 'NEW_SCHOLAR',
+        text: `Yangi talaba @${u.username || 'user'} (${u.full_name || 'Foydalanuvchi'}) ro'yxatdan o'tdi`,
+        time: u.created_at ? new Date(u.created_at).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }) : 'Yaqinda',
+        badge: "RO'YXATDAN O'TISH",
+        badgeClass: 'text-sky-400 bg-sky-500/10 border-sky-500/30',
+      }));
+      return [...realUserLogs, ...activityLogs].slice(0, 8);
+    }
+    return activityLogs;
+  }, [recentScholars, activityLogs]);
 
   return (
     <div id="admin-dashboard-view" className="space-y-6 font-sans">
@@ -237,7 +334,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             </div>
 
             <div className="divide-y divide-[#E2E8F0] dark:divide-[#1E293B]">
-              {activityLogs.map((log) => (
+              {dynamicLogs.map((log) => (
                 <div key={log.id} className="py-3.5 flex items-start justify-between gap-3 text-xs">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">

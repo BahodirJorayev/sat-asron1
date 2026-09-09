@@ -1070,6 +1070,91 @@ export default function App() {
     }
   }, []);
 
+  // Realtime Presence: Track active connected user/visitor across platform
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const clientPresenceKey = currentUser?.id || `visitor-${Math.random().toString(36).substring(2, 9)}`;
+    const presenceChannel = supabase.channel('asron-online-presence', {
+      config: { presence: { key: clientPresenceKey } },
+    });
+
+    presenceChannel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        await presenceChannel.track({
+          user_id: currentUser?.id,
+          username: currentUser?.username,
+          full_name: currentUser?.fullName,
+          online_at: new Date().toISOString(),
+        });
+      }
+    });
+
+    return () => {
+      supabase.removeChannel(presenceChannel);
+    };
+  }, [currentUser?.id]);
+
+  // Fetch and synchronize live registered profiles from Supabase public.profiles
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchProfiles = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (!error && data && data.length > 0 && isMounted) {
+          const mappedUsers: User[] = data.map((p: any) => ({
+            id: p.id,
+            email: p.email || `${p.username || 'user'}@asron.sat`,
+            username: p.username || 'user',
+            fullName: p.full_name || p.username || 'Talaba',
+            role: (p.role === 'ADMIN' ? 'ADMIN' : 'STUDENT') as any,
+            planTier: (p.plan_tier || 'FREE') as any,
+            avatarUrl: p.avatar_url,
+            streakDays: p.streak_days || 0,
+            targetScore: p.target_score || 1550,
+            streakFreezes: p.streak_freezes || 0,
+            xpPoints: p.xp_points || 0,
+            createdAt: p.created_at || new Date().toISOString(),
+            isBanned: !!p.is_banned,
+            phoneNumber: p.phone_number,
+            institution: p.institution,
+            targetUniversity: p.target_university,
+          }));
+
+          setUsersList((prev) => {
+            const existingIds = new Set(mappedUsers.map((u) => u.id));
+            const localOnly = prev.filter((u) => !existingIds.has(u.id));
+            return [...mappedUsers, ...localOnly];
+          });
+        }
+      } catch (err) {
+        console.error('Failed to sync live profiles in App:', err);
+      }
+    };
+
+    fetchProfiles();
+
+    const profilesSubscription = supabase
+      .channel('app_live_profiles_sync')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles' },
+        () => {
+          if (isMounted) fetchProfiles();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(profilesSubscription);
+    };
+  }, []);
+
   // Catch Pathname Routes & Normalize to Hash/Views on mount
   useEffect(() => {
     if (typeof window === 'undefined') return;

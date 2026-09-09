@@ -477,13 +477,7 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
           {/* Stat 4: Latest Score */}
           <div className="p-4 rounded-2xl bg-[#FAF8F5] dark:bg-[#121A2F] border border-[#EBE5DF] dark:border-[#1E293B]">
             <div className="text-xl sm:text-2xl font-extrabold font-mono text-[#1E1B18] dark:text-[#F8FAFC]">
-              {stats.latestScore > 0 ? (
-                <>
-                  {stats.latestScore} <span className="text-xs font-normal text-[#78716C] dark:text-[#94A3B8]">/ 1600</span>
-                </>
-              ) : (
-                <span className="text-slate-400 dark:text-slate-500">-- / 1600</span>
-              )}
+              <span>{stats.latestScore || '0'}</span> <span className="text-xs font-normal text-[#78716C] dark:text-[#94A3B8]">/ 1600</span>
             </div>
             <div className="text-[10px] uppercase font-bold text-[#78716C] dark:text-[#94A3B8] tracking-wider mt-0.5">
               {t('mocks_view.latestScore', "ENG SO'NGGI NATIJA")}

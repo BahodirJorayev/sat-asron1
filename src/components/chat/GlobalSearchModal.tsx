@@ -135,7 +135,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
 
   // Debounced search querying Supabase profiles and community_channels
   useEffect(() => {
-    const cleanTerm = query.replace('@', '').replace(/[%(),]/g, '').trim();
+    const cleanTerm = query.trim().replace(/^@+/, '').replace(/[%(),]/g, '');
     if (!cleanTerm) {
       if (activeTab !== 'CHANNELS') {
         setUserResults([]);
@@ -156,16 +156,16 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
         const { data: users } = await supabase
           .from('profiles')
           .select('id, full_name, username, avatar_url')
-          .or(`full_name.ilike.%${cleanTerm}%,username.ilike.%${cleanTerm}%`)
-          .limit(10);
+          .or(`username.ilike.%${cleanTerm}%,full_name.ilike.%${cleanTerm}%`)
+          .limit(15);
 
         // 2. Search Channels & Groups
         const { data: channels } = await supabase
           .from('community_channels')
-          .select('id, name, username, description, avatar_url, type, is_public')
+          .select('*')
           .eq('is_public', true)
           .or(`name.ilike.%${cleanTerm}%,username.ilike.%${cleanTerm}%`)
-          .limit(10);
+          .limit(15);
 
         const mappedUsers: ProfileSearchResult[] = [];
         if (users && Array.isArray(users)) {

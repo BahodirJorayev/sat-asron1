@@ -118,39 +118,14 @@ export const AuthModal: React.FC<Props> = ({
           onSuccess(res.data.user);
           onClose();
         } else {
-          setErrorMessage(res.error?.message || "Username / Email yoki parol noto‘g‘ri kiritildi");
+          setErrorMessage(res.error?.message || "Foydalanuvchi nomi yoki parol noto'g'ri.");
         }
       } catch (err: any) {
-        setErrorMessage(err.message || "Username / Email yoki parol noto‘g‘ri kiritildi");
+        setErrorMessage(err.message || "Foydalanuvchi nomi yoki parol noto'g'ri.");
       } finally {
         setIsLoading(false);
       }
     }
-  };
-
-  const handleDemoStudent = () => {
-    const demo: User = {
-      id: 'usr-demo-alex',
-      fullName: 'Alex Chen',
-      username: 'alex_sat',
-      email: 'alex.chen@satprep.edu',
-      phoneNumber: '+998 90 123 45 67',
-      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-      bio: 'Targeting 1550+ on Digital SAT • Tech & Computer Science',
-      role: 'STUDENT',
-      planTier: 'PRO',
-      targetScore: 1550,
-      baselineScore: 1280,
-      potentialScore: 1560,
-      predictedScore: 1420,
-      weakestSubSkills: ['Circle Theorems', 'Transitions', 'Nonlinear Systems'],
-      streakDays: 14,
-      streakFreezes: 2,
-      xpPoints: 1450,
-      createdAt: new Date().toISOString(),
-    };
-    onSuccess(demo);
-    onClose();
   };
 
   return (
@@ -370,21 +345,8 @@ export const AuthModal: React.FC<Props> = ({
             </button>
           </form>
 
-          {/* Quick Demo Access Bar & Admin Entrance */}
-          <div className="pt-1 space-y-2">
-            <div className="p-2.5 rounded-xl bg-[#F3EFE6] border border-[#E8E2D5] flex items-center justify-between text-xs">
-              <span className="text-[11px] text-[#57534E] font-medium">Tezkor Sinov:</span>
-              <button
-                type="button"
-                onClick={handleDemoStudent}
-                className="px-2.5 py-1 rounded-lg bg-[#FFFFFF] hover:bg-[#FAF7F2] border border-[#D6CEBE] text-[#2563EB] font-bold transition-colors cursor-pointer text-[11px]"
-              >
-                1-Click Demo Login →
-              </button>
-            </div>
-
           {/* Admin Entrance Gateway */}
-          <div className="pt-1 border-t border-[#E8E2D5] text-center">
+          <div className="pt-2 border-t border-[#E8E2D5] text-center">
             <button
               type="button"
               onClick={() => {
@@ -403,7 +365,6 @@ export const AuthModal: React.FC<Props> = ({
         </div>
       </div>
     </div>
-  </div>
-);
+  );
 };
 

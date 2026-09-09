@@ -72,6 +72,7 @@ import {
   DesmosSatHack
 } from './types';
 import { getSupabaseClient, mapSupabaseUserToAppUser, signOutUser, saveUserProfile, supabase } from './lib/supabase';
+import { useUserProgress, syncUserProgressRemote } from './hooks/useUserProgress';
 import {
   fetchGlobalPlatformSettings,
   saveGlobalPlatformSettings,
@@ -188,6 +189,15 @@ export default function App() {
     return hasSavedUser ? 'dashboard' : 'landing';
   });
   const [mistakes, setMistakes] = useState<MistakeVaultItem[]>(INITIAL_MISTAKES);
+
+  // Real-time cross-device user progress sync
+  const { progress } = useUserProgress(currentUser);
+
+  useEffect(() => {
+    if (progress?.mistakes_log && progress.mistakes_log.length > 0) {
+      setMistakes(progress.mistakes_log);
+    }
+  }, [progress?.mistakes_log]);
   const [mockTests, setMockTests] = useState<MockTest[]>(() => {
     try {
       const saved = localStorage.getItem('aurasat_mock_tests');
@@ -1231,7 +1241,20 @@ export default function App() {
       createdAt: new Date().toISOString(),
     };
 
-    setMistakes((prev) => [newMistake, ...prev]);
+    setMistakes((prev) => {
+      const updated = [newMistake, ...prev];
+      try {
+        localStorage.setItem('aurasat_mistakes', JSON.stringify(updated));
+        if (currentUser?.id && currentUser.id !== 'guest-user') {
+          syncUserProgressRemote(currentUser.id, {
+            mistakes_log: updated,
+          });
+        }
+      } catch (e) {
+        console.error('Failed to sync mistake:', e);
+      }
+      return updated;
+    });
   };
 
   // Workout completion handler
@@ -1296,6 +1319,22 @@ export default function App() {
           : u
       )
     );
+
+    // Save attempt to localStorage and Supabase user_progress
+    try {
+      const savedAttempts = localStorage.getItem('aurasat_mock_attempts');
+      const parsed = savedAttempts ? JSON.parse(savedAttempts) : {};
+      const testKey = attempt.mockTestId || attempt.testId || `mock-${Date.now()}`;
+      const updated = { ...parsed, [testKey]: attempt };
+      localStorage.setItem('aurasat_mock_attempts', JSON.stringify(updated));
+      if (currentUser?.id && currentUser.id !== 'guest-user') {
+        syncUserProgressRemote(currentUser.id, {
+          mock_results: { [testKey]: attempt },
+        });
+      }
+    } catch (e) {
+      console.error('Failed to sync mock attempt:', e);
+    }
   };
 
   // Socratic AI opener
@@ -1443,7 +1482,20 @@ export default function App() {
 
   // Update Mistake Item
   const handleUpdateMistakeItem = (updatedItem: MistakeVaultItem) => {
-    setMistakes((prev) => prev.map((m) => (m.id === updatedItem.id ? updatedItem : m)));
+    setMistakes((prev) => {
+      const updated = prev.map((m) => (m.id === updatedItem.id ? updatedItem : m));
+      try {
+        localStorage.setItem('aurasat_mistakes', JSON.stringify(updated));
+        if (currentUser?.id && currentUser.id !== 'guest-user') {
+          syncUserProgressRemote(currentUser.id, {
+            mistakes_log: updated,
+          });
+        }
+      } catch (e) {
+        console.error('Failed to sync updated mistake:', e);
+      }
+      return updated;
+    });
   };
 
   return (

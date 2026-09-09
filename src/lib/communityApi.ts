@@ -53,25 +53,25 @@ export async function searchGlobalCommunity(
   localUsers: User[] = [],
   localChats: Chat[] = []
 ): Promise<GlobalCommunitySearchResults> {
-  const query = rawQuery.trim().replace(/^@/, '');
-  if (!query) {
+  const cleanQuery = rawQuery.trim().replace(/^@+/, '').replace(/[%(),]/g, '');
+  if (!cleanQuery) {
     return { users: [], channels: [] };
   }
 
-  const qLower = query.toLowerCase();
+  const qLower = cleanQuery.toLowerCase();
   const foundUserIds = new Set<string>();
   const usersResults: SearchUserResult[] = [];
 
   const foundChannelIds = new Set<string>();
   const channelResults: SearchChannelResult[] = [];
 
-  // 1. Query Remote Supabase for Users (profiles or users table)
+  // 1. Query Remote Supabase for Users (profiles table)
   try {
     const { data: profileData, error: profileErr } = await supabase
       .from('profiles')
       .select('id, full_name, username, avatar_url')
-      .or(`full_name.ilike.%${query}%,username.ilike.%${query}%`)
-      .limit(10);
+      .or(`username.ilike.%${cleanQuery}%,full_name.ilike.%${cleanQuery}%`)
+      .limit(15);
 
     if (!profileErr && Array.isArray(profileData)) {
       profileData.forEach((p) => {
@@ -90,24 +90,20 @@ export async function searchGlobalCommunity(
     console.warn('Supabase profiles search notice:', err);
   }
 
-  // Remote user query relies on canonical profiles table
-
   // 2. Query Remote Supabase for Public Groups & Channels
   try {
-    const cleanQuery = query.replace(/^@/, '').replace(/[%(),]/g, '').trim();
-    if (cleanQuery) {
-      const { data: channelData, error: channelErr } = await supabase
-        .from('community_channels')
-        .select('id, name, username, description, avatar_url, type, is_public, invite_token')
-        .eq('is_public', true)
-        .or(`name.ilike.%${cleanQuery}%,username.ilike.%${cleanQuery}%,description.ilike.%${cleanQuery}%`)
-        .limit(10);
+    const { data: channelData, error: channelErr } = await supabase
+      .from('community_channels')
+      .select('*')
+      .eq('is_public', true)
+      .or(`name.ilike.%${cleanQuery}%,username.ilike.%${cleanQuery}%`)
+      .limit(15);
 
-      if (!channelErr && Array.isArray(channelData)) {
-        channelData.forEach((ch) => {
-          // Exclude private channels from global search unless the user is member
-          const isPublicEntity = ch.is_public !== false && ch.type !== 'private_group' && ch.type !== 'PRIVATE_GROUP';
-          if (isPublicEntity && !foundChannelIds.has(ch.id)) {
+    if (!channelErr && Array.isArray(channelData)) {
+      channelData.forEach((ch) => {
+        // Exclude private channels from global search unless the user is member
+        const isPublicEntity = ch.is_public !== false && ch.type !== 'private_group' && ch.type !== 'PRIVATE_GROUP';
+        if (isPublicEntity && !foundChannelIds.has(ch.id)) {
             foundChannelIds.add(ch.id);
             channelResults.push({
               id: ch.id,
@@ -122,8 +118,7 @@ export async function searchGlobalCommunity(
           }
         });
       }
-    }
-  } catch (err) {
+    } catch (err) {
     console.warn('Supabase community_channels search notice:', err);
   }
 

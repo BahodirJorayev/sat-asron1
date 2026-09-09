@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { MockTestsCatalogView } from '../../components/MockTestsCatalogView';
 import { BluebookTestEngine } from '../../components/BluebookTestEngine';
-import { MockTest, MockCategory, User } from '../../types';
+import { MockTest, MockCategory, User, Question, TestAttempt } from '../../types';
 import { INITIAL_MOCK_TESTS } from '../../data/mockDatabase';
+import { syncUserProgressRemote } from '../../hooks/useUserProgress';
 import {
   fetchMockTestsRemote,
   fetchMockCategories,
@@ -26,6 +27,7 @@ const DEFAULT_GUEST_USER: User = {
   targetScore: 1550,
   streakFreezes: 0,
   xpPoints: 0,
+  createdAt: '2026-01-01T00:00:00Z',
 };
 
 export default function MocksPage() {
@@ -101,7 +103,21 @@ export default function MocksPage() {
           test={activeBluebookTest}
           user={currentUser}
           onExit={() => setActiveBluebookTest(null)}
-          onCompleteTest={() => {
+          onCompleteTest={(attempt: TestAttempt, missedQuestions: Question[]) => {
+            try {
+              const saved = localStorage.getItem('aurasat_mock_attempts');
+              const parsed = saved ? JSON.parse(saved) : {};
+              const testKey = attempt.mockTestId || attempt.testId || `mock-${Date.now()}`;
+              const updated = { ...parsed, [testKey]: attempt };
+              localStorage.setItem('aurasat_mock_attempts', JSON.stringify(updated));
+              if (currentUser.id && currentUser.id !== 'guest-user') {
+                syncUserProgressRemote(currentUser.id, {
+                  mock_results: { [testKey]: attempt },
+                });
+              }
+            } catch (e) {
+              console.error('Failed to sync mock attempt:', e);
+            }
             setActiveBluebookTest(null);
           }}
         />

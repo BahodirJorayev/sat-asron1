@@ -20,7 +20,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!identifier.trim() || !password) {
-      setErrorMessage("Hisob topilmadi yoki parol noto‘g‘ri kiritildi. Iltimos, qayta tekshiring yoki ro‘yxatdan o‘ting.");
+      setErrorMessage("Foydalanuvchi nomi yoki parol noto'g'ri.");
       return;
     }
 
@@ -28,14 +28,14 @@ export default function LoginPage() {
     setErrorMessage(null);
 
     try {
-      const resolvedEmail = resolveLoginIdentifierToEmail(identifier);
+      const resolvedEmail = await resolveLoginIdentifierToEmail(identifier);
       const { data, error } = await supabase.auth.signInWithPassword({
         email: resolvedEmail,
         password: password,
       });
 
       if (error || !data.user) {
-        setErrorMessage("Hisob topilmadi yoki parol noto‘g‘ri kiritildi. Iltimos, qayta tekshiring yoki ro‘yxatdan o‘ting.");
+        setErrorMessage("Foydalanuvchi nomi yoki parol noto'g'ri.");
         setIsLoading(false);
         return; // HARD STOP - DO NOT REDIRECT
       }
@@ -67,7 +67,7 @@ export default function LoginPage() {
         window.location.href = '/dashboard';
       }
     } catch (err: any) {
-      setErrorMessage("Hisob topilmadi yoki parol noto‘g‘ri kiritildi. Iltimos, qayta tekshiring yoki ro‘yxatdan o‘ting.");
+      setErrorMessage("Foydalanuvchi nomi yoki parol noto'g'ri.");
       setIsLoading(false);
       return; // HARD STOP
     }

@@ -268,6 +268,7 @@ export interface TestAttempt {
   id: string;
   userId: string;
   mockTestId: string;
+  testId?: string;
   status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'ABANDONED';
   totalScore?: number; // 400 - 1600
   rwScore?: number;    // 200 - 800
@@ -277,6 +278,7 @@ export interface TestAttempt {
   currentModule?: MockModuleType | string;
   currentQIndex?: number;
   isCompleted?: boolean;
+  startedAt?: string;
   completedAt?: string;
   createdAt?: string;
   timeSpentSeconds?: number;

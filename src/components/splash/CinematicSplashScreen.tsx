@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { usePlatformSettings } from '../../hooks/usePlatformSettings';
 
 export interface CinematicSplashScreenProps {
   onComplete?: () => void;
@@ -22,6 +23,8 @@ export const CinematicSplashScreen: React.FC<CinematicSplashScreenProps> = ({
   durationMs = 3500,
   allowSkip = true,
 }) => {
+  const { settings } = usePlatformSettings();
+  const logoUrl = settings?.logo_url?.trim() || '/logo-white.png';
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
@@ -79,7 +82,7 @@ export const CinematicSplashScreen: React.FC<CinematicSplashScreenProps> = ({
           >
             {/* Authentic Pure White Logo Image (Pixel-perfect to brand mark) */}
             <img
-              src="/logo-white.png"
+              src={logoUrl}
               alt="ASRON SAT"
               className="w-full h-full object-contain pointer-events-none select-none"
               loading="eager"

@@ -9,9 +9,10 @@ import {
   INITIAL_USERS,
   INITIAL_QUESTIONS,
   INITIAL_MOCK_TESTS,
-  INITIAL_PAYMENT_RECEIPTS,
+  INITIAL_RECEIPTS,
 } from '../../data/mockDatabase';
 import { User, Question, MockTest, MockCategory, PaymentReceipt, GlobalPlatformSettings } from '../../types';
+import { supabase } from '../../lib/supabase';
 import {
   fetchQuestionsRemote,
   saveQuestionRemote,
@@ -45,13 +46,14 @@ const DEFAULT_ADMIN_USER: User = {
   targetScore: 1600,
   streakFreezes: 5,
   xpPoints: 9999,
+  createdAt: '2026-01-01T00:00:00Z',
 };
 
 export default function AdminPage() {
   const router = useRouter();
   const [currentUser] = useState<User>(DEFAULT_ADMIN_USER);
   const [usersList, setUsersList] = useState<User[]>(INITIAL_USERS);
-  const [receipts, setReceipts] = useState<PaymentReceipt[]>(INITIAL_PAYMENT_RECEIPTS);
+  const [receipts, setReceipts] = useState<PaymentReceipt[]>(INITIAL_RECEIPTS);
   const [questions, setQuestions] = useState<Question[]>(INITIAL_QUESTIONS);
   const [mockTests, setMockTests] = useState<MockTest[]>(INITIAL_MOCK_TESTS);
   const [mockCategories, setMockCategories] = useState<MockCategory[]>(INITIAL_MOCK_CATEGORIES);
@@ -89,7 +91,40 @@ export default function AdminPage() {
       }
     }).catch(console.error);
 
-    // 2. Realtime subscriptions
+    // 2. Fetch live registered students list from public.profiles sorted by created_at desc
+    const fetchProfiles = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact' })
+          .order('created_at', { ascending: false });
+
+        if (!error && data && data.length > 0) {
+          const mappedUsers: User[] = data.map((p: any) => ({
+            id: p.id,
+            email: p.email || `${p.username || 'user'}@asron.sat`,
+            username: p.username || 'user',
+            fullName: p.full_name || p.username || 'Talaba',
+            role: (p.role === 'ADMIN' ? 'ADMIN' : 'STUDENT') as any,
+            planTier: (p.plan_tier || 'FREE') as any,
+            avatarUrl: p.avatar_url,
+            streakDays: p.streak_days || 0,
+            targetScore: p.target_score || 1550,
+            streakFreezes: p.streak_freezes || 0,
+            xpPoints: p.xp_points || 0,
+            createdAt: p.created_at,
+          }));
+          if (isMounted) {
+            setUsersList(mappedUsers);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch live profiles:', err);
+      }
+    };
+    fetchProfiles();
+
+    // 3. Realtime subscriptions
     const unsubQuestions = subscribeToQuestions((newQs) => {
       if (isMounted && newQs && newQs.length > 0) {
         const remoteIds = new Set(newQs.map((q) => q.id));
@@ -106,10 +141,22 @@ export default function AdminPage() {
       }
     });
 
+    const profilesChannel = supabase
+      .channel('admin_profiles_sync')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles' },
+        () => {
+          fetchProfiles();
+        }
+      )
+      .subscribe();
+
     return () => {
       isMounted = false;
       unsubQuestions();
       unsubMocks();
+      supabase.removeChannel(profilesChannel);
     };
   }, []);
 

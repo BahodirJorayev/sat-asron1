@@ -35,6 +35,7 @@ import { MockAccessCodeModal } from './MockAccessCodeModal';
 import { FormattedMath } from './WorkoutActiveSession';
 import { supabase } from '../lib/supabase';
 import { useLanguage } from '../context/LanguageContext';
+import { useUserProgress } from '../hooks/useUserProgress';
 
 interface MockTestsCatalogViewProps {
   user: User;
@@ -247,6 +248,18 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
       return INITIAL_DEMO_ATTEMPTS;
     }
   });
+
+  // Realtime cross-device user progress sync for mock test results
+  const { progress } = useUserProgress(user);
+
+  useEffect(() => {
+    if (progress?.mock_results && Object.keys(progress.mock_results).length > 0) {
+      setUserAttempts((prev) => ({
+        ...prev,
+        ...progress.mock_results,
+      }));
+    }
+  }, [progress?.mock_results]);
 
   // Filter & Search state (Category tab supports dynamic categories)
   const { t } = useLanguage();

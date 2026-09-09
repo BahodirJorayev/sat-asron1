@@ -31,6 +31,7 @@ import { SAT_DOMAINS_TAXONOMY, OFFICIAL_SQB_QUESTIONS } from '../data/sqbQuestio
 import { KaTeXRenderer } from './KaTeXRenderer';
 import { QuestionPracticeEngine } from './QuestionPracticeEngine';
 import { useLanguage } from '../context/LanguageContext';
+import { useUserProgress } from '../hooks/useUserProgress';
 
 interface Props {
   user: User;
@@ -50,6 +51,8 @@ export const QuestionBankView: React.FC<Props> = ({
   onOpenPaywall,
 }) => {
   const { t } = useLanguage();
+  const { progress, recordQuestionAnswer } = useUserProgress(user);
+
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState(initialFilter);
   const [selectedSection, setSelectedSection] = useState<'ALL' | 'READING_AND_WRITING' | 'MATH'>('ALL');
@@ -63,7 +66,7 @@ export const QuestionBankView: React.FC<Props> = ({
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
 
-  // User Practice History State (Persisted in localStorage)
+  // User Practice History State (Persisted in localStorage & Supabase)
   const [userPractices, setUserPractices] = useState<Record<string, UserQuestionPractice>>(() => {
     try {
       const saved = localStorage.getItem(`aurasat_sqb_practices_${user.id}`);
@@ -73,6 +76,30 @@ export const QuestionBankView: React.FC<Props> = ({
       return {};
     }
   });
+
+  // Cross-device progress sync from public.user_progress
+  useEffect(() => {
+    if (progress?.completed_questions && Object.keys(progress.completed_questions).length > 0) {
+      setUserPractices((prev) => {
+        const merged = { ...prev };
+        Object.entries(progress.completed_questions).forEach(([qId, val]: [string, any]) => {
+          if (!merged[qId]) {
+            merged[qId] = {
+              id: `practice-${user.id}-${qId}`,
+              userId: user.id,
+              questionId: qId,
+              userAnswer: val?.selectedOption || '',
+              isCorrect: !!val?.isCorrect,
+              timeSpentSecs: 0,
+              isBookmarked: false,
+              lastAttemptedAt: val?.answeredAt || new Date().toISOString(),
+            };
+          }
+        });
+        return merged;
+      });
+    }
+  }, [progress?.completed_questions, user.id]);
 
   // Practice Simulation Engine State
   const [isPracticeEngineActive, setIsPracticeEngineActive] = useState<boolean>(false);
@@ -90,6 +117,9 @@ export const QuestionBankView: React.FC<Props> = ({
       }
       return next;
     });
+
+    // Directly write to Supabase user_progress table for real-time cross-device sync
+    recordQuestionAnswer(result.questionId, result.isCorrect, result.userAnswer);
   };
 
   // Toggle Bookmark for a question directly from table

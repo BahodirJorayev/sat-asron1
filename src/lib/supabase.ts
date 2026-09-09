@@ -157,12 +157,22 @@ function saveUserToRegisteredIndex(user: User) {
 }
 
 // Resolve email or username identifier to authentic email
-export function resolveLoginIdentifierToEmail(identifier: string): string {
+export async function resolveLoginIdentifierToEmail(identifier: string): Promise<string> {
   const trimmed = identifier.trim();
   if (trimmed.includes('@') && trimmed.includes('.')) {
     return trimmed.toLowerCase();
   }
   const cleanUsername = trimmed.toLowerCase().replace(/^@/, '').replace(/[^a-z0-9_]/g, '');
+  try {
+    const { data } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('username', cleanUsername)
+      .maybeSingle();
+    if (data?.email && data.email.includes('@')) {
+      return data.email.toLowerCase();
+    }
+  } catch {}
   return `${cleanUsername}@asron.sat`;
 }
 
@@ -173,58 +183,54 @@ export async function signInWithEmail(
 ): Promise<{ data: { user?: User } | null; error: any }> {
   try {
     if (!identifierOrEmail?.trim() || !pass) {
-      return { data: null, error: { message: "Username / Email yoki parol noto‘g‘ri kiritildi" } };
+      return { data: null, error: { message: "Foydalanuvchi nomi yoki parol noto'g'ri." } };
     }
 
-    const email = resolveLoginIdentifierToEmail(identifierOrEmail);
+    const email = await resolveLoginIdentifierToEmail(identifierOrEmail);
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email,
       password: pass,
     });
 
-    if (error) {
-      console.warn('Supabase login error:', error.message);
+    if (error || !data?.user) {
+      console.warn('Supabase login error:', error?.message);
       return {
         data: null,
         error: {
-          message: "Username / Email yoki parol noto‘g‘ri kiritildi",
+          message: "Foydalanuvchi nomi yoki parol noto'g'ri.",
           raw: error,
         },
       };
     }
 
-    if (data?.user) {
-      let customProfile: Partial<User> | undefined;
-      try {
-        const { data: prof } = await supabase
-          .from('profiles')
-          .select('id, full_name, username, avatar_url, target_score')
-          .eq('id', data.user.id)
-          .maybeSingle();
-        if (prof) {
-          customProfile = {
-            fullName: prof.full_name,
-            username: prof.username,
-            avatarUrl: prof.avatar_url,
-            targetScore: prof.target_score,
-          };
-        }
-      } catch {}
-
-      const appUser = mapSupabaseUserToAppUser(data.user, customProfile);
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('aurasat_user_profile', JSON.stringify(appUser));
-        localStorage.setItem('aura_sat_auth_user', JSON.stringify(appUser));
-        saveUserToRegisteredIndex(appUser);
+    let customProfile: Partial<User> | undefined;
+    try {
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('id, full_name, username, avatar_url, target_score')
+        .eq('id', data.user.id)
+        .maybeSingle();
+      if (prof) {
+        customProfile = {
+          fullName: prof.full_name,
+          username: prof.username,
+          avatarUrl: prof.avatar_url,
+          targetScore: prof.target_score,
+        };
       }
-      setAuthCookie(appUser);
-      return { data: { user: appUser }, error: null };
-    }
+    } catch {}
 
-    return { data: null, error: { message: "Username / Email yoki parol noto‘g‘ri kiritildi" } };
+    const appUser = mapSupabaseUserToAppUser(data.user, customProfile);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('aurasat_user_profile', JSON.stringify(appUser));
+      localStorage.setItem('aura_sat_auth_user', JSON.stringify(appUser));
+      saveUserToRegisteredIndex(appUser);
+    }
+    setAuthCookie(appUser);
+    return { data: { user: appUser }, error: null };
   } catch (err: any) {
-    return { data: null, error: { message: "Username / Email yoki parol noto‘g‘ri kiritildi", raw: err } };
+    return { data: null, error: { message: "Foydalanuvchi nomi yoki parol noto'g'ri.", raw: err } };
   }
 }
 
@@ -343,6 +349,7 @@ export async function signUpWithUsername(
     try {
       await supabase.from('profiles').upsert({
         id: data.user.id,
+        email: syntheticEmail,
         full_name: cleanFullName,
         username: cleanUsername,
         avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanUsername}`,
@@ -351,6 +358,23 @@ export async function signUpWithUsername(
       }, { onConflict: 'id' });
     } catch (e) {
       console.warn('Profiles table sync error:', e);
+    }
+
+    // Initialize user_progress row for cross-device synchronization
+    try {
+      await supabase.from('user_progress').upsert({
+        user_id: data.user.id,
+        streak_days: 0,
+        total_questions_done: 0,
+        overall_accuracy: 0,
+        completed_questions: {},
+        mock_results: {},
+        mistakes_log: [],
+        vocab_mastery: {},
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id' });
+    } catch (e) {
+      console.warn('User progress table init notice:', e);
     }
 
     const createdUser: User = mapSupabaseUserToAppUser(data.user, {

@@ -37,9 +37,9 @@ import { supabase } from '../lib/supabase';
 import { useLanguage } from '../context/LanguageContext';
 import { useUserProgress } from '../hooks/useUserProgress';
 
-interface MockTestsCatalogViewProps {
-  user: User;
-  mockTests: MockTest[];
+export interface MockTestsCatalogViewProps {
+  user?: User | null;
+  mockTests?: MockTest[];
   categories?: MockCategory[];
   onStartBluebookTest?: (test: MockTest) => void;
   onLaunchTest?: (test: MockTest) => void;
@@ -214,7 +214,7 @@ const EXPANDED_MOCK_TESTS: MockTest[] = [
 
 export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
   user,
-  mockTests,
+  mockTests = [],
   categories = INITIAL_MOCK_CATEGORIES,
   onStartBluebookTest,
   onLaunchTest,
@@ -227,10 +227,11 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
 
   // Combine passed mockTests with fallback list to ensure full catalog richness
   const allTests = useMemo(() => {
-    const existingIds = new Set(mockTests.map((t) => t.id));
-    const merged = [...mockTests];
-    EXPANDED_MOCK_TESTS.forEach((t) => {
-      if (!existingIds.has(t.id)) {
+    const safeTests = Array.isArray(mockTests) ? mockTests.filter(Boolean) : [];
+    const existingIds = new Set(safeTests.map((t) => t?.id).filter(Boolean));
+    const merged = [...safeTests];
+    (EXPANDED_MOCK_TESTS || []).forEach((t) => {
+      if (t && t.id && !existingIds.has(t.id)) {
         merged.push(t);
       }
     });
@@ -250,22 +251,49 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
     }
   });
 
-  // Realtime cross-device user progress sync for mock test results
-  const { progress } = useUserProgress(user);
+  // Realtime cross-device user progress sync for mock test results (Supports both Array & Object)
+  const { progress: userProgress } = useUserProgress(user);
 
   useEffect(() => {
-    if (progress?.mock_results && Object.keys(progress.mock_results).length > 0) {
-      setUserAttempts((prev) => ({
-        ...prev,
-        ...progress.mock_results,
-      }));
+    if (userProgress?.mock_results) {
+      if (Array.isArray(userProgress.mock_results)) {
+        const mapped: Record<string, TestAttempt> = {};
+        userProgress.mock_results.forEach((r: any, idx: number) => {
+          if (!r) return;
+          const key = r.test_id || r.testId || r.id || `attempt-${idx}`;
+          mapped[key] = {
+            id: key,
+            testId: r.test_id || r.testId || r.id || '',
+            userId: safeUserId,
+            totalScore: Number(r.total_score ?? r.totalScore) || 0,
+            rwScore: Number(r.rw_score ?? r.rwScore) || 0,
+            mathScore: Number(r.math_score ?? r.mathScore) || 0,
+            status: (r.status || 'COMPLETED') as any,
+            isCompleted: true,
+            completedAt: r.completed_at || r.completedAt || new Date().toISOString(),
+            startedAt: r.started_at || r.startedAt || new Date().toISOString(),
+            timeSpentSecs: Number(r.time_spent_secs ?? r.timeSpentSecs) || 0,
+            accuracy: Number(r.accuracy) || 0,
+            ...r,
+          };
+        });
+        setUserAttempts((prev) => ({ ...prev, ...mapped }));
+      } else if (typeof userProgress.mock_results === 'object' && Object.keys(userProgress.mock_results).length > 0) {
+        setUserAttempts((prev) => ({
+          ...prev,
+          ...userProgress.mock_results,
+        }));
+      }
     }
-  }, [progress?.mock_results]);
+  }, [userProgress?.mock_results, safeUserId]);
 
-  // Filter & Search state (Category tab supports dynamic categories)
+  // Safe filter, search & loading state initializers (Crash-Proof)
   const { t } = useLanguage();
+  const [loading, setLoading] = useState<boolean>(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeCategoryTab, setActiveCategoryTab] = useState<string>('ALL');
-  const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED'>('ALL');
   const [accessFilter, setAccessFilter] = useState<'ALL' | 'PUBLIC' | 'PRIVATE'>('ALL');
 
@@ -315,92 +343,109 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
   const [reviewAttemptTest, setReviewAttemptTest] = useState<{ test: MockTest; attempt: TestAttempt } | null>(null);
   const [aiDiagnosticModalData, setAiDiagnosticModalData] = useState<{ test: MockTest; attempt: TestAttempt } | null>(null);
 
-  // Quick stats calculations: Strict 0-State Baseline
-  const stats = useMemo(() => {
-    const completedAttempts = (Object.values(userAttempts) as TestAttempt[]).filter(
-      (a) => a && (a.status === 'COMPLETED' || a.isCompleted)
-    );
-    const completedCount = completedAttempts.length;
-    const totalCount = allTests.length;
+  // Safe calculations for top 4 stat cards (Zero Runtime Errors)
+  const mockResultsArray = useMemo(() => {
+    if (Array.isArray(userProgress?.mock_results)) {
+      return userProgress.mock_results.filter(Boolean);
+    }
+    if (userProgress?.mock_results && typeof userProgress.mock_results === 'object') {
+      return Object.values(userProgress.mock_results).filter(Boolean);
+    }
+    if (userAttempts && typeof userAttempts === 'object') {
+      return Object.values(userAttempts).filter((a: any) => a && (a.status === 'COMPLETED' || a.isCompleted));
+    }
+    return [];
+  }, [userProgress?.mock_results, userAttempts]);
 
-    let highest = 0;
-    let sumScore = 0;
+  const testsTakenCount = Array.isArray(userProgress?.mock_results)
+    ? userProgress.mock_results.length
+    : mockResultsArray.length;
 
-    completedAttempts.forEach((a) => {
-      const s = a.totalScore || 0;
-      if (s > highest) highest = s;
-      sumScore += s;
-    });
+  const highestScore = Array.isArray(userProgress?.mock_results) && userProgress.mock_results.length > 0
+    ? Math.max(...userProgress.mock_results.map((r: any) => Number(r?.total_score ?? r?.totalScore) || 0))
+    : mockResultsArray.length > 0
+      ? Math.max(...mockResultsArray.map((r: any) => Number(r?.total_score ?? r?.totalScore) || 0), 0)
+      : 0;
 
-    const average = completedCount > 0 ? Math.round(sumScore / completedCount) : 0;
+  const avgScore = testsTakenCount > 0
+    ? Math.round(
+        (Array.isArray(userProgress?.mock_results) ? userProgress.mock_results : mockResultsArray).reduce(
+          (acc: number, curr: any) => acc + (Number(curr?.total_score ?? curr?.totalScore) || 0),
+          0
+        ) / testsTakenCount
+      )
+    : 0;
 
-    const sortedCompleted = [...completedAttempts].sort((a, b) => {
-      const timeA = new Date(a.completedAt || a.startedAt || 0).getTime();
-      const timeB = new Date(b.completedAt || b.startedAt || 0).getTime();
-      return timeB - timeA;
-    });
-    const latestScore = sortedCompleted[0]?.totalScore ?? 0;
+  const latestScore = Array.isArray(userProgress?.mock_results) && userProgress.mock_results.length > 0
+    ? (userProgress.mock_results[userProgress.mock_results.length - 1]?.total_score ?? userProgress.mock_results[userProgress.mock_results.length - 1]?.totalScore ?? 0)
+    : mockResultsArray.length > 0
+      ? (mockResultsArray[mockResultsArray.length - 1]?.total_score ?? mockResultsArray[mockResultsArray.length - 1]?.totalScore ?? 0)
+      : 0;
 
-    return {
-      completedCount,
-      totalCount,
-      highestScore: highest || 0,
-      averageScore: average || 0,
-      latestScore,
-    };
-  }, [userAttempts, allTests]);
-
-  // Filtered Tests
+  // Safe Test Catalog Filtering & Empty State (Crash-Proof)
   const filteredTests = useMemo(() => {
-    return allTests.filter((test) => {
-      // Dynamic Category filter
-      if (activeCategoryTab !== 'ALL') {
-        const matchCategory =
-          test.categoryId === activeCategoryTab ||
-          test.categorySlug === activeCategoryTab ||
-          test.category === activeCategoryTab;
-        if (!matchCategory) return false;
+    const listToFilter = (allTests && allTests.length > 0 ? allTests : (mockTests || []));
+    return (listToFilter || []).filter((test) => {
+      if (!test) return false;
+
+      const title = (test.title || test.name || '').toLowerCase();
+      const desc = (test.description || '').toLowerCase();
+      const cleanSearch = (searchQuery || '').trim().toLowerCase();
+
+      // Search match
+      const matchesSearch =
+        !cleanSearch ||
+        title.includes(cleanSearch) ||
+        desc.includes(cleanSearch) ||
+        (Array.isArray(test.tags) && test.tags.some((tg) => (tg || '').toLowerCase().includes(cleanSearch)));
+
+      if (!matchesSearch) return false;
+
+      // Category match (supporting 'all', 'ALL', categoryId, categorySlug, category)
+      const currentCategory = selectedCategory !== 'all' ? selectedCategory : activeCategoryTab;
+      if (currentCategory && currentCategory !== 'all' && currentCategory !== 'ALL') {
+        const matchesCategory =
+          test.category === currentCategory ||
+          test.categoryId === currentCategory ||
+          test.categorySlug === currentCategory;
+        if (!matchesCategory) return false;
+      }
+
+      // Status filter
+      const currentStatus = selectedStatus !== 'all' ? selectedStatus.toUpperCase() : statusFilter;
+      if (currentStatus !== 'ALL') {
+        const attempt = userAttempts[test.id];
+        const isCompleted = attempt?.status === 'COMPLETED' || attempt?.isCompleted;
+        const isInProgress = attempt?.status === 'IN_PROGRESS' && !isCompleted;
+        const isNotStarted = !attempt || attempt.status === 'NOT_STARTED';
+
+        if (currentStatus === 'COMPLETED' && !isCompleted) return false;
+        if (currentStatus === 'IN_PROGRESS' && !isInProgress) return false;
+        if (currentStatus === 'NOT_STARTED' && !isNotStarted) return false;
       }
 
       // Access tier filter
       if (accessFilter === 'PUBLIC' && test.isPrivate) return false;
       if (accessFilter === 'PRIVATE' && !test.isPrivate) return false;
 
-      // Status filter
-      const attempt = userAttempts[test.id];
-      const isCompleted = attempt?.status === 'COMPLETED' || attempt?.isCompleted;
-      const isInProgress = attempt?.status === 'IN_PROGRESS' && !isCompleted;
-      const isNotStarted = !attempt || attempt.status === 'NOT_STARTED';
-
-      if (statusFilter === 'COMPLETED' && !isCompleted) return false;
-      if (statusFilter === 'IN_PROGRESS' && !isInProgress) return false;
-      if (statusFilter === 'NOT_STARTED' && !isNotStarted) return false;
-
-      // Search query
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matchTitle = test.title.toLowerCase().includes(q);
-        const matchDesc = test.description?.toLowerCase().includes(q);
-        const matchTags = test.tags?.some((t) => t.toLowerCase().includes(q));
-        if (!matchTitle && !matchDesc && !matchTags) return false;
-      }
-
       return true;
     });
-  }, [allTests, activeCategoryTab, accessFilter, statusFilter, searchQuery, userAttempts]);
+  }, [allTests, mockTests, searchQuery, selectedCategory, activeCategoryTab, selectedStatus, statusFilter, accessFilter, userAttempts]);
 
   // Unlock success callback
   const handleUnlockSuccess = async (unlocked: MockTest) => {
     setUnlockedMockIds((prev) => {
       const next = new Set([...prev, unlocked.id]);
       try {
-        localStorage.setItem(`asron_unlocked_mocks_${user.id}`, JSON.stringify(Array.from(next)));
+        if (safeUserId) {
+          localStorage.setItem(`asron_unlocked_mocks_${safeUserId}`, JSON.stringify(Array.from(next)));
+        }
       } catch {}
       return next;
     });
 
     try {
-      if (supabase && user.id) {
+      if (supabase && user?.id) {
         await supabase.from('user_unlocked_mocks').insert({
           user_id: user.id,
           mock_test_id: unlocked.id,
@@ -448,7 +493,7 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
           {/* Stat 1: Completed */}
           <div className="p-4 rounded-2xl bg-[#FAF8F5] dark:bg-[#121A2F] border border-[#EBE5DF] dark:border-[#1E293B]">
             <div className="text-xl sm:text-2xl font-extrabold font-mono text-[#1E1B18] dark:text-[#F8FAFC]">
-              {stats.completedCount} <span className="text-sm font-normal text-[#78716C] dark:text-[#94A3B8]">/ {stats.totalCount}</span>
+              {testsTakenCount} <span className="text-sm font-normal text-[#78716C] dark:text-[#94A3B8]">/ {allTests.length}</span>
             </div>
             <div className="text-[10px] uppercase font-bold text-[#78716C] dark:text-[#94A3B8] tracking-wider mt-0.5">
               {t('mocks_view.testsTaken', 'Topshirilgan Testlar')}
@@ -458,7 +503,7 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
           {/* Stat 2: Highest Score */}
           <div className="p-4 rounded-2xl bg-[#FAF8F5] dark:bg-[#121A2F] border border-[#EBE5DF] dark:border-[#1E293B]">
             <div className="text-xl sm:text-2xl font-extrabold font-mono text-[#E07A5F]">
-              {stats.highestScore} <span className="text-xs font-normal text-[#78716C] dark:text-[#94A3B8]">/ 1600</span>
+              {highestScore} <span className="text-xs font-normal text-[#78716C] dark:text-[#94A3B8]">/ 1600</span>
             </div>
             <div className="text-[10px] uppercase font-bold text-[#78716C] dark:text-[#94A3B8] tracking-wider mt-0.5">
               {t('mocks_view.highestScore', 'Eng Yuqori Score')}
@@ -468,7 +513,7 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
           {/* Stat 3: Average Score */}
           <div className="p-4 rounded-2xl bg-[#FAF8F5] dark:bg-[#121A2F] border border-[#EBE5DF] dark:border-[#1E293B]">
             <div className="text-xl sm:text-2xl font-extrabold font-mono text-[#2A9D8F]">
-              {stats.averageScore}
+              {avgScore}
             </div>
             <div className="text-[10px] uppercase font-bold text-[#78716C] dark:text-[#94A3B8] tracking-wider mt-0.5">
               {t('mocks_view.avgScore', "O'rtacha Score")}
@@ -478,7 +523,7 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
           {/* Stat 4: Latest Score */}
           <div className="p-4 rounded-2xl bg-[#FAF8F5] dark:bg-[#121A2F] border border-[#EBE5DF] dark:border-[#1E293B]">
             <div className="text-xl sm:text-2xl font-extrabold font-mono text-[#1E1B18] dark:text-[#F8FAFC]">
-              <span>{stats.latestScore || '0'}</span> <span className="text-xs font-normal text-[#78716C] dark:text-[#94A3B8]">/ 1600</span>
+              <span>{latestScore || 0}</span> <span className="text-xs font-normal text-[#78716C] dark:text-[#94A3B8]">/ 1600</span>
             </div>
             <div className="text-[10px] uppercase font-bold text-[#78716C] dark:text-[#94A3B8] tracking-wider mt-0.5">
               {t('mocks_view.latestScore', "ENG SO'NGGI NATIJA")}
@@ -495,7 +540,10 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
         {/* Dynamic Category Tabs */}
         <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-2xl bg-[#FAF8F5] dark:bg-[#121A2F] border border-[#E5E0D8] dark:border-[#1E293B] w-fit">
           <button
-            onClick={() => setActiveCategoryTab('ALL')}
+            onClick={() => {
+              setSelectedCategory('all');
+              setActiveCategoryTab('ALL');
+            }}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
               activeCategoryTab === 'ALL'
                 ? 'bg-[#1E1B18] dark:bg-[#E07A5F] text-white shadow-xs'
@@ -525,7 +573,10 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveCategoryTab(tab.id)}
+                onClick={() => {
+                  setSelectedCategory(tab.id);
+                  setActiveCategoryTab(tab.id);
+                }}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                   isActive
                     ? 'bg-[#1E1B18] dark:bg-[#E07A5F] text-white shadow-xs'
@@ -577,7 +628,10 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
               {(['ALL', 'NOT_STARTED', 'IN_PROGRESS', 'COMPLETED'] as const).map((s) => (
                 <button
                   key={s}
-                  onClick={() => setStatusFilter(s)}
+                  onClick={() => {
+                    setSelectedStatus(s.toLowerCase());
+                    setStatusFilter(s);
+                  }}
                   className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                     statusFilter === s
                       ? 'bg-[#1E1B18] dark:bg-[#E07A5F] text-white'
@@ -629,7 +683,9 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
           <button
             onClick={() => {
               setSearchQuery('');
+              setSelectedCategory('all');
               setActiveCategoryTab('ALL');
+              setSelectedStatus('all');
               setStatusFilter('ALL');
               setAccessFilter('ALL');
             }}
@@ -646,7 +702,7 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
             const isInProgress = attempt?.status === 'IN_PROGRESS' && !isCompleted;
             const isNotStarted = !attempt || attempt.status === 'NOT_STARTED';
             const isPrivate = Boolean(test.isPrivate);
-            const isUnlocked = !isPrivate || user.role === 'ADMIN' || user.role === 'SUPER_ADMIN' || unlockedMockIds.has(test.id);
+            const isUnlocked = !isPrivate || user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN' || unlockedMockIds.has(test.id);
 
             // Dynamic category name resolution
             const matchingCat = categories.find((c) => c.id === test.categoryId || c.slug === test.categorySlug);
@@ -734,7 +790,7 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
       <PreTestModal
         isOpen={Boolean(selectedTestForModal)}
         test={selectedTestForModal}
-        user={user}
+        user={user || { id: 'guest-user', email: '', username: 'Talaba', fullName: 'Talaba', role: 'STUDENT', planTier: 'FREE', streakDays: 0, streakFreezes: 0, xpPoints: 0, targetScore: 1550, createdAt: '' }}
         onClose={() => setSelectedTestForModal(null)}
         onLaunchTest={handleLaunchTest}
       />

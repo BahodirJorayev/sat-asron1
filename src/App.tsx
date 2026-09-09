@@ -73,6 +73,7 @@ import {
 } from './types';
 import { getSupabaseClient, mapSupabaseUserToAppUser, signOutUser, saveUserProfile, supabase } from './lib/supabase';
 import { useUserProgress, syncUserProgressRemote } from './hooks/useUserProgress';
+import { ViewSkeletonLoader } from './components/common/ViewSkeletonLoader';
 import {
   fetchGlobalPlatformSettings,
   saveGlobalPlatformSettings,
@@ -159,6 +160,16 @@ export default function App() {
       const pathname = window.location.pathname;
       const search = window.location.search;
       const cleanHash = hash.split('?')[0];
+
+      // 0. Check for OAuth callback tokens or auth codes (Google OAuth redirect)
+      if (
+        cleanHash.includes('access_token') ||
+        cleanHash.includes('token_type') ||
+        cleanHash.includes('code=') ||
+        search.includes('code=')
+      ) {
+        return 'dashboard';
+      }
 
       // 1. Check direct hash first
       if (cleanHash) {
@@ -467,15 +478,32 @@ export default function App() {
 
     const handleProfileUpdateEvent = (e: any) => {
       if (e.detail) {
-        handleUpdateUser(e.detail);
+        const payload = e.detail;
+        setUsersList((prev) => {
+          const activeId = payload.id || prev[0]?.id;
+          return prev.map((u, i) => {
+            if (u.id === activeId || (i === 0 && !u.id)) {
+              return {
+                ...u,
+                fullName: payload.fullName || payload.full_name || u.fullName,
+                username: payload.username || u.username,
+                avatarUrl: payload.avatarUrl !== undefined ? payload.avatarUrl : (payload.avatar_url !== undefined ? payload.avatar_url : u.avatarUrl),
+                targetScore: payload.targetScore || payload.target_score || u.targetScore,
+              };
+            }
+            return u;
+          });
+        });
       }
     };
     window.addEventListener('asron_profile_updated', handleProfileUpdateEvent);
+    window.addEventListener('profile_updated', handleProfileUpdateEvent);
 
     return () => {
       isMounted = false;
       supabase.removeChannel(profileChannel);
       window.removeEventListener('asron_profile_updated', handleProfileUpdateEvent);
+      window.removeEventListener('profile_updated', handleProfileUpdateEvent);
     };
   }, []);
 
@@ -1074,7 +1102,7 @@ export default function App() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const clientPresenceKey = currentUser?.id || `visitor-${Math.random().toString(36).substring(2, 9)}`;
-    const presenceChannel = supabase.channel('asron-online-presence', {
+    const presenceChannel = supabase.channel('online-presence', {
       config: { presence: { key: clientPresenceKey } },
     });
 
@@ -1084,6 +1112,7 @@ export default function App() {
           user_id: currentUser?.id,
           username: currentUser?.username,
           full_name: currentUser?.fullName,
+          role: currentUser?.role || 'STUDENT',
           online_at: new Date().toISOString(),
         });
       }
@@ -1092,7 +1121,7 @@ export default function App() {
     return () => {
       supabase.removeChannel(presenceChannel);
     };
-  }, [currentUser?.id]);
+  }, [currentUser?.id, currentUser?.fullName, currentUser?.username]);
 
   // Fetch and synchronize live registered profiles from Supabase public.profiles
   useEffect(() => {
@@ -1197,6 +1226,17 @@ export default function App() {
       const pathname = customPath || window.location.pathname;
       const authenticated = isUserAuthenticated();
 
+      if (
+        hash.includes('access_token') ||
+        hash.includes('token_type') ||
+        hash.includes('code=') ||
+        pathname.includes('callback') ||
+        window.location.search.includes('code=')
+      ) {
+        setActiveTab('dashboard');
+        return;
+      }
+
       if (hash === 'login' || hash === 'signin') {
         if (authenticated) {
           setActiveTab('dashboard');
@@ -1246,7 +1286,13 @@ export default function App() {
       if (cleanHash && hashTabMap[cleanHash]) {
         const mappedTab = hashTabMap[cleanHash];
         setActiveTab(mappedTab);
-        if (['vault', 'profile', 'admin'].includes(mappedTab) && !authenticated) {
+        if (mappedTab === 'admin') {
+          // Admin Session Protection: Never prompt auth modal if user is admin or authenticated
+          if (!authenticated && currentUser.role !== 'ADMIN' && currentUser.role !== 'SUPER_ADMIN') {
+            setAuthModalMode('signin');
+            setIsAuthModalOpen(true);
+          }
+        } else if (['vault', 'profile'].includes(mappedTab) && !authenticated) {
           setAuthModalMode('signin');
           setIsAuthModalOpen(true);
         }
@@ -1807,25 +1853,31 @@ export default function App() {
               'roadmap',
               'admin',
             ].includes(activeTab)) && (
-            <DashboardView
-              user={currentUser}
-              mistakes={mistakes}
-              mockTests={mockTests}
-              platformContent={platformContentMap}
-              onOpenDailyWorkout={() => setIsDailyWorkoutOpen(true)}
-              onOpenDiagnostic={() => setIsDiagnosticOpen(true)}
-              onOpenMistakeVault={() => setActiveTab('vault')}
-              onStartBluebookTest={(test) => setActiveBluebookTest(test)}
-              onOpenQuestionBank={(subSkill) => {
-                setQbankInitialFilter(subSkill || '');
-                setActiveTab('qbank');
-              }}
-              onOpenCommunity={() => setActiveTab('community')}
-              onOpenRoadmap={() => setActiveTab('roadmap')}
-              onOpenPaywall={() => setIsPaywallOpen(true)}
-              onOpenSocraticTutor={handleOpenSocraticTutor}
-              onOpenMilestoneModal={handleOpenMilestoneModal}
-            />
+            !currentUser ? (
+              <div className="p-4 sm:p-6">
+                <ViewSkeletonLoader title="Dashboard yuklanmoqda..." />
+              </div>
+            ) : (
+              <DashboardView
+                user={currentUser}
+                mistakes={mistakes}
+                mockTests={mockTests}
+                platformContent={platformContentMap}
+                onOpenDailyWorkout={() => setIsDailyWorkoutOpen(true)}
+                onOpenDiagnostic={() => setIsDiagnosticOpen(true)}
+                onOpenMistakeVault={() => setActiveTab('vault')}
+                onStartBluebookTest={(test) => setActiveBluebookTest(test)}
+                onOpenQuestionBank={(subSkill) => {
+                  setQbankInitialFilter(subSkill || '');
+                  setActiveTab('qbank');
+                }}
+                onOpenCommunity={() => setActiveTab('community')}
+                onOpenRoadmap={() => setActiveTab('roadmap')}
+                onOpenPaywall={() => setIsPaywallOpen(true)}
+                onOpenSocraticTutor={handleOpenSocraticTutor}
+                onOpenMilestoneModal={handleOpenMilestoneModal}
+              />
+            )
           )}
 
           {(activeTab === 'vault' || activeTab === 'mistakes') && (

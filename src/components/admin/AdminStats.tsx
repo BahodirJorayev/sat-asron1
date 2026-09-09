@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Users, Radio, RefreshCw, CheckCircle2, ShieldAlert } from 'lucide-react';
@@ -72,8 +72,8 @@ export function useAdminUserMetrics(initialCount: number = 0): AdminUserMetrics 
     };
     init();
 
-    // 3. Supabase Realtime Presence: Track live active connections
-    const presenceChannel = supabase.channel('asron-online-presence', {
+    // 3. Supabase Realtime Presence: Track live active connections on 'online-presence'
+    const presenceChannel = supabase.channel('online-presence', {
       config: { presence: { key: `admin-monitor-${Math.random().toString(36).substring(2, 9)}` } },
     });
 

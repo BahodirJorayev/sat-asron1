@@ -69,9 +69,9 @@ export async function searchGlobalCommunity(
   try {
     const { data: profileData, error: profileErr } = await supabase
       .from('profiles')
-      .select('id, full_name, username, avatar_url')
-      .or(`username.ilike.%${cleanQuery}%,full_name.ilike.%${cleanQuery}%`)
-      .limit(15);
+      .select('id, full_name, username, avatar_url, role')
+      .or(`full_name.ilike.%${cleanQuery}%,username.ilike.%${cleanQuery}%`)
+      .limit(20);
 
     if (!profileErr && Array.isArray(profileData)) {
       profileData.forEach((p) => {
@@ -82,6 +82,7 @@ export async function searchGlobalCommunity(
             fullName: p.full_name || p.username || 'Talaba',
             username: p.username || 'user',
             avatarUrl: p.avatar_url,
+            role: p.role,
           });
         }
       });

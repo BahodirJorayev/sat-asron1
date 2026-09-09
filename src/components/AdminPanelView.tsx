@@ -287,9 +287,13 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
           </div>
 
           <div className="flex items-center gap-3 text-xs font-mono">
-            <div className="hidden sm:flex items-center gap-2.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">
-              <span className="text-slate-400">Admin:</span>
-              <span className="font-medium text-slate-900 dark:text-slate-100">{currentUser.fullName || 'Bahodir'}</span>
+            <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-2xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-slate-400 font-medium">Admin:</span>
+              <span className="font-bold text-slate-900 dark:text-slate-100">{currentUser.fullName || currentUser.username || 'Bosh Administrator'}</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-500 font-bold border border-emerald-500/20">
+                {currentUser.role === 'SUPER_ADMIN' ? 'SUPER ADMIN' : 'ADMIN'}
+              </span>
             </div>
           </div>
         </header>

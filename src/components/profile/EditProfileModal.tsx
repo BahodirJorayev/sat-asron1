@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { User } from '../../types';
 import { supabase, saveUserProfile } from '../../lib/supabase';
+import { useUserProfile } from '../../hooks/useUserProfile';
 
 export interface EditProfileModalProps {
   isOpen: boolean;
@@ -28,6 +29,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   currentUser,
   onSaveSuccess,
 }) => {
+  const { updateProfile } = useUserProfile();
   const [fullName, setFullName] = useState(currentUser.fullName || '');
   const [username, setUsername] = useState(currentUser.username || '');
   const [avatarUrl, setAvatarUrl] = useState(currentUser.avatarUrl || '');
@@ -153,11 +155,20 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
       // 3. Update application cache & local cookies
       await saveUserProfile(updatedUser);
+      await updateProfile({
+        fullName: cleanFullName,
+        username: cleanUsername,
+        avatarUrl: cleanAvatarUrl,
+        phoneNumber: cleanPhone,
+        targetScore: Number(targetScore) || 1500,
+        targetExamDate: targetExamDate,
+      });
 
       // Invalidate client-side cache and broadcast cross-device/cross-tab
       if (typeof window !== 'undefined') {
         localStorage.setItem('aurasat_user_profile', JSON.stringify(updatedUser));
         window.dispatchEvent(new CustomEvent('profile_updated', { detail: updatedUser }));
+        window.dispatchEvent(new CustomEvent('asron_profile_updated', { detail: updatedUser }));
         try {
           const bc = new BroadcastChannel('asron_profile_channel');
           bc.postMessage({ type: 'profile_updated', user: updatedUser });

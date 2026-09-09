@@ -4,6 +4,7 @@ import '../index.css';
 import '../lib/supabase';
 import { LanguageProvider } from '../context/LanguageContext';
 import { PlatformSettingsProvider } from '../contexts/PlatformSettingsContext';
+import { UserProfileProvider } from '../context/UserProfileContext';
 import { PathnameNormalizer } from '../components/navigation/PathnameNormalizer';
 
 export const metadata: Metadata = {
@@ -80,7 +81,9 @@ export default function RootLayout({
         <PathnameNormalizer />
         <PlatformSettingsProvider>
           <LanguageProvider>
-            {children}
+            <UserProfileProvider>
+              {children}
+            </UserProfileProvider>
           </LanguageProvider>
         </PlatformSettingsProvider>
       </body>

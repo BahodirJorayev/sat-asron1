@@ -31,6 +31,7 @@ import { AsronLogo } from './AsronLogo';
 import { usePlatformSettings } from '../hooks/usePlatformSettings';
 import { LanguageSwitcher } from './navigation/LanguageSwitcher';
 import { useLanguage } from '../context/LanguageContext';
+import { useUserProfile } from '../hooks/useUserProfile';
 
 interface Props {
   user: User;
@@ -74,15 +75,22 @@ export const Header: React.FC<Props> = ({
   const brandTagline = settings.tagline || siteBranding?.brandTagline || 'Digital SAT Platform';
   const logoIcon = siteBranding?.logoIcon || 'Σ';
   const isLandingOrBlog = activeTab === 'landing' || activeTab === 'blog';
+  const { profile } = useUserProfile();
 
   const safeFullName =
+    profile?.fullName ||
     (typeof user?.fullName === 'string' && user.fullName.trim()) ||
     'Foydalanuvchi';
   const safeUsername =
+    profile?.username ||
     (typeof user?.username === 'string' && user.username.trim()) ||
     'user';
   const safeAvatarUrl =
-    typeof user?.avatarUrl === 'string' ? user.avatarUrl.trim() : '';
+    profile?.avatarUrl !== undefined
+      ? profile.avatarUrl
+      : typeof user?.avatarUrl === 'string'
+      ? user.avatarUrl.trim()
+      : '';
   const monogram = (safeFullName || safeUsername || 'T')[0]?.toUpperCase() || 'T';
   const hasAvatar = Boolean(safeAvatarUrl && !safeAvatarUrl.startsWith('data:image'));
 
@@ -267,8 +275,13 @@ export const Header: React.FC<Props> = ({
                   </div>
                 )}
                 <div className="text-left">
-                  <div className="text-[11px] font-bold text-[#0F172A] dark:text-[#F8FAFC] leading-tight">
+                  <div className="text-[11px] font-bold text-[#0F172A] dark:text-[#F8FAFC] leading-tight flex items-center gap-1.5">
                     <span>{safeFullName}</span>
+                    {(user.role === 'ADMIN' || user.role === 'SUPER_ADMIN' || profile?.role === 'ADMIN' || profile?.role === 'SUPER_ADMIN') && (
+                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                        ADMIN
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

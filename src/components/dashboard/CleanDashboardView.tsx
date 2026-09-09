@@ -18,6 +18,7 @@ import { MultiplayerArenaModal } from '../MultiplayerArenaModal';
 import { ExamCountdownWidget } from './ExamCountdownWidget';
 import { supabase } from '../../lib/supabase';
 import { useLanguage } from '../../context/LanguageContext';
+import { useUserProfile } from '../../hooks/useUserProfile';
 
 
 interface Props {
@@ -109,7 +110,8 @@ export const CleanDashboardView: React.FC<Props> = ({
     : [];
 
 
-  const studentName = user.fullName || user.username || 'Talaba';
+  const { profile } = useUserProfile();
+  const studentName = profile?.fullName || user.fullName || user.username || 'Talaba';
   const streakDays = user.streakDays || 0;
   const questionsDone = user.totalQuestionsDone || 0;
   const accuracy = user.overallAccuracy || 0;

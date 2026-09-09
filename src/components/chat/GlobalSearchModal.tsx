@@ -152,12 +152,12 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
 
     debounceTimerRef.current = setTimeout(async () => {
       try {
-        // 1. Search Users
+        // 1. Search Users (Precise case-insensitive search by name & username)
         const { data: users } = await supabase
           .from('profiles')
-          .select('id, full_name, username, avatar_url')
-          .or(`username.ilike.%${cleanTerm}%,full_name.ilike.%${cleanTerm}%`)
-          .limit(15);
+          .select('id, full_name, username, avatar_url, role')
+          .or(`full_name.ilike.%${cleanTerm}%,username.ilike.%${cleanTerm}%`)
+          .limit(20);
 
         // 2. Search Channels & Groups
         const { data: channels } = await supabase
@@ -165,7 +165,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
           .select('*')
           .eq('is_public', true)
           .or(`name.ilike.%${cleanTerm}%,username.ilike.%${cleanTerm}%`)
-          .limit(15);
+          .limit(20);
 
         const mappedUsers: ProfileSearchResult[] = [];
         if (users && Array.isArray(users)) {
@@ -175,7 +175,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
               fullName: p.full_name || p.username || 'Talaba',
               username: p.username || 'user',
               avatarUrl: p.avatar_url,
-              role: 'STUDENT',
+              role: p.role || 'STUDENT',
             });
           });
         }

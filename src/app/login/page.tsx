@@ -4,14 +4,14 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
-import { supabase, setAuthCookie, mapSupabaseUserToAppUser } from '../../lib/supabase';
+import { supabase, setAuthCookie, mapSupabaseUserToAppUser, resolveLoginIdentifierToEmail } from '../../lib/supabase';
 import { usePlatformSettings } from '../../hooks/usePlatformSettings';
 import { AsronLogo } from '../../components/AsronLogo';
 
 export default function LoginPage() {
   const router = useRouter();
   const { settings } = usePlatformSettings();
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -19,7 +19,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !password) {
+    if (!identifier.trim() || !password) {
       setErrorMessage("Hisob topilmadi yoki parol noto‘g‘ri kiritildi. Iltimos, qayta tekshiring yoki ro‘yxatdan o‘ting.");
       return;
     }
@@ -28,8 +28,9 @@ export default function LoginPage() {
     setErrorMessage(null);
 
     try {
+      const resolvedEmail = resolveLoginIdentifierToEmail(identifier);
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: resolvedEmail,
         password: password,
       });
 
@@ -133,18 +134,18 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email Field */}
+            {/* Username or Email Field */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                Email Manzili
+                Username yoki Email
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="talaba@asronsat.uz"
+                  type="text"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  placeholder="username yoki talaba@asronsat.uz"
                   required
                   autoFocus
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#0A0F1D] border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#E07A5F] focus:ring-1 focus:ring-[#E07A5F] transition-all"

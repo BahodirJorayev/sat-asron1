@@ -182,7 +182,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         ).map((item) => {
           const Icon = item.icon;
           const isLocked = item.id !== 'dashboard' && isModuleLocked(item.id as any);
-          const localizedLabel = t(item.id, item.label);
+          const localizedLabel = t('nav.' + (item.id === 'dashboard' ? 'home' : item.id), item.label);
           const isCurrentActive = () => {
             if (activeTab) {
               if (activeTab === item.id) return true;

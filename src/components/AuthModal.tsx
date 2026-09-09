@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Sparkles, Shield, Mail, Lock, User as UserIcon, ArrowRight, CheckCircle2, AlertCircle, Phone, AtSign, Loader2 } from 'lucide-react';
-import { signInWithGoogle, signInWithEmail, signUpWithEmail, supabase } from '../lib/supabase';
+import { X, Sparkles, Shield, Mail, Lock, User as UserIcon, ArrowRight, CheckCircle2, AlertCircle, AtSign, Loader2 } from 'lucide-react';
+import { signInWithGoogle, signInWithEmail, signUpWithUsername, supabase } from '../lib/supabase';
 import { User } from '../types';
 import { usePlatformSettings } from '../hooks/usePlatformSettings';
 import { AsronLogo } from './AsronLogo';
@@ -22,11 +22,10 @@ export const AuthModal: React.FC<Props> = ({
 }) => {
   const { settings } = usePlatformSettings();
   const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
-  const [email, setEmail] = useState('');
+  const [loginIdentifier, setLoginIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -77,36 +76,55 @@ export const AuthModal: React.FC<Props> = ({
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
-      setErrorMessage("Iltimos, barcha majburiy maydonlarni to'ldiring.");
-      return;
-    }
 
-    setIsLoading(true);
-    setErrorMessage(null);
+    if (mode === 'signup') {
+      if (!fullName.trim() || !username.trim() || !password) {
+        setErrorMessage("Iltimos, barcha majburiy maydonlarni to'ldiring.");
+        return;
+      }
+      if (password.length < 6) {
+        setErrorMessage("Parol kamida 6 ta belgidan iborat bo'lishi kerak.");
+        return;
+      }
 
-    try {
-      if (mode === 'signup') {
-        const res = await signUpWithEmail(email, password, fullName, username, phoneNumber);
+      setIsLoading(true);
+      setErrorMessage(null);
+
+      try {
+        const res = await signUpWithUsername(fullName, username, password);
         if (res.data?.user) {
           onSuccess(res.data.user);
           onClose();
         } else if (res.error) {
           setErrorMessage(res.error.message || "Ro'yxatdan o'tishda xatolik yuz berdi.");
         }
-      } else {
-        const res = await signInWithEmail(email, password);
+      } catch (err: any) {
+        setErrorMessage(err.message || "Ro'yxatdan o'tishda xatolik yuz berdi.");
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      if (!loginIdentifier.trim() || !password) {
+        setErrorMessage("Iltimos, username yoki email hamda parolni kiriting.");
+        return;
+      }
+
+      setIsLoading(true);
+      setErrorMessage(null);
+
+      try {
+        const res = await signInWithEmail(loginIdentifier, password);
         if (res.data?.user) {
           onSuccess(res.data.user);
           onClose();
         } else {
-          setErrorMessage(res.error?.message || "Email yoki parol noto‘g‘ri kiritildi");
+          setErrorMessage(res.error?.message || "Username / Email yoki parol noto‘g‘ri kiritildi");
         }
+      } catch (err: any) {
+        setErrorMessage(err.message || "Username / Email yoki parol noto‘g‘ri kiritildi");
+      } finally {
+        setIsLoading(false);
       }
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Email yoki parol noto‘g‘ri kiritildi');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -254,13 +272,13 @@ export const AuthModal: React.FC<Props> = ({
           <div className="relative flex items-center justify-center">
             <div className="border-t border-[#E8E2D5] w-full" />
             <span className="bg-[#FAF7F2] px-2.5 text-[10px] font-mono text-[#78716C] uppercase">
-              Yoki Email orqali
+              {mode === 'signup' ? 'Yoki Login orqali' : 'Yoki Username / Email orqali'}
             </span>
           </div>
 
-          {/* Email / Password Form */}
+          {/* Form */}
           <form onSubmit={handleEmailSubmit} className="space-y-3">
-            {mode === 'signup' && (
+            {mode === 'signup' ? (
               <>
                 <div>
                   <label className="block text-[11px] font-semibold text-[#57534E] mb-1">
@@ -279,63 +297,45 @@ export const AuthModal: React.FC<Props> = ({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-[#57534E] mb-1">
-                      Username (@) *
-                    </label>
-                    <div className="relative">
-                      <AtSign className="w-3.5 h-3.5 text-[#A8A29E] absolute left-3 top-3" />
-                      <input
-                        type="text"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        placeholder="bahodir_sat"
-                        required
-                        className="w-full pl-8 pr-2.5 py-2 rounded-xl bg-[#FFFFFF] border border-[#D6CEBE] text-xs font-mono text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:border-[#2563EB]"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-semibold text-[#57534E] mb-1">
-                      Telefon
-                    </label>
-                    <div className="relative">
-                      <Phone className="w-3.5 h-3.5 text-[#A8A29E] absolute left-3 top-3" />
-                      <input
-                        type="text"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                        placeholder="+998 90..."
-                        className="w-full pl-8 pr-2.5 py-2 rounded-xl bg-[#FFFFFF] border border-[#D6CEBE] text-xs font-mono text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:border-[#2563EB]"
-                      />
-                    </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#57534E] mb-1">
+                    Username (@) *
+                  </label>
+                  <div className="relative">
+                    <AtSign className="w-3.5 h-3.5 text-[#A8A29E] absolute left-3 top-3" />
+                    <input
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="bahodir_sat"
+                      required
+                      className="w-full pl-8 pr-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#D6CEBE] text-xs font-mono text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:border-[#2563EB]"
+                    />
                   </div>
                 </div>
               </>
+            ) : (
+              <div>
+                <label className="block text-[11px] font-semibold text-[#57534E] mb-1">
+                  Username yoki Email *
+                </label>
+                <div className="relative">
+                  <UserIcon className="w-3.5 h-3.5 text-[#A8A29E] absolute left-3 top-3" />
+                  <input
+                    type="text"
+                    value={loginIdentifier}
+                    onChange={(e) => setLoginIdentifier(e.target.value)}
+                    placeholder="username yoki name@example.com"
+                    required
+                    className="w-full pl-8 pr-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#D6CEBE] text-xs text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:border-[#2563EB]"
+                  />
+                </div>
+              </div>
             )}
 
             <div>
               <label className="block text-[11px] font-semibold text-[#57534E] mb-1">
-                Email Manzil *
-              </label>
-              <div className="relative">
-                <Mail className="w-3.5 h-3.5 text-[#A8A29E] absolute left-3 top-3" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  required
-                  className="w-full pl-8 pr-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#D6CEBE] text-xs text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:border-[#2563EB]"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-semibold text-[#57534E] mb-1">
-                Maxfiy Parol *
+                {mode === 'signup' ? "Maxfiy Parol (kamida 6 ta belgi) *" : "Maxfiy Parol *"}
               </label>
               <div className="relative">
                 <Lock className="w-3.5 h-3.5 text-[#A8A29E] absolute left-3 top-3" />
@@ -345,6 +345,7 @@ export const AuthModal: React.FC<Props> = ({
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
+                  minLength={mode === 'signup' ? 6 : undefined}
                   className="w-full pl-8 pr-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#D6CEBE] text-xs text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:border-[#2563EB]"
                 />
               </div>

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, User as UserIcon, AtSign, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
-import { signUpWithEmail, supabase } from '../../lib/supabase';
+import { signUpWithUsername, supabase } from '../../lib/supabase';
 import { usePlatformSettings } from '../../hooks/usePlatformSettings';
 import { AsronLogo } from '../../components/AsronLogo';
 
@@ -13,7 +13,6 @@ export default function RegisterPage() {
   const { settings } = usePlatformSettings();
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -21,7 +20,7 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !password || !fullName.trim()) {
+    if (!fullName.trim() || !username.trim() || !password) {
       setErrorMessage("Iltimos, barcha majburiy maydonlarni to'ldiring.");
       return;
     }
@@ -35,8 +34,7 @@ export default function RegisterPage() {
     setErrorMessage(null);
 
     try {
-      const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_') || email.split('@')[0];
-      const res = await signUpWithEmail(email, password, fullName, cleanUsername);
+      const res = await signUpWithUsername(fullName, username, password);
 
       if (res.data?.user) {
         // Successful registration: redirect to dashboard
@@ -138,7 +136,7 @@ export default function RegisterPage() {
             {/* Username */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                Foydalanuvchi nomi (@username)
+                Foydalanuvchi nomi (@username) *
               </label>
               <div className="relative">
                 <AtSign className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -147,23 +145,6 @@ export default function RegisterPage() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="alivaliyev"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#0A0F1D] border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#E07A5F] focus:ring-1 focus:ring-[#E07A5F] transition-all"
-                />
-              </div>
-            </div>
-
-            {/* Email Field */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                Email Manzili *
-              </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="ali@asronsat.uz"
                   required
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#0A0F1D] border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#E07A5F] focus:ring-1 focus:ring-[#E07A5F] transition-all"
                 />

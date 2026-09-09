@@ -94,17 +94,17 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   const allNavItems = [
     {
       id: 'dashboard',
-      label: t('dashboard', 'Bosh sahifa'),
+      label: t('nav.home', 'Uy'),
       icon: LayoutDashboard,
       onClick: () => setActiveTab('dashboard'),
     },
     {
       id: 'qbank',
-      label: t('questions', 'Savollar Banki'),
+      label: t('nav.questions', 'Savollar'),
       icon: Database,
       onClick: () => {
         if (isModuleLocked('questions')) {
-          showLockedNotice('Savollar Banki');
+          showLockedNotice(t('nav.questions', 'Savollar'));
           return;
         }
         setActiveTab('qbank');
@@ -113,11 +113,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     },
     {
       id: 'bluebook',
-      label: t('mocks', 'Mock Testlar'),
+      label: t('nav.mocks', 'Testlar'),
       icon: FileText,
       onClick: () => {
         if (isModuleLocked('mocks')) {
-          showLockedNotice('Mock Testlar');
+          showLockedNotice(t('nav.mocks', 'Testlar'));
           return;
         }
         setActiveTab('bluebook');
@@ -126,11 +126,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     },
     {
       id: 'vocab',
-      label: t('vocabulary', "SAT Lug'at"),
+      label: t('nav.vocabulary', "Lug'at"),
       icon: BookOpen,
       onClick: () => {
         if (isModuleLocked('vocabulary')) {
-          showLockedNotice('SAT Lug\'at');
+          showLockedNotice(t('nav.vocabulary', "Lug'at"));
           return;
         }
         setActiveTab('vocab');
@@ -139,11 +139,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     },
     {
       id: 'vault',
-      label: t('mistakes', 'Xatolar Ombori'),
+      label: t('nav.mistakes', 'Xatolar'),
       icon: BookmarkCheck,
       onClick: () => {
         if (isModuleLocked('mistakes')) {
-          showLockedNotice(t('mistakes', 'Xatolar Ombori'));
+          showLockedNotice(t('nav.mistakes', 'Xatolar'));
           return;
         }
         setActiveTab('vault');
@@ -152,11 +152,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     },
     {
       id: 'community',
-      label: t('community', 'Hamjamiyat'),
+      label: t('nav.community', 'Hamjamiyat'),
       icon: Users,
       onClick: () => {
         if (isModuleLocked('community')) {
-          showLockedNotice(t('community', 'Hamjamiyat'));
+          showLockedNotice(t('nav.community', 'Hamjamiyat'));
           return;
         }
         setActiveTab('community');
@@ -167,7 +167,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       ? [
           {
             id: 'admin',
-            label: t('adminPanel', 'Admin Panel'),
+            label: t('nav.admin', 'Admin'),
             icon: ShieldAlert,
             onClick: () => setActiveTab('admin'),
             isLocked: false,
@@ -221,7 +221,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           <div
             onClick={() => setActiveTab('dashboard')}
             className="flex items-center gap-3 cursor-pointer group min-w-0"
-            title={`${brandName} - ${t('nav.home', 'Bosh Sahifa')}`}
+            title={`${brandName} - ${t('nav.home', 'Uy')}`}
           >
             {settings.logo_url && settings.logo_url !== '/brand/logo.svg' ? (
               <img

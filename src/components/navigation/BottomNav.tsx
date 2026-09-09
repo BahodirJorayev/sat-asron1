@@ -166,7 +166,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                     : 'text-slate-500 dark:text-slate-400'
                 }`}
               >
-                {t(item.id, item.label)}
+                {t('nav.' + (item.id === 'dashboard' ? 'home' : item.id), item.label)}
               </span>
             </div>
           </Link>

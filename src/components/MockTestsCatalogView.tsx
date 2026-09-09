@@ -320,11 +320,19 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
 
     const average = completedCount > 0 ? Math.round(sumScore / completedCount) : 0;
 
+    const sortedCompleted = [...completedAttempts].sort((a, b) => {
+      const timeA = new Date(a.completedAt || a.startedAt || 0).getTime();
+      const timeB = new Date(b.completedAt || b.startedAt || 0).getTime();
+      return timeB - timeA;
+    });
+    const latestScore = sortedCompleted[0]?.totalScore ?? 0;
+
     return {
       completedCount,
       totalCount,
       highestScore: highest || 0,
       averageScore: average || 0,
+      latestScore,
     };
   }, [userAttempts, allTests]);
 
@@ -453,14 +461,22 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
             </div>
           </div>
 
-          {/* Stat 4: Adaptive MST Status */}
-          <div className="p-4 rounded-2xl bg-[#FAF8F5] dark:bg-[#121A2F] border border-[#EBE5DF] dark:border-[#1E293B] flex flex-col items-center justify-center">
-            <div className="flex items-center gap-1.5 text-xs font-extrabold text-[#3D405B] dark:text-[#F8FAFC] font-mono">
-              <span className="w-2 h-2 rounded-full bg-[#2A9D8F] animate-pulse" />
-              <span>{t('mocks_view.stage2Status', 'Adaptiv Bosqich')}</span>
+          {/* Stat 4: Latest Score */}
+          <div className="p-4 rounded-2xl bg-[#FAF8F5] dark:bg-[#121A2F] border border-[#EBE5DF] dark:border-[#1E293B]">
+            <div className="text-xl sm:text-2xl font-extrabold font-mono text-[#1E1B18] dark:text-[#F8FAFC]">
+              {stats.latestScore > 0 ? (
+                <>
+                  {stats.latestScore} <span className="text-xs font-normal text-[#78716C] dark:text-[#94A3B8]">/ 1600</span>
+                </>
+              ) : (
+                <span className="text-slate-400 dark:text-slate-500">-- / 1600</span>
+              )}
             </div>
-            <div className="text-[10px] uppercase font-bold text-[#78716C] dark:text-[#94A3B8] tracking-wider mt-1">
-              {t('mocks_view.stage2Desc', 'Module 1 natijangizga qarab Module 2 avtomatik ravishda Hard yoki Easy darajaga moslashadi.')}
+            <div className="text-[10px] uppercase font-bold text-[#78716C] dark:text-[#94A3B8] tracking-wider mt-0.5">
+              {t('mocks_view.latestScore', "ENG SO'NGGI NATIJA")}
+            </div>
+            <div className="text-[10px] text-[#78716C] dark:text-[#94A3B8] mt-0.5">
+              {t('mocks_view.lastAttempt', "So'nggi urinish")}
             </div>
           </div>
         </div>

@@ -60,27 +60,27 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   const navItems = [
     {
       id: 'dashboard',
-      label: 'Uy',
+      label: t('nav.home', 'Uy'),
       icon: Home,
     },
     {
       id: 'qbank',
-      label: 'Savollar',
+      label: t('nav.questions', 'Savollar'),
       icon: Layers,
     },
     {
       id: 'bluebook',
-      label: 'Testlar',
+      label: t('nav.mocks', 'Testlar'),
       icon: FileText,
     },
     {
       id: 'vocab',
-      label: "Lug'at",
+      label: t('nav.vocabulary', "Lug'at"),
       icon: BookOpen,
     },
     {
       id: 'vault',
-      label: 'Xatolar',
+      label: t('nav.mistakes', 'Xatolar'),
       icon: AlertCircle,
     },
   ];

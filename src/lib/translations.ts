@@ -40,13 +40,13 @@ export const translations = {
   uz: {
     // Navigation & Shell
     nav: {
-      home: "Bosh sahifa",
-      questions: "Savollar Banki",
-      mocks: "Mock Testlar",
-      vocabulary: "SAT Lug'at",
-      mistakes: "Xatolar Ombori",
+      home: "Uy",
+      questions: "Savollar",
+      mocks: "Testlar",
+      vocabulary: "Lug'at",
+      mistakes: "Xatolar",
       community: "Hamjamiyat",
-      admin: "Admin Panel",
+      admin: "Admin",
       searchPlaceholder: "Qidirish (odamlar, guruhlar, savollar)...",
       login: "Kirish",
       register: "Ro'yxatdan o'tish",
@@ -177,6 +177,8 @@ export const translations = {
       accessAll: "Barchasi",
       accessPublic: "Ochiq (Public)",
       startBtn: "Testni Boshlash",
+      latestScore: "Eng So'nggi Natija",
+      lastAttempt: "So'nggi urinish",
     },
     // 4. Vocabulary Mastery View
     vocab_view: {
@@ -220,12 +222,12 @@ export const translations = {
   en: {
     nav: {
       home: "Home",
-      questions: "Question Bank",
-      mocks: "Mock Tests",
-      vocabulary: "SAT Vocabulary",
-      mistakes: "Mistake Bank",
+      questions: "Questions",
+      mocks: "Mocks",
+      vocabulary: "Vocabulary",
+      mistakes: "Mistakes",
       community: "Community",
-      admin: "Admin Panel",
+      admin: "Admin",
       searchPlaceholder: "Search (people, groups, questions)...",
       login: "Log In",
       register: "Sign Up",
@@ -352,6 +354,8 @@ export const translations = {
       accessAll: "All",
       accessPublic: "Public",
       startBtn: "Start Test",
+      latestScore: "Latest Score",
+      lastAttempt: "Last attempt",
     },
     // 4. Vocabulary Mastery View
     vocab_view: {
@@ -395,12 +399,12 @@ export const translations = {
   ru: {
     nav: {
       home: "Главная",
-      questions: "Банк вопросов",
-      mocks: "Mock Тесты",
-      vocabulary: "Словарь SAT",
-      mistakes: "Банк ошибок",
+      questions: "Вопросы",
+      mocks: "Тесты",
+      vocabulary: "Словарь",
+      mistakes: "Ошибки",
       community: "Сообщество",
-      admin: "Панель админа",
+      admin: "Админ",
       searchPlaceholder: "Поиск (люди, группы, вопросы)...",
       login: "Войти",
       register: "Регистрация",
@@ -527,6 +531,8 @@ export const translations = {
       accessAll: "Все",
       accessPublic: "Открытые (Public)",
       startBtn: "Начать тест",
+      latestScore: "Последний результат",
+      lastAttempt: "Последняя попытка",
     },
     // 4. Vocabulary Mastery View
     vocab_view: {
@@ -575,20 +581,20 @@ export type TranslationKey = string;
  * Universal backwards-compatible fallback mapping for flat keys used in legacy components
  */
 const FLAT_ALIAS_MAP: Record<string, { uz: string; en: string; ru: string }> = {
-  dashboard: { uz: 'Bosh sahifa', en: 'Home', ru: 'Главная' },
-  home: { uz: 'Bosh sahifa', en: 'Home', ru: 'Главная' },
-  qbank: { uz: 'Savollar Banki', en: 'Question Bank', ru: 'Банк вопросов' },
-  practice: { uz: 'Savollar Banki', en: 'Question Bank', ru: 'Банк вопросов' },
-  questions: { uz: 'Savollar Banki', en: 'Question Bank', ru: 'Банк вопросов' },
-  bluebook: { uz: 'Mock Testlar', en: 'Mock Tests', ru: 'Mock Тесты' },
-  mocks: { uz: 'Mock Testlar', en: 'Mock Tests', ru: 'Mock Тесты' },
-  vocab: { uz: "SAT Lug'at", en: 'SAT Vocabulary', ru: 'Словарь SAT' },
-  vocabulary: { uz: "SAT Lug'at", en: 'SAT Vocabulary', ru: 'Словарь SAT' },
-  vault: { uz: 'Xatolar Ombori', en: 'Mistake Bank', ru: 'Банк ошибок' },
-  mistakes: { uz: 'Xatolar Ombori', en: 'Mistake Bank', ru: 'Банк ошибок' },
+  dashboard: { uz: 'Uy', en: 'Home', ru: 'Главная' },
+  home: { uz: 'Uy', en: 'Home', ru: 'Главная' },
+  qbank: { uz: 'Savollar', en: 'Questions', ru: 'Вопросы' },
+  practice: { uz: 'Savollar', en: 'Questions', ru: 'Вопросы' },
+  questions: { uz: 'Savollar', en: 'Questions', ru: 'Вопросы' },
+  bluebook: { uz: 'Testlar', en: 'Mocks', ru: 'Тесты' },
+  mocks: { uz: 'Testlar', en: 'Mocks', ru: 'Тесты' },
+  vocab: { uz: "Lug'at", en: 'Vocabulary', ru: 'Словарь' },
+  vocabulary: { uz: "Lug'at", en: 'Vocabulary', ru: 'Словарь' },
+  vault: { uz: 'Xatolar', en: 'Mistakes', ru: 'Ошибки' },
+  mistakes: { uz: 'Xatolar', en: 'Mistakes', ru: 'Ошибки' },
   community: { uz: 'Hamjamiyat', en: 'Community', ru: 'Сообщество' },
-  admin: { uz: 'Admin Panel', en: 'Admin Panel', ru: 'Панель админа' },
-  adminPanel: { uz: 'Admin Panel', en: 'Admin Panel', ru: 'Панель админа' },
+  admin: { uz: 'Admin', en: 'Admin', ru: 'Админ' },
+  adminPanel: { uz: 'Admin', en: 'Admin', ru: 'Админ' },
   mainSections: { uz: 'Asosiy Bo‘limlar', en: 'Main Sections', ru: 'Основные разделы' },
 
   language: { uz: 'Til', en: 'Language', ru: 'Язык' },

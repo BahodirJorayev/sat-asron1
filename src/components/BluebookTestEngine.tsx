@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { INITIAL_MOCK_TESTS } from '../data/mockDatabase';
 import {
   X,
   Clock,
@@ -25,7 +26,7 @@ import { FormulaReferenceSheet } from './FormulaReferenceSheet';
 
 interface Props {
   test: MockTest;
-  user: User;
+  user?: User | null;
   onExit: () => void;
   onCompleteTest: (attempt: TestAttempt, missedQuestions: Question[]) => void;
 }
@@ -68,10 +69,20 @@ export const BluebookTestEngine: React.FC<Props> = ({
     missedQuestions: Question[];
   } | null>(null);
 
+  // Safely extract questions from test or fallback to default mock questions
+  const questionsList: MockTestQuestion[] = useMemo(() => {
+    if (Array.isArray(test?.questions) && test.questions.length > 0) {
+      return test.questions.filter(Boolean);
+    }
+    return INITIAL_MOCK_TESTS[0]?.questions || [];
+  }, [test]);
+
   // Filter questions for current active Section and Module
-  const currentModuleQuestions: MockTestQuestion[] = test.questions.filter((q) => {
-    return q.section === currentSection && q.moduleNumber === currentModule;
-  });
+  const currentModuleQuestions: MockTestQuestion[] = useMemo(() => {
+    return questionsList.filter((q) => {
+      return q && q.section === currentSection && q.moduleNumber === currentModule;
+    });
+  }, [questionsList, currentSection, currentModule]);
 
   const activeQuestion = currentModuleQuestions[currentQuestionIndex]?.question;
   const totalQuestionsInModule = currentModuleQuestions.length;
@@ -107,10 +118,11 @@ export const BluebookTestEngine: React.FC<Props> = ({
   const handleNextModuleOrFinish = () => {
     if (currentSection === 'READING_AND_WRITING' && currentModule === 1) {
       // Evaluate Module 1 performance for RW adaptive routing
-      const m1Questions = test.questions.filter((q) => q.section === 'READING_AND_WRITING' && q.moduleNumber === 1);
+      const m1Questions = questionsList.filter((q) => q && q.section === 'READING_AND_WRITING' && q.moduleNumber === 1);
       let correct = 0;
       m1Questions.forEach((q) => {
-        if (answers[q.questionId]?.trim().toUpperCase() === q.question.correctAnswer.trim().toUpperCase()) {
+        const correctAns = q?.question?.correctAnswer ? String(q.question.correctAnswer).trim().toUpperCase() : '';
+        if (correctAns && answers[q.questionId]?.trim().toUpperCase() === correctAns) {
           correct++;
         }
       });
@@ -130,10 +142,11 @@ export const BluebookTestEngine: React.FC<Props> = ({
       setShowDirections(false);
     } else if (currentSection === 'MATH' && currentModule === 1) {
       // Evaluate Math Module 1
-      const m1Math = test.questions.filter((q) => q.section === 'MATH' && q.moduleNumber === 1);
+      const m1Math = questionsList.filter((q) => q && q.section === 'MATH' && q.moduleNumber === 1);
       let correct = 0;
       m1Math.forEach((q) => {
-        if (answers[q.questionId]?.trim().toUpperCase() === q.question.correctAnswer.trim().toUpperCase()) {
+        const correctAns = q?.question?.correctAnswer ? String(q.question.correctAnswer).trim().toUpperCase() : '';
+        if (correctAns && answers[q.questionId]?.trim().toUpperCase() === correctAns) {
           correct++;
         }
       });
@@ -150,14 +163,15 @@ export const BluebookTestEngine: React.FC<Props> = ({
   };
 
   const calculateOfficialScore = () => {
-    const rwQuestions = test.questions.filter((q) => q.section === 'READING_AND_WRITING');
-    const mathQuestions = test.questions.filter((q) => q.section === 'MATH');
+    const rwQuestions = questionsList.filter((q) => q && q.section === 'READING_AND_WRITING');
+    const mathQuestions = questionsList.filter((q) => q && q.section === 'MATH');
 
     let rwCorrect = 0;
     let mathCorrect = 0;
     const missedList: Question[] = [];
 
-    test.questions.forEach((q) => {
+    questionsList.forEach((q) => {
+      if (!q || !q.question) return;
       const userAns = answers[q.questionId];
       const isCorrect = userAns && userAns.trim().toUpperCase() === q.question.correctAnswer.trim().toUpperCase();
       if (isCorrect) {
@@ -542,7 +556,7 @@ export const BluebookTestEngine: React.FC<Props> = ({
       <footer className="h-16 bg-[#111111] border-t border-[#1F2937] px-4 sm:px-6 flex items-center justify-between shrink-0">
         {/* Left: User & Section details */}
         <div className="text-xs text-[#9CA3AF] hidden sm:block">
-          <span className="text-white font-bold">{user.fullName}</span> • Digital SAT Official Simulation
+          <span className="text-white font-bold">{user?.fullName || 'Talaba'}</span> • Digital SAT Official Simulation
         </div>
 
         {/* Center: Question Matrix Grid Drawer Button */}

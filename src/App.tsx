@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { ActiveView, resolveRoute } from './RootRouter';
+export { resolveRoute };
+export type { ActiveView };
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { DashboardView } from './components/DashboardView';
@@ -153,46 +156,33 @@ export default function App() {
     return hasSavedProfile;
   };
 
-  // Derive initial tab from URL hash, pathname or persistent session to prevent redirect loops
-  const [activeTab, setActiveTab] = useState<string>(() => {
+  // Single-source route state: resolveRoute(hashOrPath)
+  const [currentView, setCurrentView] = useState<ActiveView>(() => {
     if (typeof window !== 'undefined') {
-      const hash = window.location.hash.replace(/^#\/?/, '').trim();
-      const pathname = window.location.pathname;
-      const search = window.location.search;
-      const raw = `${hash} ${pathname}`.toLowerCase();
-
-      // 0. Check for OAuth callback tokens or auth codes (Google OAuth redirect)
-      if (
-        raw.includes('access_token') ||
-        raw.includes('token_type') ||
-        raw.includes('code=') ||
-        search.includes('code=')
-      ) {
-        return 'dashboard';
-      }
-
-      // 1. Exhaustive check of hash and pathname aliases
-      if (raw.includes('qbank') || raw.includes('question') || raw.includes('sqb') || raw.includes('practice')) return 'qbank';
-      if (raw.includes('mock') || raw.includes('test') || raw.includes('bluebook')) return 'bluebook';
-      if (raw.includes('vocab') || raw.includes('word') || raw.includes('lug')) return 'vocab';
-      if (raw.includes('mistake') || raw.includes('error') || raw.includes('xato') || raw.includes('vault')) return 'vault';
-      if (raw.includes('community') || raw.includes('chat') || raw.includes('hamjamiyat')) return 'community';
-      if (raw.includes('profile') || raw.includes('setting')) return 'profile';
-      if (raw.includes('admin')) return 'admin';
-      if (raw.includes('arena')) return 'arena';
-      if (raw.includes('ai-tutor') || raw.includes('tutor')) return 'ai-tutor';
-      if (raw.includes('roadmap')) return 'roadmap';
-      if (raw.includes('daily-workout') || raw.includes('workout')) return 'daily-workout';
-      if (raw.includes('blog')) return 'blog';
-      if (raw.includes('dashboard')) return 'dashboard';
-      if (raw.includes('landing')) return 'landing';
-
-      const hasSavedUser = !!localStorage.getItem('aurasat_user_profile');
-      return hasSavedUser ? 'dashboard' : 'landing';
+      const raw = window.location.hash || window.location.pathname || '';
+      return resolveRoute(raw);
     }
-    const hasSavedUser = typeof localStorage !== 'undefined' && !!localStorage.getItem('aurasat_user_profile');
-    return hasSavedUser ? 'dashboard' : 'landing';
+    return 'dashboard';
   });
+
+  // Map currentView to activeTab for Sidebar/Header/MobileBottomNav active states
+  const activeTab = currentView === 'mocks' ? 'bluebook'
+    : currentView === 'questions' ? 'qbank'
+    : currentView === 'vocabulary' ? 'vocab'
+    : currentView === 'mistakes' ? 'vault'
+    : (currentView as string);
+
+  const setActiveTab = (tabOrHash: string) => {
+    const resolved = resolveRoute(tabOrHash);
+    setCurrentView(resolved);
+    if (typeof window !== 'undefined') {
+      const cleanTab = tabOrHash.replace(/^[#/]+/, '');
+      const targetHash = `#/${cleanTab || resolved}`;
+      if (window.location.hash !== targetHash) {
+        window.location.hash = targetHash;
+      }
+    }
+  };
   const [mistakes, setMistakes] = useState<MistakeVaultItem[]>(INITIAL_MISTAKES);
 
   // Real-time cross-device user progress sync
@@ -1711,320 +1701,301 @@ export default function App() {
     });
   };
 
-  // Bulletproof Routing & View Transition Engine
+  // Backward-compatible getActiveView referencing resolveRoute
   const getActiveView = (hashOrPath: string): string => {
-    const clean = hashOrPath.replace(/^#\/?/, '').toLowerCase().split('?')[0].trim();
-    if (clean === '' || clean.startsWith('landing')) return 'landing';
-    if (clean.startsWith('dash') || clean.startsWith('home') || clean === 'app') return 'dashboard';
-    if (clean.startsWith('qbank') || clean.startsWith('question') || clean.startsWith('sqb') || clean.startsWith('practice')) return 'qbank';
-    if (clean.startsWith('mock') || clean.startsWith('test') || clean.startsWith('bluebook')) return 'bluebook';
-    if (clean.startsWith('vocab') || clean.startsWith('word') || clean.startsWith('lug')) return 'vocab';
-    if (clean.startsWith('mistake') || clean.startsWith('error') || clean.startsWith('xato') || clean.startsWith('vault')) return 'vault';
-    if (clean.startsWith('communit') || clean.startsWith('chat') || clean.startsWith('hamjam')) return 'community';
-    if (clean.startsWith('admin')) return 'admin';
-    if (clean.startsWith('profile') || clean.startsWith('setting')) return 'profile';
-    if (clean.startsWith('arena')) return 'arena';
-    if (clean.startsWith('ai-tutor') || clean.startsWith('tutor')) return 'ai-tutor';
-    if (clean.startsWith('roadmap')) return 'roadmap';
-    if (clean.startsWith('daily-workout') || clean.startsWith('workout')) return 'daily-workout';
-    if (clean.startsWith('blog')) return 'blog';
-    return 'dashboard';
+    return resolveRoute(hashOrPath);
   };
 
-  // Sync route changes from URL hash/popstate
+  // Single-source syncRoute from window hash / popstate
   useEffect(() => {
-    const handleRoute = () => {
+    const syncRoute = () => {
       if (typeof window === 'undefined') return;
-      const hash = window.location.hash || window.location.pathname || '#/dashboard';
-      const target = getActiveView(hash);
-      if (target && target !== activeTab) {
-        setActiveTab(target);
-      }
+      const raw = window.location.hash || window.location.pathname || '#/dashboard';
+      const resolved = resolveRoute(raw);
+      setCurrentView(resolved);
     };
 
-    window.addEventListener('hashchange', handleRoute);
-    window.addEventListener('popstate', handleRoute);
-    handleRoute();
+    window.addEventListener('hashchange', syncRoute);
+    window.addEventListener('popstate', syncRoute);
+    syncRoute();
+
     return () => {
-      window.removeEventListener('hashchange', handleRoute);
-      window.removeEventListener('popstate', handleRoute);
+      window.removeEventListener('hashchange', syncRoute);
+      window.removeEventListener('popstate', syncRoute);
     };
-  }, [activeTab]);
+  }, []);
 
-  const renderCurrentView = () => {
-    const hash = typeof window !== 'undefined' ? window.location.hash : '';
-    const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
-    const viewKey = activeTab || getActiveView(`${hash} ${pathname}`);
-    const raw = `${hash} ${pathname} ${activeTab}`.toLowerCase();
-
-    // 1. Question Bank aliases: qbank, question, sqb, practice
-    if (raw.includes('qbank') || raw.includes('question') || raw.includes('sqb') || raw.includes('practice')) {
-      return (
-        <QuestionBankView
-          user={currentUser}
-          questions={questions}
-          initialFilter={qbankInitialFilter}
-          onOpenSocraticTutor={handleOpenSocraticTutor}
-          onDepositMistake={handleDepositMistake}
-          onOpenPaywall={() => setIsPaywallOpen(true)}
-        />
-      );
-    }
-
-    // 2. Mock Tests aliases: mock, test, bluebook
-    if (raw.includes('mock') || raw.includes('test') || raw.includes('bluebook')) {
-      return (
-        <MockTestsCatalogView
-          user={currentUser}
-          mockTests={mockTests}
-          categories={mockCategories}
-          onLaunchTest={(test) => setActiveBluebookTest(test)}
-          onStartBluebookTest={(test) => setActiveBluebookTest(test)}
-          onOpenPaywall={() => setIsPaywallOpen(true)}
-        />
-      );
-    }
-
-    // 3. Vocabulary aliases: vocab, word, lug, vocabulary
-    if (raw.includes('vocab') || raw.includes('word') || raw.includes('lug')) {
-      return (
-        <VocabularyHub
-          user={currentUser}
-          onOpenPaywall={() => setIsPaywallOpen(true)}
-        />
-      );
-    }
-
-    // 4. Mistake Bank / Vault aliases: mistake, error, xato, vault
-    if (raw.includes('mistake') || raw.includes('error') || raw.includes('xato') || raw.includes('vault')) {
-      return (
-        <MistakeVaultView
-          mistakes={mistakes}
-          user={currentUser}
-          onOpenSocraticTutor={handleOpenSocraticTutor}
-          onOpenPaywall={() => setIsPaywallOpen(true)}
-          onUpdateMistakeItem={handleUpdateMistakeItem}
-        />
-      );
-    }
-
-    // 5. Community & Chat aliases: community, chat, hamjamiyat
-    if (raw.includes('community') || raw.includes('chat') || raw.includes('hamjamiyat')) {
-      return (
-        <CommunityView
-          user={currentUser}
-          usersList={usersList}
-          onOpenPaywall={() => setIsPaywallOpen(true)}
-          onOpenQuestionInBank={(questionId) => {
-            setActiveTab('qbank');
-          }}
-          onSelectUserProfile={(u) => {
-            setInspectedUser(u);
-            setIsProfileModalOpen(true);
-          }}
-        />
-      );
-    }
-
-    // 6. Admin Panel: admin
-    if (raw.includes('admin')) {
-      return (
-        <AdminPanelView
-          currentUser={currentUser}
-          onRefreshGlobal={() => fetchPlatformContentMap().then(setPlatformContentMap)}
-          usersList={usersList}
-          receipts={receipts}
-          questions={questions}
-          mockTests={mockTests}
-          mockCategories={mockCategories}
-          onAddMockCategory={handleAddMockCategory}
-          onUpdateMockCategory={handleUpdateMockCategory}
-          onDeleteMockCategory={handleDeleteMockCategory}
-          blogArticles={blogArticles}
-          testimonials={testimonials}
-          pricingPlans={pricingPlans}
-          globalSettings={globalSettings}
-          desmosHacks={desmosHacks}
-          siteBranding={siteBranding}
-          adminCredentials={adminCredentials}
-          onUpdateSiteBranding={handleUpdateSiteBranding}
-          onUpdateAdminCredentials={handleUpdateAdminCredentials}
-          onSavePricingPlans={handleSavePricingPlans}
-          onSaveGlobalSettings={handleSaveGlobalSettings}
-          onSaveDesmosHacks={handleSaveDesmosHacks}
-          onSaveTestimonials={(tests) => {
-            setTestimonials(tests);
-            localStorage.setItem('aurasat_testimonials', JSON.stringify(tests));
-          }}
-          onApproveReceipt={handleApproveReceipt}
-          onRejectReceipt={handleRejectReceipt}
-          onAddReceipt={handleAddReceipt}
-          onDeleteReceipt={handleDeleteReceipt}
-          onUpdateUserPlan={handleUpdateUserPlan}
-          onAddUser={handleAddUser}
-          onUpdateUser={handleUpdateUser}
-          onDeleteUser={handleDeleteUser}
-          onAddQuestion={handleAddQuestion}
-          onUpdateQuestion={handleUpdateQuestion}
-          onDeleteQuestion={handleDeleteQuestion}
-          onIngestQuestions={handleIngestQuestions}
-          onAddMockTest={handleAddMockTest}
-          onUpdateMockTest={handleUpdateMockTest}
-          onDeleteMockTest={handleDeleteMockTest}
-          onPreviewMockTest={(test) => setActiveBluebookTest(test)}
-          onAddBlogArticle={handleAddBlogArticle}
-          onUpdateBlogArticle={handleUpdateBlogArticle}
-          onDeleteBlogArticle={handleDeleteBlogArticle}
-          onAddTestimonial={handleAddTestimonial}
-          onUpdateTestimonial={handleUpdateTestimonial}
-          onDeleteTestimonial={handleDeleteTestimonial}
-          onNavigateToStudentView={() => setActiveTab('dashboard')}
-        />
-      );
-    }
-
-    // 7. Profile & Settings aliases: profile, setting
-    if (raw.includes('profile') || raw.includes('setting')) {
-      return (
-        <ProfileView
-          currentUser={currentUser}
-          onUpdateUser={handleUpdateCurrentUser}
-          onOpenPaywall={() => setIsPaywallOpen(true)}
-          onOpenAuthModal={() => handleOpenAuth('signin')}
-          onSignOut={handleSignOut}
-          onOpenChat={() => setActiveTab('community')}
-          onOpenArena={() => setActiveTab('arena')}
-        />
-      );
-    }
-
-    // 8. Multiplayer Arena: arena
-    if (raw.includes('arena')) {
-      return (
-        <MultiplayerArenaView
-          user={currentUser}
-          usersList={usersList}
-          onOpenPaywall={() => setIsPaywallOpen(true)}
-          onDepositMistake={handleDepositMistake}
-          onOpenSocraticTutor={handleOpenSocraticTutor}
-          onSelectUserProfile={(u) => {
-            setInspectedUser(u);
-            setIsProfileModalOpen(true);
-          }}
-        />
-      );
-    }
-
-    // 9. AI Tutor: ai-tutor, tutor
-    if (raw.includes('ai-tutor') || raw.includes('tutor')) {
-      return (
-        <SocraticRepetitorHubView
-          user={currentUser}
-          questions={questions}
-          mistakes={mistakes}
-          onOpenPaywall={() => setIsPaywallOpen(true)}
-          onOpenQuestionBank={(skill) => {
-            setQbankInitialFilter(skill || '');
-            setActiveTab('qbank');
-          }}
-        />
-      );
-    }
-
-    // 10. Roadmap: roadmap
-    if (raw.includes('roadmap')) {
-      return (
-        <RoadmapView
-          user={currentUser}
-          onOpenPaywall={() => setIsPaywallOpen(true)}
-          onOpenDailyWorkout={() => setIsDailyWorkoutOpen(true)}
-          onOpenQuestionBank={() => setActiveTab('qbank')}
-          onOpenVocabTrainer={() => setActiveTab('vocab')}
-          onOpenMockTests={() => setActiveTab('bluebook')}
-          onOpenSocraticTutor={handleOpenSocraticTutor}
-          onOpenMistakeVault={() => setActiveTab('vault')}
-        />
-      );
-    }
-
-    // 11. Daily Workout: daily-workout, workout
-    if (raw.includes('daily-workout') || raw.includes('workout')) {
-      return (
-        <div className="animate-in fade-in duration-200">
-          <DailyWorkoutView
+  const renderView = (view: ActiveView) => {
+    switch (view) {
+      case 'landing':
+        return (
+          <LandingView
             user={currentUser}
-            onWorkoutComplete={handleWorkoutComplete}
-            onReturnToDashboard={() => setActiveTab('dashboard')}
+            siteBranding={siteBranding}
+            platformContent={platformContentMap}
+            blogArticles={blogArticles}
+            testimonials={testimonials}
+            onOpenAuthModal={(mode) => handleOpenAuth(mode || 'signup')}
+            onOpenDiagnostic={() => setIsDiagnosticOpen(true)}
+            onOpenDailyWorkout={() => setIsDailyWorkoutOpen(true)}
+            onOpenPaywall={() => setIsPaywallOpen(true)}
+            onNavigateToBlog={() => setActiveTab('blog')}
+          />
+        );
+
+      case 'dashboard':
+        if (!currentUser) {
+          return (
+            <div className="p-4 sm:p-6">
+              <ViewSkeletonLoader title="Dashboard yuklanmoqda..." />
+            </div>
+          );
+        }
+        return (
+          <DashboardView
+            user={currentUser}
+            mistakes={mistakes}
+            mockTests={mockTests}
+            platformContent={platformContentMap}
+            onOpenDailyWorkout={() => setIsDailyWorkoutOpen(true)}
+            onOpenDiagnostic={() => setIsDiagnosticOpen(true)}
             onOpenMistakeVault={() => setActiveTab('vault')}
+            onStartBluebookTest={(test) => setActiveBluebookTest(test)}
+            onOpenQuestionBank={(subSkill) => {
+              setQbankInitialFilter(subSkill || '');
+              setActiveTab('qbank');
+            }}
+            onOpenCommunity={() => setActiveTab('community')}
+            onOpenRoadmap={() => setActiveTab('roadmap')}
             onOpenPaywall={() => setIsPaywallOpen(true)}
             onOpenSocraticTutor={handleOpenSocraticTutor}
-            onOpenDiagnostic={() => setIsDiagnosticOpen(true)}
+            onOpenMilestoneModal={handleOpenMilestoneModal}
           />
-        </div>
-      );
-    }
+        );
 
-    // 12. Blog: blog
-    if (raw.includes('blog')) {
-      return (
-        <BlogView
-          articles={blogArticles}
-          siteBranding={siteBranding}
-          onOpenDiagnostic={() => setIsDiagnosticOpen(true)}
-          onOpenAuthModal={(mode) => handleOpenAuth(mode || 'signup')}
-          onBackToOverview={() => setActiveTab('landing')}
-        />
-      );
-    }
+      case 'questions':
+        return (
+          <QuestionBankView
+            user={currentUser}
+            questions={questions}
+            initialFilter={qbankInitialFilter}
+            onOpenSocraticTutor={handleOpenSocraticTutor}
+            onDepositMistake={handleDepositMistake}
+            onOpenPaywall={() => setIsPaywallOpen(true)}
+          />
+        );
 
-    // 13. Landing page (only if explicitly requested and not on dashboard)
-    if (viewKey === 'landing' && !hash.includes('dashboard') && !pathname.includes('dashboard')) {
-      return (
-        <LandingView
-          user={currentUser}
-          siteBranding={siteBranding}
-          platformContent={platformContentMap}
-          blogArticles={blogArticles}
-          testimonials={testimonials}
-          onOpenAuthModal={(mode) => handleOpenAuth(mode || 'signup')}
-          onOpenDiagnostic={() => setIsDiagnosticOpen(true)}
-          onOpenDailyWorkout={() => setIsDailyWorkoutOpen(true)}
-          onOpenPaywall={() => setIsPaywallOpen(true)}
-          onNavigateToBlog={() => setActiveTab('blog')}
-        />
-      );
-    }
+      case 'mocks':
+        return (
+          <MockTestsCatalogView
+            user={currentUser}
+            mockTests={mockTests}
+            categories={mockCategories}
+            onLaunchTest={(test) => setActiveBluebookTest(test)}
+            onStartBluebookTest={(test) => setActiveBluebookTest(test)}
+            onOpenPaywall={() => setIsPaywallOpen(true)}
+          />
+        );
 
-    // Safe Default Fallback: DashboardView (Guarantees zero blank screen)
-    if (!currentUser) {
-      return (
-        <div className="p-4 sm:p-6">
-          <ViewSkeletonLoader title="Dashboard yuklanmoqda..." />
-        </div>
-      );
-    }
+      case 'vocabulary':
+        return (
+          <VocabularyHub
+            user={currentUser}
+            onOpenPaywall={() => setIsPaywallOpen(true)}
+          />
+        );
 
-    return (
-      <DashboardView
-        user={currentUser}
-        mistakes={mistakes}
-        mockTests={mockTests}
-        platformContent={platformContentMap}
-        onOpenDailyWorkout={() => setIsDailyWorkoutOpen(true)}
-        onOpenDiagnostic={() => setIsDiagnosticOpen(true)}
-        onOpenMistakeVault={() => setActiveTab('vault')}
-        onStartBluebookTest={(test) => setActiveBluebookTest(test)}
-        onOpenQuestionBank={(subSkill) => {
-          setQbankInitialFilter(subSkill || '');
-          setActiveTab('qbank');
-        }}
-        onOpenCommunity={() => setActiveTab('community')}
-        onOpenRoadmap={() => setActiveTab('roadmap')}
-        onOpenPaywall={() => setIsPaywallOpen(true)}
-        onOpenSocraticTutor={handleOpenSocraticTutor}
-        onOpenMilestoneModal={handleOpenMilestoneModal}
-      />
-    );
+      case 'mistakes':
+        return (
+          <MistakeVaultView
+            mistakes={mistakes}
+            user={currentUser}
+            onOpenSocraticTutor={handleOpenSocraticTutor}
+            onOpenPaywall={() => setIsPaywallOpen(true)}
+            onUpdateMistakeItem={handleUpdateMistakeItem}
+          />
+        );
+
+      case 'community':
+        return (
+          <CommunityView
+            user={currentUser}
+            usersList={usersList}
+            onOpenPaywall={() => setIsPaywallOpen(true)}
+            onOpenQuestionInBank={(questionId) => {
+              setActiveTab('qbank');
+            }}
+            onSelectUserProfile={(u) => {
+              setInspectedUser(u);
+              setIsProfileModalOpen(true);
+            }}
+          />
+        );
+
+      case 'admin':
+        return (
+          <AdminPanelView
+            currentUser={currentUser}
+            onRefreshGlobal={() => fetchPlatformContentMap().then(setPlatformContentMap)}
+            usersList={usersList}
+            receipts={receipts}
+            questions={questions}
+            mockTests={mockTests}
+            mockCategories={mockCategories}
+            onAddMockCategory={handleAddMockCategory}
+            onUpdateMockCategory={handleUpdateMockCategory}
+            onDeleteMockCategory={handleDeleteMockCategory}
+            blogArticles={blogArticles}
+            testimonials={testimonials}
+            pricingPlans={pricingPlans}
+            globalSettings={globalSettings}
+            desmosHacks={desmosHacks}
+            siteBranding={siteBranding}
+            adminCredentials={adminCredentials}
+            onUpdateSiteBranding={handleUpdateSiteBranding}
+            onUpdateAdminCredentials={handleUpdateAdminCredentials}
+            onSavePricingPlans={handleSavePricingPlans}
+            onSaveGlobalSettings={handleSaveGlobalSettings}
+            onSaveDesmosHacks={handleSaveDesmosHacks}
+            onSaveTestimonials={(tests) => {
+              setTestimonials(tests);
+              localStorage.setItem('aurasat_testimonials', JSON.stringify(tests));
+            }}
+            onApproveReceipt={handleApproveReceipt}
+            onRejectReceipt={handleRejectReceipt}
+            onAddReceipt={handleAddReceipt}
+            onDeleteReceipt={handleDeleteReceipt}
+            onUpdateUserPlan={handleUpdateUserPlan}
+            onAddUser={handleAddUser}
+            onUpdateUser={handleUpdateUser}
+            onDeleteUser={handleDeleteUser}
+            onAddQuestion={handleAddQuestion}
+            onUpdateQuestion={handleUpdateQuestion}
+            onDeleteQuestion={handleDeleteQuestion}
+            onIngestQuestions={handleIngestQuestions}
+            onAddMockTest={handleAddMockTest}
+            onUpdateMockTest={handleUpdateMockTest}
+            onDeleteMockTest={handleDeleteMockTest}
+            onPreviewMockTest={(test) => setActiveBluebookTest(test)}
+            onAddBlogArticle={handleAddBlogArticle}
+            onUpdateBlogArticle={handleUpdateBlogArticle}
+            onDeleteBlogArticle={handleDeleteBlogArticle}
+            onAddTestimonial={handleAddTestimonial}
+            onUpdateTestimonial={handleUpdateTestimonial}
+            onDeleteTestimonial={handleDeleteTestimonial}
+            onNavigateToStudentView={() => setActiveTab('dashboard')}
+          />
+        );
+
+      case 'profile':
+        return (
+          <ProfileView
+            currentUser={currentUser}
+            onUpdateUser={handleUpdateCurrentUser}
+            onOpenPaywall={() => setIsPaywallOpen(true)}
+            onOpenAuthModal={() => handleOpenAuth('signin')}
+            onSignOut={handleSignOut}
+            onOpenChat={() => setActiveTab('community')}
+            onOpenArena={() => setActiveTab('arena')}
+          />
+        );
+
+      case 'arena':
+        return (
+          <MultiplayerArenaView
+            user={currentUser}
+            usersList={usersList}
+            onOpenPaywall={() => setIsPaywallOpen(true)}
+            onDepositMistake={handleDepositMistake}
+            onOpenSocraticTutor={handleOpenSocraticTutor}
+            onSelectUserProfile={(u) => {
+              setInspectedUser(u);
+              setIsProfileModalOpen(true);
+            }}
+          />
+        );
+
+      case 'ai-tutor':
+        return (
+          <SocraticRepetitorHubView
+            user={currentUser}
+            questions={questions}
+            mistakes={mistakes}
+            onOpenPaywall={() => setIsPaywallOpen(true)}
+            onOpenQuestionBank={(skill) => {
+              setQbankInitialFilter(skill || '');
+              setActiveTab('qbank');
+            }}
+          />
+        );
+
+      case 'roadmap':
+        return (
+          <RoadmapView
+            user={currentUser}
+            onOpenPaywall={() => setIsPaywallOpen(true)}
+            onOpenDailyWorkout={() => setIsDailyWorkoutOpen(true)}
+            onOpenQuestionBank={() => setActiveTab('qbank')}
+            onOpenVocabTrainer={() => setActiveTab('vocab')}
+            onOpenMockTests={() => setActiveTab('bluebook')}
+            onOpenSocraticTutor={handleOpenSocraticTutor}
+            onOpenMistakeVault={() => setActiveTab('vault')}
+          />
+        );
+
+      case 'daily-workout':
+        return (
+          <div className="animate-in fade-in duration-200">
+            <DailyWorkoutView
+              user={currentUser}
+              onWorkoutComplete={handleWorkoutComplete}
+              onReturnToDashboard={() => setActiveTab('dashboard')}
+              onOpenMistakeVault={() => setActiveTab('vault')}
+              onOpenPaywall={() => setIsPaywallOpen(true)}
+              onOpenSocraticTutor={handleOpenSocraticTutor}
+              onOpenDiagnostic={() => setIsDiagnosticOpen(true)}
+            />
+          </div>
+        );
+
+      case 'blog':
+        return (
+          <BlogView
+            articles={blogArticles}
+            siteBranding={siteBranding}
+            onOpenDiagnostic={() => setIsDiagnosticOpen(true)}
+            onOpenAuthModal={(mode) => handleOpenAuth(mode || 'signup')}
+            onBackToOverview={() => setActiveTab('landing')}
+          />
+        );
+
+      default:
+        return (
+          <DashboardView
+            user={currentUser}
+            mistakes={mistakes}
+            mockTests={mockTests}
+            platformContent={platformContentMap}
+            onOpenDailyWorkout={() => setIsDailyWorkoutOpen(true)}
+            onOpenDiagnostic={() => setIsDiagnosticOpen(true)}
+            onOpenMistakeVault={() => setActiveTab('vault')}
+            onStartBluebookTest={(test) => setActiveBluebookTest(test)}
+            onOpenQuestionBank={(subSkill) => {
+              setQbankInitialFilter(subSkill || '');
+              setActiveTab('qbank');
+            }}
+            onOpenCommunity={() => setActiveTab('community')}
+            onOpenRoadmap={() => setActiveTab('roadmap')}
+            onOpenPaywall={() => setIsPaywallOpen(true)}
+            onOpenSocraticTutor={handleOpenSocraticTutor}
+            onOpenMilestoneModal={handleOpenMilestoneModal}
+          />
+        );
+    }
+  };
+
+  const renderCurrentView = () => {
+    return renderView(currentView);
   };
 
   return (
@@ -2110,7 +2081,7 @@ export default function App() {
 
         {/* Main Routed Views */}
         <main className={`flex-1 ${activeTab === 'community' || activeTab === 'chat' ? 'h-[100dvh] md:h-[calc(100dvh-64px)] overflow-hidden overflow-x-hidden overflow-y-hidden pb-0' : 'pb-16'}`}>
-          {renderCurrentView()}
+          {renderView(currentView)}
         </main>
       </div>
 

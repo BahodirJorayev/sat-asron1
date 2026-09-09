@@ -32,7 +32,16 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode; defaultTheme?:
     return defaultTheme;
   });
 
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
+      const effective = (stored && (stored === 'light' || stored === 'dark' || stored === 'system')) ? stored : defaultTheme;
+      if (effective === 'dark') return 'dark';
+      if (effective === 'system') return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      return 'light';
+    }
+    return defaultTheme === 'dark' ? 'dark' : 'light';
+  });
 
   useEffect(() => {
     const root = document.documentElement;

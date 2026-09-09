@@ -124,7 +124,7 @@ export const MistakeVaultView: React.FC<Props> = ({
   const [trapAnalysisError, setTrapAnalysisError] = useState<string | null>(null);
   const [isSpeakingTrap, setIsSpeakingTrap] = useState(false);
 
-  const isPro = user.planTier === 'PRO';
+  const isPro = user?.planTier === 'PRO';
 
   // Find active item
   const activeItem = useMemo(() => {

@@ -52,6 +52,7 @@ export const QuestionBankView: React.FC<Props> = ({
 }) => {
   const { t } = useLanguage();
   const { progress, recordQuestionAnswer } = useUserProgress(user);
+  const safeUserId = user?.id || 'guest-user';
 
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState(initialFilter);
@@ -69,7 +70,7 @@ export const QuestionBankView: React.FC<Props> = ({
   // User Practice History State (Persisted in localStorage & Supabase)
   const [userPractices, setUserPractices] = useState<Record<string, UserQuestionPractice>>(() => {
     try {
-      const saved = localStorage.getItem(`aurasat_sqb_practices_${user.id}`);
+      const saved = localStorage.getItem(`aurasat_sqb_practices_${safeUserId}`);
       if (saved) return JSON.parse(saved);
       return {};
     } catch {
@@ -85,8 +86,8 @@ export const QuestionBankView: React.FC<Props> = ({
         Object.entries(progress.completed_questions).forEach(([qId, val]: [string, any]) => {
           if (!merged[qId]) {
             merged[qId] = {
-              id: `practice-${user.id}-${qId}`,
-              userId: user.id,
+              id: `practice-${safeUserId}-${qId}`,
+              userId: safeUserId,
               questionId: qId,
               userAnswer: val?.selectedOption || '',
               isCorrect: !!val?.isCorrect,
@@ -99,7 +100,7 @@ export const QuestionBankView: React.FC<Props> = ({
         return merged;
       });
     }
-  }, [progress?.completed_questions, user.id]);
+  }, [progress?.completed_questions, safeUserId]);
 
   // Practice Simulation Engine State
   const [isPracticeEngineActive, setIsPracticeEngineActive] = useState<boolean>(false);
@@ -111,7 +112,7 @@ export const QuestionBankView: React.FC<Props> = ({
     setUserPractices((prev) => {
       const next = { ...prev, [result.questionId]: result };
       try {
-        localStorage.setItem(`aurasat_sqb_practices_${user.id}`, JSON.stringify(next));
+        localStorage.setItem(`aurasat_sqb_practices_${safeUserId}`, JSON.stringify(next));
       } catch {
         // ignore
       }
@@ -129,8 +130,8 @@ export const QuestionBankView: React.FC<Props> = ({
     const newBookmarked = !(existing?.isBookmarked);
 
     const updatedRecord: UserQuestionPractice = {
-      id: existing?.id || `practice-${user.id}-${q.id}`,
-      userId: user.id,
+      id: existing?.id || `practice-${safeUserId}-${q.id}`,
+      userId: safeUserId,
       questionId: q.id,
       userAnswer: existing?.userAnswer || '',
       isCorrect: existing?.isCorrect || false,

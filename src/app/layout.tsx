@@ -65,8 +65,41 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="uz" className="dark">
+    <html lang="uz" suppressHydrationWarning>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var stored = localStorage.getItem('aurasat-theme');
+                  var isDark = false;
+                  if (stored === 'dark') {
+                    isDark = true;
+                  } else if (stored === 'light') {
+                    isDark = false;
+                  } else if (stored === 'system') {
+                    isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  } else {
+                    isDark = false;
+                  }
+                  var root = document.documentElement;
+                  if (isDark) {
+                    root.classList.add('dark');
+                    root.classList.remove('light');
+                    root.setAttribute('data-theme', 'dark');
+                    root.style.colorScheme = 'dark';
+                  } else {
+                    root.classList.remove('dark');
+                    root.classList.add('light');
+                    root.setAttribute('data-theme', 'light');
+                    root.style.colorScheme = 'light';
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#03165a" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -77,7 +110,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/logo.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/logo.png" />
       </head>
-      <body className="bg-[#0A0F1D] text-[#F8FAFC] antialiased min-h-screen">
+      <body className="bg-[#FAF7F2] dark:bg-[#0A0F1D] text-[#1C1917] dark:text-[#F8FAFC] antialiased min-h-screen">
         <PathnameNormalizer />
         <PlatformSettingsProvider>
           <LanguageProvider>

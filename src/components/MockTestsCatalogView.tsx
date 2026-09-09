@@ -223,6 +223,7 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
   onOpenSocraticTutor,
 }) => {
   const startTestHandler = onStartBluebookTest || onLaunchTest || (() => {});
+  const safeUserId = user?.id || 'guest-user';
 
   // Combine passed mockTests with fallback list to ensure full catalog richness
   const allTests = useMemo(() => {
@@ -271,7 +272,7 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
   // Unlocked Mocks Engine (Stores permanently unlocked private course mocks)
   const [unlockedMockIds, setUnlockedMockIds] = useState<Set<string>>(() => {
     try {
-      const saved = localStorage.getItem(`asron_unlocked_mocks_${user.id}`);
+      const saved = localStorage.getItem(`asron_unlocked_mocks_${safeUserId}`);
       if (saved) {
         return new Set(JSON.parse(saved));
       }
@@ -286,17 +287,17 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
   useEffect(() => {
     const loadRemoteUnlockedMocks = async () => {
       try {
-        if (supabase && user.id) {
+        if (supabase && safeUserId && safeUserId !== 'guest-user') {
           const { data, error } = await supabase
             .from('user_unlocked_mocks')
             .select('mock_test_id')
-            .eq('user_id', user.id);
+            .eq('user_id', safeUserId);
           if (data && !error) {
             const remoteIds = data.map((d: any) => d.mock_test_id);
             setUnlockedMockIds((prev) => {
               const next = new Set([...prev, ...remoteIds]);
               try {
-                localStorage.setItem(`asron_unlocked_mocks_${user.id}`, JSON.stringify(Array.from(next)));
+                localStorage.setItem(`asron_unlocked_mocks_${safeUserId}`, JSON.stringify(Array.from(next)));
               } catch {}
               return next;
             });
@@ -305,7 +306,7 @@ export const MockTestsCatalogView: React.FC<MockTestsCatalogViewProps> = ({
       } catch {}
     };
     loadRemoteUnlockedMocks();
-  }, [user.id]);
+  }, [safeUserId]);
 
   // Selected Test for Pre-Test Modal
   const [selectedTestForModal, setSelectedTestForModal] = useState<MockTest | null>(null);

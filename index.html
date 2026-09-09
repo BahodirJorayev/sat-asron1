@@ -1,8 +1,37 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('aurasat-theme');
+          var isDark = false;
+          if (stored === 'dark') {
+            isDark = true;
+          } else if (stored === 'light') {
+            isDark = false;
+          } else if (stored === 'system') {
+            isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          } else {
+            isDark = false;
+          }
+          var root = document.documentElement;
+          if (isDark) {
+            root.classList.add('dark');
+            root.classList.remove('light');
+            root.setAttribute('data-theme', 'dark');
+            root.style.colorScheme = 'dark';
+          } else {
+            root.classList.remove('dark');
+            root.classList.add('light');
+            root.setAttribute('data-theme', 'light');
+            root.style.colorScheme = 'light';
+          }
+        } catch (e) {}
+      })();
+    </script>
     <title>ASRON SAT • Digital SAT Intelligence Platform</title>
     <meta name="description" content="ASRON SAT Digital SAT Intelligence Platform featuring adaptive habit workouts, smart mistake vault with AI clones, diagnostic score forecasting, official Bluebook testing engine, and live community." />
     <meta property="og:title" content="ASRON SAT • Digital SAT Intelligence Platform" />
@@ -32,7 +61,7 @@
       }
     </script>
   </head>
-  <body class="bg-[#0A0F1D] text-[#F8FAFC] antialiased selection:bg-[#E76F51] selection:text-white min-h-screen">
+  <body class="bg-[#FAF7F2] dark:bg-[#0A0F1D] text-[#1C1917] dark:text-[#F8FAFC] antialiased selection:bg-[#E76F51] selection:text-white min-h-screen">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

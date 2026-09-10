@@ -215,14 +215,18 @@ export async function saveGlobalPlatformSettings(settings: GlobalPlatformSetting
 
   // 4. Broadcast to all active browser windows & external visitors via Supabase Realtime
   try {
-    const channel = supabase.channel('global-platform-events');
+    const channel = supabase.channel(`global-settings-broadcast-${Date.now()}`);
     channel.subscribe((status) => {
       if (status === 'SUBSCRIBED') {
-        channel.send({
-          type: 'broadcast',
-          event: 'settings_updated',
-          payload,
-        });
+        channel
+          .send({
+            type: 'broadcast',
+            event: 'settings_updated',
+            payload,
+          })
+          .finally(() => {
+            supabase.removeChannel(channel);
+          });
       }
     });
   } catch (bcErr) {

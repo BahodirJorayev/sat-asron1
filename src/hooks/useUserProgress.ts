@@ -207,7 +207,7 @@ export function useUserProgress(activeUser?: User | null) {
     window.addEventListener(BROADCAST_EVENT, handleLocalBroadcast);
 
     return () => {
-      channel.unsubscribe();
+      supabase.removeChannel(channel);
       window.removeEventListener(BROADCAST_EVENT, handleLocalBroadcast);
     };
   }, [userId, fetchProgress]);

@@ -201,14 +201,18 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
       // 4. Broadcast via Supabase Realtime channel so other open tabs / devices reflect immediately
       try {
-        const realtimeChannel = supabase.channel(`profile-realtime-${activeId}`);
+        const realtimeChannel = supabase.channel(`profile-broadcast-${activeId}-${Date.now()}`);
         realtimeChannel.subscribe((status) => {
           if (status === 'SUBSCRIBED') {
-            realtimeChannel.send({
-              type: 'broadcast',
-              event: 'profile_updated',
-              payload: updatedUser,
-            });
+            realtimeChannel
+              .send({
+                type: 'broadcast',
+                event: 'profile_updated',
+                payload: updatedUser,
+              })
+              .finally(() => {
+                supabase.removeChannel(realtimeChannel);
+              });
           }
         });
       } catch (rtErr) {

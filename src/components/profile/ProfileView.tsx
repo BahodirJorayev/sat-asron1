@@ -176,8 +176,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             setTargetExamDate(resolvedUser.targetExamDate?.slice(0, 10) || '2026-10-03');
           }
 
+          if (!isMounted) return;
+
           // Realtime cross-device synchronization (PC <-> Mobile)
-          profileChannel = supabase
+          const channel = supabase
             .channel(`profile-sync-${activeUser.id}`)
             .on(
               'postgres_changes',
@@ -225,6 +227,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               }
             )
             .subscribe();
+
+          if (!isMounted) {
+            supabase.removeChannel(channel);
+          } else {
+            profileChannel = channel;
+          }
         }
       } catch (err) {
         console.warn('Profile fetch warning:', err);
@@ -248,7 +256,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
     return () => {
       isMounted = false;
-      if (profileChannel) profileChannel.unsubscribe();
+      if (profileChannel) supabase.removeChannel(profileChannel);
     };
   }, []);
 

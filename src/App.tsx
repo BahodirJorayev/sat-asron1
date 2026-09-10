@@ -619,8 +619,8 @@ export default function App() {
 
     return () => {
       window.removeEventListener('asron_settings_updated', handleSettingsBroadcast);
-      broadcastChannel.unsubscribe();
-      dbSettingsChannel.unsubscribe();
+      supabase.removeChannel(broadcastChannel);
+      supabase.removeChannel(dbSettingsChannel);
     };
   }, []);
 

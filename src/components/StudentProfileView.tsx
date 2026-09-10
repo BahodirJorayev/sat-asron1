@@ -168,7 +168,7 @@ export const StudentProfileView: React.FC<StudentProfileViewProps> = ({
 
     return () => {
       isMounted = false;
-      channel.unsubscribe();
+      supabase.removeChannel(channel);
     };
   }, [currentUser.id]);
 

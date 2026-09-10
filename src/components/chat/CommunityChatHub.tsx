@@ -252,7 +252,7 @@ export const CommunityChatHub: React.FC<Props> = ({
     );
 
     return () => {
-      channel.unsubscribe();
+      supabase.removeChannel(channel);
     };
   }, [activeChat?.id, currentUser.id]);
 

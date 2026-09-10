@@ -90,13 +90,19 @@ export const FormattedMathText: React.FC<{ text: string; className?: string }> =
 };
 
 export const MistakeVaultView: React.FC<Props> = ({
-  mistakes,
+  mistakes = [],
   user,
   onOpenSocraticTutor,
   onOpenPaywall,
   onUpdateMistakeItem,
 }) => {
   const { t } = useLanguage();
+  // Safe mistakes array filter
+  const safeMistakes = useMemo(() => {
+    if (!Array.isArray(mistakes)) return [];
+    return mistakes.filter((m): m is MistakeVaultItem => Boolean(m && typeof m === 'object' && m.id && m.question));
+  }, [mistakes]);
+
   // Filter States
   const [selectedStageFilter, setSelectedStageFilter] = useState<'ALL' | 'DUE' | 'LEARNING' | 1 | 2 | 3 | 'MASTERED'>('ALL');
   const [selectedSectionFilter, setSelectedSectionFilter] = useState<'ALL' | 'READING_AND_WRITING' | 'MATH'>('ALL');
@@ -105,7 +111,10 @@ export const MistakeVaultView: React.FC<Props> = ({
   const [searchQuery, setSearchQuery] = useState('');
 
   // Active View State
-  const [activeItemId, setActiveItemId] = useState<string>(mistakes[0]?.id || '');
+  const [activeItemId, setActiveItemId] = useState<string>(() => {
+    if (Array.isArray(mistakes) && mistakes[0]?.id) return mistakes[0].id;
+    return '';
+  });
   const [activeTab, setActiveTab] = useState<'RETEST' | 'TRAP_ANALYSIS' | 'CLONE_STUDIO'>('TRAP_ANALYSIS');
 
   // Practice Re-test State
@@ -128,40 +137,41 @@ export const MistakeVaultView: React.FC<Props> = ({
 
   // Find active item
   const activeItem = useMemo(() => {
-    return mistakes.find((m) => m.id === activeItemId) || mistakes[0] || null;
-  }, [mistakes, activeItemId]);
+    if (safeMistakes.length === 0) return null;
+    return safeMistakes.find((m) => m.id === activeItemId) || safeMistakes[0] || null;
+  }, [safeMistakes, activeItemId]);
 
   // Derived Metrics
   const dueCount = useMemo(() => {
-    return mistakes.filter(
+    return safeMistakes.filter(
       (m) => new Date(m.nextReviewAt) <= new Date() && !(m.isMastered || (m.consecutiveCorrectCount ?? 0) >= 3)
     ).length;
-  }, [mistakes]);
+  }, [safeMistakes]);
 
   const masteredCount = useMemo(() => {
-    return mistakes.filter((m) => m.isMastered || (m.consecutiveCorrectCount ?? 0) >= 3).length;
-  }, [mistakes]);
+    return safeMistakes.filter((m) => m.isMastered || (m.consecutiveCorrectCount ?? 0) >= 3).length;
+  }, [safeMistakes]);
 
   const stage1Count = useMemo(() => {
-    return mistakes.filter((m) => m.stage === 1 && !m.isMastered && (m.consecutiveCorrectCount ?? 0) < 3).length;
-  }, [mistakes]);
+    return safeMistakes.filter((m) => m.stage === 1 && !m.isMastered && (m.consecutiveCorrectCount ?? 0) < 3).length;
+  }, [safeMistakes]);
 
   const stage2Count = useMemo(() => {
-    return mistakes.filter((m) => m.stage === 2 && !m.isMastered && (m.consecutiveCorrectCount ?? 0) < 3).length;
-  }, [mistakes]);
+    return safeMistakes.filter((m) => m.stage === 2 && !m.isMastered && (m.consecutiveCorrectCount ?? 0) < 3).length;
+  }, [safeMistakes]);
 
   // Unique Domains for Filter Dropdown
   const availableDomains = useMemo(() => {
     const set = new Set<string>();
-    mistakes.forEach((m) => {
+    safeMistakes.forEach((m) => {
       if (m.question?.domain) set.add(m.question.domain);
     });
     return Array.from(set);
-  }, [mistakes]);
+  }, [safeMistakes]);
 
   // Filtered Mistakes List
   const filteredMistakes = useMemo(() => {
-    return mistakes.filter((m) => {
+    return safeMistakes.filter((m) => {
       const isItemMastered = m.isMastered || (m.consecutiveCorrectCount ?? 0) >= 3;
       const isDue = new Date(m.nextReviewAt) <= new Date() && !isItemMastered;
 
@@ -174,12 +184,12 @@ export const MistakeVaultView: React.FC<Props> = ({
       }
 
       // Section Filter
-      if (selectedSectionFilter !== 'ALL' && m.question.section !== selectedSectionFilter) {
+      if (selectedSectionFilter !== 'ALL' && m.question?.section !== selectedSectionFilter) {
         return false;
       }
 
       // Domain Filter
-      if (selectedDomainFilter !== 'ALL' && m.question.domain !== selectedDomainFilter) {
+      if (selectedDomainFilter !== 'ALL' && m.question?.domain !== selectedDomainFilter) {
         return false;
       }
 
@@ -191,16 +201,16 @@ export const MistakeVaultView: React.FC<Props> = ({
       // Search Query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
-        const textMatch = (m.question.questionText || '').toLowerCase().includes(q);
-        const passageMatch = (m.question.passage || '').toLowerCase().includes(q);
-        const skillMatch = (m.question.skill || '').toLowerCase().includes(q);
-        const domainMatch = (m.question.domain || '').toLowerCase().includes(q);
+        const textMatch = (m.question?.questionText || '').toLowerCase().includes(q);
+        const passageMatch = (m.question?.passage || '').toLowerCase().includes(q);
+        const skillMatch = (m.question?.skill || '').toLowerCase().includes(q);
+        const domainMatch = (m.question?.domain || '').toLowerCase().includes(q);
         if (!textMatch && !passageMatch && !skillMatch && !domainMatch) return false;
       }
 
       return true;
     });
-  }, [mistakes, selectedStageFilter, selectedSectionFilter, selectedDomainFilter, selectedSourceFilter, searchQuery]);
+  }, [safeMistakes, selectedStageFilter, selectedSectionFilter, selectedDomainFilter, selectedSourceFilter, searchQuery]);
 
   // Generate Trap Analysis via Gemini API
   const handleFetchTrapAnalysis = async (item: MistakeVaultItem) => {

@@ -77,6 +77,7 @@ import {
 import { getSupabaseClient, mapSupabaseUserToAppUser, signOutUser, saveUserProfile, supabase } from './lib/supabase';
 import { useUserProgress, syncUserProgressRemote } from './hooks/useUserProgress';
 import { ViewSkeletonLoader } from './components/common/ViewSkeletonLoader';
+import { ViewErrorBoundary } from './components/common/ViewErrorBoundary';
 import {
   fetchGlobalPlatformSettings,
   saveGlobalPlatformSettings,
@@ -1725,7 +1726,7 @@ export default function App() {
     };
   }, []);
 
-  const renderView = (view: ActiveView) => {
+  const renderViewContent = (view: ActiveView) => {
     // Graceful fallback during navigation state resolution
     if (!view) {
       if (!currentUser) return <ViewSkeletonLoader title="Dashboard yuklanmoqda..." />;
@@ -2018,6 +2019,14 @@ export default function App() {
           />
         );
     }
+  };
+
+  const renderView = (view: ActiveView) => {
+    return (
+      <ViewErrorBoundary moduleName={view} onReset={() => setActiveTab('dashboard')}>
+        {renderViewContent(view)}
+      </ViewErrorBoundary>
+    );
   };
 
   const renderCurrentView = () => {

@@ -176,9 +176,15 @@ export const QuestionBankView: React.FC<Props> = ({
     setCurrentPage(1);
   };
 
+  // Safe questions collection with fallback to OFFICIAL_SQB_QUESTIONS
+  const safeQuestions: Question[] = useMemo(() => {
+    const list = Array.isArray(questions) && questions.length > 0 ? questions : OFFICIAL_SQB_QUESTIONS;
+    return list.filter((q): q is Question => Boolean(q && typeof q === 'object' && q.id));
+  }, [questions]);
+
   // Filtered Questions list
   const filteredQuestions = useMemo(() => {
-    return questions.filter((q) => {
+    return safeQuestions.filter((q) => {
       // 1. Section Filter
       if (selectedSection !== 'ALL' && q.section !== selectedSection) {
         return false;
@@ -190,7 +196,7 @@ export const QuestionBankView: React.FC<Props> = ({
       }
 
       // 3. Skill Filter (multi-select)
-      if (selectedSkills.length > 0 && !selectedSkills.includes(q.skill)) {
+      if (selectedSkills.length > 0 && (!q.skill || !selectedSkills.includes(q.skill))) {
         return false;
       }
 
@@ -218,9 +224,9 @@ export const QuestionBankView: React.FC<Props> = ({
       if (searchTerm.trim()) {
         const query = searchTerm.toLowerCase().trim();
         const sqbId = (q.sqbId || '').toLowerCase();
-        const domain = q.domain.toLowerCase();
-        const skill = q.skill.toLowerCase();
-        const text = q.questionText.toLowerCase();
+        const domain = (q.domain || '').toLowerCase();
+        const skill = (q.skill || '').toLowerCase();
+        const text = (q.questionText || '').toLowerCase();
         const passage = (q.passage || '').toLowerCase();
 
         if (
@@ -237,7 +243,7 @@ export const QuestionBankView: React.FC<Props> = ({
       return true;
     });
   }, [
-    questions,
+    safeQuestions,
     selectedSection,
     selectedDomain,
     selectedSkills,
@@ -256,7 +262,7 @@ export const QuestionBankView: React.FC<Props> = ({
 
   // Aggregate Metrics Analytics
   const metrics = useMemo(() => {
-    const totalCount = questions.length > 0 ? questions.length : 3420; // Official SAT Question Bank repository scale
+    const totalCount = safeQuestions.length > 0 ? safeQuestions.length : 3420; // Official SAT Question Bank repository scale
     const attemptedList = (Object.values(userPractices) as UserQuestionPractice[]).filter(Boolean);
     const attemptedCount = attemptedList.length;
     const correctCount = attemptedList.filter((a) => a.isCorrect).length;
@@ -279,7 +285,7 @@ export const QuestionBankView: React.FC<Props> = ({
       accuracyRate: attemptedCount > 0 ? `${accuracyRate}%` : '0%',
       avgTime: attemptedCount > 0 ? formattedAvgTime : '0s',
     };
-  }, [questions, userPractices]);
+  }, [safeQuestions, userPractices]);
 
   // Launch single question practice
   const handleLaunchSingleQuestion = (question: Question) => {

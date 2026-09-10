@@ -30,6 +30,7 @@ import {
 } from '../../lib/vocabApi';
 import { speakWord } from '../../utils/speechUtils';
 import { useLanguage } from '../../context/LanguageContext';
+import { ViewSkeletonLoader } from '../common/ViewSkeletonLoader';
 
 interface VocabularyHubProps {
   user?: User;
@@ -66,12 +67,12 @@ export const VocabularyHub: React.FC<VocabularyHubProps> = ({
         ]);
 
         if (!isMounted) return;
-        setBooks(loadedBooks);
-        setWords(loadedWords);
+        setBooks(Array.isArray(loadedBooks) ? loadedBooks : []);
+        setWords(Array.isArray(loadedWords) ? loadedWords : []);
 
         if (user?.id) {
           const progress = await fetchUserVocabProgress(user.id);
-          if (isMounted) setUserProgressMap(progress);
+          if (isMounted) setUserProgressMap(progress || {});
         }
       } catch (err) {
         console.warn('Error loading vocabulary data:', err);
@@ -108,10 +109,10 @@ export const VocabularyHub: React.FC<VocabularyHubProps> = ({
     const q = searchQuery.toLowerCase().trim();
     return activeBookWords.filter(
       (w) =>
-        w.word.toLowerCase().includes(q) ||
-        w.definition.toLowerCase().includes(q) ||
+        (w.word || '').toLowerCase().includes(q) ||
+        (w.definition || '').toLowerCase().includes(q) ||
         (w.definitionUz && w.definitionUz.toLowerCase().includes(q)) ||
-        w.synonyms.some((s) => s.toLowerCase().includes(q))
+        (Array.isArray(w.synonyms) && w.synonyms.some((s) => (s || '').toLowerCase().includes(q)))
     );
   }, [activeBookWords, searchQuery]);
 
@@ -121,8 +122,8 @@ export const VocabularyHub: React.FC<VocabularyHubProps> = ({
     let knownCount = 0;
     let reviewedCount = 0;
 
-    Object.values(userProgressMap).forEach((p) => {
-      if (bookWordIds.has(p.wordId)) {
+    (Object.values(userProgressMap) as UserVocabProgress[]).forEach((p) => {
+      if (p && p.wordId && bookWordIds.has(p.wordId)) {
         if (p.isKnown) knownCount++;
         reviewedCount++;
       }
@@ -170,6 +171,14 @@ export const VocabularyHub: React.FC<VocabularyHubProps> = ({
       alert(`${activeBook.title} qo'llanmasi PDF fayli tayyorlanmoqda.`);
     }
   };
+
+  if (isLoading && books.length === 0) {
+    return (
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <ViewSkeletonLoader title="SAT Lug'at bazasi yuklanmoqda..." />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 font-sans text-[#0F172A] dark:text-[#F8FAFC]">

@@ -101,12 +101,28 @@ interface Props {
 }
 
 export const CommunityChatHub: React.FC<Props> = ({
-  currentUser,
+  currentUser: rawUser,
   usersList = [],
   onOpenQuestionInBank,
   onSelectUserProfile,
 }) => {
   const { t } = useLanguage();
+  // Safe user fallback for unauthenticated visitors or pending auth sessions
+  const currentUser: User = useMemo(() => {
+    if (rawUser && rawUser.id) return rawUser;
+    return {
+      id: 'guest-user',
+      fullName: 'Talaba',
+      email: 'student@aurasat.uz',
+      targetScore: 1450,
+      currentScore: 1200,
+      planTier: 'FREE',
+      dailyStreak: 1,
+      role: 'student',
+      joinedDate: new Date().toISOString(),
+    };
+  }, [rawUser]);
+
   // 1. Initial State Initialization & Clean Baseline Chats
   const [chats, setChats] = useState<Chat[]>(() => getInitialChats(currentUser));
   const [activeChatId, setActiveChatId] = useState<string>('11111111-1111-1111-1111-111111111111');

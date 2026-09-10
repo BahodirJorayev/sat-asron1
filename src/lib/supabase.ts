@@ -492,17 +492,57 @@ export async function uploadUserAvatar(userId: string, file: File): Promise<{ ur
   }
 }
 
-// Sign Out
+// Sign Out - completely clears Supabase session, local caches, and session tokens
 export async function signOutUser(): Promise<void> {
   try {
     await supabase.auth.signOut();
   } catch (e) {
-    // ignore
+    console.warn('Supabase auth.signOut notice:', e);
   }
   setAuthCookie(null);
   if (typeof localStorage !== 'undefined') {
+    // Auth & Identity caches
     localStorage.removeItem('aurasat_user_profile');
     localStorage.removeItem('aura_sat_auth_user');
+    localStorage.removeItem('asron_auth_intent');
+    localStorage.removeItem('asron_auth_notice');
+    localStorage.removeItem('sb-auth-token');
+
+    // Remove user progress and attempt caches
+    localStorage.removeItem('aurasat_mock_attempts');
+    localStorage.removeItem('aurasat_mistakes');
+
+    // Remove any user-keyed localStorage items
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (
+        key &&
+        (key.startsWith('asron_user_progress_') ||
+          key.startsWith('aurasat_sqb_practices_') ||
+          key.startsWith('aurasat_user_vocab_progress_') ||
+          key.startsWith('asron_unlocked_mocks_') ||
+          key.startsWith('aurasat_active_attempt_') ||
+          key.startsWith('bluebook_attempt_') ||
+          key.startsWith('active_session_') ||
+          key.startsWith('aurasat_vocab_pb_') ||
+          (key.startsWith('sb-') && key.includes('-auth-token')))
+      ) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach((k) => localStorage.removeItem(k));
+  }
+
+  if (typeof sessionStorage !== 'undefined') {
+    sessionStorage.clear();
+  }
+
+  // Broadcast signout across app
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('asron_auth_signout'));
+    window.dispatchEvent(new CustomEvent('asron_profile_updated', { detail: null }));
+    window.dispatchEvent(new CustomEvent('asron_user_progress_updated', { detail: null }));
   }
 }
 

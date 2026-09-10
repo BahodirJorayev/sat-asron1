@@ -94,16 +94,10 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
   const handleSignOut = async () => {
     try {
       setIsSigningOut(true);
-      // Supabase auth sign-out
-      if (supabase && supabase.auth) {
-        await supabase.auth.signOut().catch(() => {});
-      }
       await signOutUser().catch(() => {});
 
       if (onLogout) {
         onLogout();
-      } else if (router && typeof router.push === 'function') {
-        router.push('/login');
       } else if (typeof window !== 'undefined') {
         window.location.hash = '#/landing';
       }

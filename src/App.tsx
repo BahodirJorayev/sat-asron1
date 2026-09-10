@@ -150,11 +150,15 @@ export default function App() {
   const [currentUserIndex, setCurrentUserIndex] = useState<number>(0);
   const currentUser = usersList[currentUserIndex] || usersList[0];
 
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    if (typeof localStorage === 'undefined') return false;
+    return !!localStorage.getItem('aurasat_user_profile');
+  });
+
   // Helper to check if current user is actively logged in
   const isUserAuthenticated = () => {
     if (typeof localStorage === 'undefined') return false;
-    const hasSavedProfile = !!localStorage.getItem('aurasat_user_profile');
-    return hasSavedProfile;
+    return !!localStorage.getItem('aurasat_user_profile');
   };
 
   // Single-source route state: resolveRoute(hashOrPath)
@@ -163,8 +167,24 @@ export default function App() {
       const raw = window.location.hash || window.location.pathname || '';
       return resolveRoute(raw);
     }
-    return 'dashboard';
+    return 'landing';
   });
+
+  // Global listener for signout events across components
+  useEffect(() => {
+    const handleSignOutEvent = () => {
+      setIsAuthenticated(false);
+      setCurrentView('landing');
+      if (typeof window !== 'undefined') {
+        window.location.hash = '#/landing';
+        if (window.location.pathname !== '/' && !window.location.pathname.startsWith('/#')) {
+          window.history.replaceState(null, '', '/#/landing');
+        }
+      }
+    };
+    window.addEventListener('asron_auth_signout', handleSignOutEvent);
+    return () => window.removeEventListener('asron_auth_signout', handleSignOutEvent);
+  }, []);
 
   // Map currentView to activeTab for Sidebar/Header/MobileBottomNav active states
   const activeTab = currentView === 'mocks' ? 'bluebook'
@@ -1089,6 +1109,7 @@ export default function App() {
           return [appUser, ...prev];
         });
         setCurrentUserIndex(0);
+        setIsAuthenticated(true);
         localStorage.setItem('aurasat_user_profile', JSON.stringify(appUser));
         localStorage.setItem('aura_sat_auth_user', JSON.stringify(appUser));
 
@@ -1114,19 +1135,27 @@ export default function App() {
     // 1. Initial session check
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user && isMounted) {
+        setIsAuthenticated(true);
         await handleAuthenticatedUser(session.user);
       }
     });
 
     // 2. Realtime auth change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_OUT') {
+      if (event === 'SIGNED_OUT' || !session) {
+        setIsAuthenticated(false);
         localStorage.removeItem('aurasat_user_profile');
         localStorage.removeItem('aura_sat_auth_user');
         setCurrentUserIndex(0);
+        setCurrentView('landing');
+        setActiveTab('landing');
+        if (typeof window !== 'undefined') {
+          window.location.hash = '#/landing';
+        }
         return;
       }
       if (session?.user && isMounted) {
+        setIsAuthenticated(true);
         await handleAuthenticatedUser(session.user);
       }
     });
@@ -1417,8 +1446,10 @@ export default function App() {
       return updated;
     });
     setCurrentUserIndex(0);
+    setIsAuthenticated(true);
     localStorage.setItem('aurasat_user_profile', JSON.stringify(authenticatedUser));
     setActiveTab('dashboard');
+    setCurrentView('dashboard');
     window.location.hash = '#/dashboard';
     setIsAuthModalOpen(false);
   };
@@ -1434,12 +1465,15 @@ export default function App() {
   // Handle User Sign Out
   const handleSignOut = async () => {
     await signOutUser();
-    localStorage.removeItem('aurasat_user_profile');
-    // Switch to first initial demo student
+    setIsAuthenticated(false);
     setCurrentUserIndex(0);
+    setCurrentView('landing');
     setActiveTab('landing');
     if (typeof window !== 'undefined') {
       window.location.hash = '#/landing';
+      if (window.location.pathname !== '/' && !window.location.pathname.startsWith('/#')) {
+        window.history.replaceState(null, '', '/#/landing');
+      }
     }
   };
 
@@ -1755,6 +1789,24 @@ export default function App() {
   }, []);
 
   const renderViewContent = (view: ActiveView) => {
+    // If not authenticated and trying to access any protected view, cleanly render LandingView
+    if (!isAuthenticated && view !== 'landing' && view !== 'blog') {
+      return (
+        <LandingView
+          user={currentUser}
+          siteBranding={siteBranding}
+          platformContent={platformContentMap}
+          blogArticles={blogArticles}
+          testimonials={testimonials}
+          onOpenAuthModal={(mode) => handleOpenAuth(mode || 'signup')}
+          onOpenDiagnostic={() => setIsDiagnosticOpen(true)}
+          onOpenDailyWorkout={() => setIsDailyWorkoutOpen(true)}
+          onOpenPaywall={() => setIsPaywallOpen(true)}
+          onNavigateToBlog={() => setActiveTab('blog')}
+        />
+      );
+    }
+
     // Graceful fallback during navigation state resolution
     if (!view) {
       if (!currentUser) return <ViewSkeletonLoader title="Dashboard yuklanmoqda..." />;
@@ -2064,7 +2116,7 @@ export default function App() {
   return (
     <div className={`min-h-screen ${activeTab === 'community' ? 'h-[100dvh] overflow-hidden overflow-x-hidden overflow-y-hidden' : ''} bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#0F172A] dark:text-[#F8FAFC] flex font-sans selection:bg-[#E07A5F] selection:text-white`}>
       {/* 1. Left Fixed Sidebar (Visible in Dashboard & Study Views) */}
-      {activeTab !== 'landing' && activeTab !== 'blog' && (
+      {isAuthenticated && activeTab !== 'landing' && activeTab !== 'blog' && (
         <Sidebar
           user={currentUser}
           activeTab={activeTab}
@@ -2119,7 +2171,7 @@ export default function App() {
         )}
 
         {/* Top Header with Quick Actions (Hidden on Landing page to prevent duplicate headers) */}
-        {activeTab !== 'landing' && (
+        {isAuthenticated && activeTab !== 'landing' && (
           <div className={activeTab === 'community' || activeTab === 'chat' ? 'hidden md:block shrink-0' : 'shrink-0'}>
             <Header
               user={currentUser}
@@ -2133,6 +2185,7 @@ export default function App() {
               onSwitchUserRole={handleSwitchUserRole}
               onOpenAuthModal={handleOpenAuth}
               onOpenMilestoneModal={handleOpenMilestoneModal}
+              onSignOut={handleSignOut}
               onOpenProfileSearch={() => {
                 setIsGlobalSearchOpen(true);
               }}
@@ -2151,7 +2204,7 @@ export default function App() {
       </div>
 
       {/* Mobile Bottom Navigation Bar (Visible only on < 768px in student/dashboard views) */}
-      {activeTab !== 'landing' && activeTab !== 'blog' && activeTab !== 'community' && activeTab !== 'chat' && !activeBluebookTest && (
+      {isAuthenticated && activeTab !== 'landing' && activeTab !== 'blog' && activeTab !== 'community' && activeTab !== 'chat' && !activeBluebookTest && (
         <MobileBottomNav
           activeTab={activeTab}
           setActiveTab={setActiveTab}

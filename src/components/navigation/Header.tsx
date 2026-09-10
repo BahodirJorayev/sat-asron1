@@ -13,7 +13,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { GlobalSearchModal } from '../chat/GlobalSearchModal';
-import { supabase } from '../../lib/supabase';
+import { supabase, signOutUser } from '../../lib/supabase';
 import { usePlatformSettings } from '../../hooks/usePlatformSettings';
 import { AsronLogo } from '../AsronLogo';
 import { LanguageSwitcher } from './LanguageSwitcher';
@@ -369,13 +369,15 @@ export const Header: React.FC<HeaderProps> = ({
                 <div className="pt-1 border-t border-slate-100 dark:border-slate-800/80">
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={async () => {
                       setIsProfileMenuOpen(false);
                       if (onSignOut) {
                         onSignOut();
-                      } else if (typeof window !== 'undefined') {
-                        localStorage.removeItem('sb-auth-token');
-                        window.location.href = '/';
+                      } else {
+                        await signOutUser();
+                        if (typeof window !== 'undefined') {
+                          window.location.hash = '#/landing';
+                        }
                       }
                     }}
                     className="w-full text-left flex items-center gap-2 px-3.5 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"

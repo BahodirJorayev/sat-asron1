@@ -23,6 +23,7 @@ import {
   Search,
   BookOpen,
   User as UserIcon,
+  LogOut,
 } from 'lucide-react';
 import { User, PlanTier } from '../types';
 import { SiteBrandingConfig } from '../data/blogAndBrandingData';
@@ -47,11 +48,11 @@ interface Props {
   onOpenProfileSearch?: () => void;
   onOpenCurrentUserProfile?: () => void;
   onOpenMilestoneModal?: (days?: number) => void;
+  onSignOut?: () => void;
   unreadAlertCount: number;
 }
 
 export const Header: React.FC<Props> = ({
-
   user,
   activeTab,
   setActiveTab,
@@ -65,6 +66,7 @@ export const Header: React.FC<Props> = ({
   onOpenProfileSearch,
   onOpenCurrentUserProfile,
   onOpenMilestoneModal,
+  onSignOut,
   unreadAlertCount,
 }) => {
   const isPro = user.planTier === 'PRO';
@@ -300,6 +302,19 @@ export const Header: React.FC<Props> = ({
                   </div>
                 </div>
               </div>
+
+              {/* Desktop Direct Sign Out Action */}
+              {onSignOut && (
+                <button
+                  type="button"
+                  onClick={onSignOut}
+                  aria-label={t('logout', 'Chiqish')}
+                  title={t('logout', 'Hisobdan Chiqish (Log Out)')}
+                  className="hidden md:flex w-8 h-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-slate-200 dark:border-slate-700/60 active:scale-95 transition-all cursor-pointer shadow-2xs"
+                >
+                  <LogOut size={14} />
+                </button>
+              )}
             </>
           )}
         </div>

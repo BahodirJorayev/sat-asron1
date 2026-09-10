@@ -238,12 +238,27 @@ export const UserProfileProvider: React.FC<UserProfileProviderProps> = ({
       };
     } catch {}
 
+    const { data: authSub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        if (isMounted) setProfile(null);
+      } else if (event === 'SIGNED_IN' && session?.user && isMounted) {
+        fetchProfile();
+      }
+    });
+
+    const handleSignOutEvent = () => {
+      if (isMounted) setProfile(null);
+    };
+    window.addEventListener('asron_auth_signout', handleSignOutEvent);
+
     return () => {
       isMounted = false;
       if (realtimeChannel) supabase.removeChannel(realtimeChannel);
+      authSub.subscription.unsubscribe();
       window.removeEventListener('profileUpdated', handleLocalProfileUpdate);
       window.removeEventListener('asron_profile_updated', handleLocalProfileUpdate);
       window.removeEventListener('profile_updated', handleLocalProfileUpdate);
+      window.removeEventListener('asron_auth_signout', handleSignOutEvent);
       if (bc) bc.close();
     };
   }, [fetchProfile]);

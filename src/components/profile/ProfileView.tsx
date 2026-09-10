@@ -27,7 +27,7 @@ import {
   Upload,
 } from 'lucide-react';
 import { User } from '../../types';
-import { supabase, saveUserProfile } from '../../lib/supabase';
+import { supabase, saveUserProfile, signOutUser } from '../../lib/supabase';
 import { useTheme } from '../../context/ThemeContext';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { EditProfileModal } from './EditProfileModal';
@@ -385,10 +385,9 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       if (onSignOut) {
         onSignOut();
       } else {
-        await supabase.auth.signOut();
+        await signOutUser();
         if (typeof window !== 'undefined') {
-          localStorage.removeItem('sb-auth-token');
-          window.location.href = '/';
+          window.location.hash = '#/landing';
         }
       }
     } catch (err) {

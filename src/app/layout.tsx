@@ -5,6 +5,7 @@ import '../lib/supabase';
 import { LanguageProvider } from '../context/LanguageContext';
 import { PlatformSettingsProvider } from '../contexts/PlatformSettingsContext';
 import { UserProfileProvider } from '../context/UserProfileContext';
+import { ThemeProvider } from '../context/ThemeContext';
 import { PathnameNormalizer } from '../components/navigation/PathnameNormalizer';
 
 export const metadata: Metadata = {
@@ -112,13 +113,15 @@ export default function RootLayout({
       </head>
       <body className="bg-[#FAF7F2] dark:bg-[#0A0F1D] text-[#1C1917] dark:text-[#F8FAFC] antialiased min-h-screen">
         <PathnameNormalizer />
-        <PlatformSettingsProvider>
+        <ThemeProvider defaultTheme="light">
+          <PlatformSettingsProvider>
           <LanguageProvider>
             <UserProfileProvider>
               {children}
             </UserProfileProvider>
           </LanguageProvider>
         </PlatformSettingsProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

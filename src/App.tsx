@@ -1726,6 +1726,32 @@ export default function App() {
   }, []);
 
   const renderView = (view: ActiveView) => {
+    // Graceful fallback during navigation state resolution
+    if (!view) {
+      if (!currentUser) return <ViewSkeletonLoader title="Dashboard yuklanmoqda..." />;
+      return (
+        <DashboardView
+          user={currentUser}
+          mistakes={mistakes}
+          mockTests={mockTests}
+          platformContent={platformContentMap}
+          onOpenDailyWorkout={() => setIsDailyWorkoutOpen(true)}
+          onOpenDiagnostic={() => setIsDiagnosticOpen(true)}
+          onOpenMistakeVault={() => setActiveTab('vault')}
+          onStartBluebookTest={(test) => setActiveBluebookTest(test)}
+          onOpenQuestionBank={(subSkill) => {
+            setQbankInitialFilter(subSkill || '');
+            setActiveTab('qbank');
+          }}
+          onOpenCommunity={() => setActiveTab('community')}
+          onOpenRoadmap={() => setActiveTab('roadmap')}
+          onOpenPaywall={() => setIsPaywallOpen(true)}
+          onOpenSocraticTutor={handleOpenSocraticTutor}
+          onOpenMilestoneModal={handleOpenMilestoneModal}
+        />
+      );
+    }
+
     switch (view) {
       case 'landing':
         return (
@@ -1999,7 +2025,7 @@ export default function App() {
   };
 
   return (
-    <div className={`min-h-screen ${activeTab === 'community' ? 'h-[100dvh] overflow-hidden overflow-x-hidden overflow-y-hidden' : ''} bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#0F172A] dark:text-[#F8FAFC] flex font-sans selection:bg-[#E07A5F] selection:text-white transition-colors duration-150`}>
+    <div className={`min-h-screen ${activeTab === 'community' ? 'h-[100dvh] overflow-hidden overflow-x-hidden overflow-y-hidden' : ''} bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#0F172A] dark:text-[#F8FAFC] flex font-sans selection:bg-[#E07A5F] selection:text-white`}>
       {/* 1. Left Fixed Sidebar (Visible in Dashboard & Study Views) */}
       {activeTab !== 'landing' && activeTab !== 'blog' && (
         <Sidebar

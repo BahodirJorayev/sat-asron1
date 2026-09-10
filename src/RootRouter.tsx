@@ -29,7 +29,7 @@ export const resolveRoute = (hashOrPath: string): ActiveView => {
   // 3. Question Bank
   if (clean === 'qbank' || clean === 'questions' || clean === 'sqb' || clean === 'savollar' || clean === 'practice') return 'questions';
 
-  // 4. Mock Tests & Bluebook (PREVENTS #/bluebook BLANK SCREEN)
+  // 4. Mock Tests & Bluebook (PREVENTS #/bluebook, #/qbank, #/mocks BLANK SCREENS)
   if (
     clean === 'mocks' || 
     clean === 'mock' || 

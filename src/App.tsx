@@ -2090,32 +2090,34 @@ export default function App() {
           </div>
         )}
 
-        {/* Top Header with Quick Actions */}
-        <div className={activeTab === 'community' || activeTab === 'chat' ? 'hidden md:block shrink-0' : 'shrink-0'}>
-          <Header
-            user={currentUser}
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            siteBranding={siteBranding}
-            onOpenDailyWorkout={() => setIsDailyWorkoutOpen(true)}
-            onOpenDiagnostic={() => setIsDiagnosticOpen(true)}
-            onOpenPaywall={() => setIsPaywallOpen(true)}
-            onOpenTelegramLogs={() => setIsTelegramLogsOpen(true)}
-            onSwitchUserRole={handleSwitchUserRole}
-            onOpenAuthModal={handleOpenAuth}
-            onOpenMilestoneModal={handleOpenMilestoneModal}
-            onOpenProfileSearch={() => {
-              setIsGlobalSearchOpen(true);
-            }}
-            onOpenCurrentUserProfile={() => {
-              setActiveTab('profile');
-            }}
-            unreadAlertCount={notifications.filter((n) => !n.read).length}
-          />
-        </div>
+        {/* Top Header with Quick Actions (Hidden on Landing page to prevent duplicate headers) */}
+        {activeTab !== 'landing' && (
+          <div className={activeTab === 'community' || activeTab === 'chat' ? 'hidden md:block shrink-0' : 'shrink-0'}>
+            <Header
+              user={currentUser}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              siteBranding={siteBranding}
+              onOpenDailyWorkout={() => setIsDailyWorkoutOpen(true)}
+              onOpenDiagnostic={() => setIsDiagnosticOpen(true)}
+              onOpenPaywall={() => setIsPaywallOpen(true)}
+              onOpenTelegramLogs={() => setIsTelegramLogsOpen(true)}
+              onSwitchUserRole={handleSwitchUserRole}
+              onOpenAuthModal={handleOpenAuth}
+              onOpenMilestoneModal={handleOpenMilestoneModal}
+              onOpenProfileSearch={() => {
+                setIsGlobalSearchOpen(true);
+              }}
+              onOpenCurrentUserProfile={() => {
+                setActiveTab('profile');
+              }}
+              unreadAlertCount={notifications.filter((n) => !n.read).length}
+            />
+          </div>
+        )}
 
         {/* Main Routed Views */}
-        <main className={`flex-1 ${activeTab === 'community' || activeTab === 'chat' ? 'h-[100dvh] md:h-[calc(100dvh-64px)] overflow-hidden overflow-x-hidden overflow-y-hidden pb-0' : 'pb-16'}`}>
+        <main className={`flex-1 ${activeTab === 'community' || activeTab === 'chat' ? 'h-[100dvh] md:h-[calc(100dvh-64px)] overflow-hidden overflow-x-hidden overflow-y-hidden pb-0' : activeTab === 'landing' ? 'pb-0' : 'pb-16'}`}>
           {renderView(currentView)}
         </main>
       </div>

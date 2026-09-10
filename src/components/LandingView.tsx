@@ -212,61 +212,69 @@ export const LandingView: React.FC<LandingViewProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#070D1E] text-slate-900 dark:text-slate-100 font-sans selection:bg-[#E07A5F] selection:text-white transition-colors duration-200">
-      {/* 1. STICKY MODERN NAVBAR (GrowMock Style) */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-[#070D1E]/85 border-b border-slate-200/80 dark:border-slate-800/80 transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          {/* Brand Logo */}
+    <div className="min-h-screen bg-slate-50 dark:bg-[#070D1E] text-slate-900 dark:text-slate-100 font-sans selection:bg-blue-600 selection:text-white transition-colors duration-200 scroll-smooth">
+      {/* 1. YOSHLARVENTURES-STYLE FLOATING GLASS NAVBAR */}
+      <header className="sticky top-3 sm:top-4 z-50 mx-auto max-w-6xl px-3 sm:px-6 transition-all duration-300">
+        <div className="bg-white/75 dark:bg-[#0A1024]/75 backdrop-blur-xl border border-slate-200/60 dark:border-slate-800/60 shadow-lg shadow-black/5 rounded-full px-4 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between transition-all duration-300">
+          {/* Left: Minimalist Logo + 2026 Tag Badge */}
           <div
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="cursor-pointer flex items-center gap-2.5 transition-transform hover:scale-102"
+            className="cursor-pointer flex items-center gap-2.5 select-none shrink-0 group"
           >
-            <AsronLogo variant="full" size={34} />
+            <AsronLogo variant="mark-only" size={32} />
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold tracking-tight text-[#0F172A] dark:text-[#F8FAFC] text-sm sm:text-base group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                ASRON SAT
+              </span>
+              <span className="hidden lg:inline-flex items-center text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-blue-500/10 dark:bg-blue-400/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                2026 MST
+              </span>
+            </div>
           </div>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-slate-600 dark:text-slate-300">
+          {/* Center Navigation Links (Logical Anchors with Smooth Scroll) */}
+          <nav className="hidden lg:flex items-center gap-6 xl:gap-8 text-sm font-medium">
             <button
-              onClick={() => scrollToSection('mocks-section')}
-              className="hover:text-[#E07A5F] dark:hover:text-[#E07A5F] transition-colors cursor-pointer"
-            >
-              Mock Testlar
-            </button>
-            <button
-              onClick={() => scrollToSection('sqb-section')}
-              className="hover:text-[#E07A5F] dark:hover:text-[#E07A5F] transition-colors cursor-pointer"
-            >
-              Savollar Banki
-            </button>
-            <button
-              onClick={() => scrollToSection('vocab-section')}
-              className="hover:text-[#E07A5F] dark:hover:text-[#E07A5F] transition-colors cursor-pointer"
-            >
-              SAT Lug'at
-            </button>
-            <button
-              onClick={() => scrollToSection('features-section')}
-              className="hover:text-[#E07A5F] dark:hover:text-[#E07A5F] transition-colors cursor-pointer"
+              onClick={() => scrollToSection('features')}
+              className="text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 transition-colors cursor-pointer"
             >
               Imkoniyatlar
             </button>
             <button
-              onClick={() => scrollToSection('timeline-section')}
-              className="hover:text-[#E07A5F] dark:hover:text-[#E07A5F] transition-colors cursor-pointer"
+              onClick={() => scrollToSection('mocks')}
+              className="text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 transition-colors cursor-pointer"
             >
-              Yo'riqnoma
+              Mock Testlar
+            </button>
+            <button
+              onClick={() => scrollToSection('qbank')}
+              className="text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 transition-colors cursor-pointer"
+            >
+              Savollar Banki
+            </button>
+            <button
+              onClick={() => scrollToSection('vocab')}
+              className="text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 transition-colors cursor-pointer"
+            >
+              SAT Lug'at
+            </button>
+            <button
+              onClick={() => scrollToSection('results')}
+              className="text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 transition-colors cursor-pointer"
+            >
+              Natijalar &amp; AI
             </button>
           </nav>
 
-          {/* Right Action Area */}
-          <div className="hidden sm:flex items-center gap-3">
-            <ThemeToggle />
+          {/* Right Area: Language Switcher, Theme Toggle, Kirish, Bepul Boshlash */}
+          <div className="hidden sm:flex items-center gap-2.5 shrink-0">
             <LanguageSwitcher />
-            
+            <ThemeToggle />
+
             <button
               type="button"
               onClick={() => onOpenAuthModal('signin')}
-              className="px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:text-[#E07A5F] dark:hover:text-white transition-colors cursor-pointer"
+              className="px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
             >
               Kirish
             </button>
@@ -274,27 +282,27 @@ export const LandingView: React.FC<LandingViewProps> = ({
             <button
               type="button"
               onClick={() => onOpenAuthModal('signup')}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#E07A5F] to-[#E76F51] hover:from-[#d96e53] hover:to-[#dc6345] text-white text-sm font-bold shadow-md shadow-[#E07A5F]/20 hover:shadow-lg hover:shadow-[#E07A5F]/30 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
+              className="px-4 sm:px-5 py-2 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
             >
               <span>Bepul Boshlash</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          {/* Mobile Actions & Hamburger */}
-          <div className="flex sm:hidden items-center gap-2">
+          {/* Mobile Actions: Theme, Kirish, Hamburger */}
+          <div className="flex sm:hidden items-center gap-1.5">
             <ThemeToggle />
             <button
               type="button"
               onClick={() => onOpenAuthModal('signin')}
-              className="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200"
+              className="px-2.5 py-1 text-xs font-bold rounded-lg text-slate-700 dark:text-slate-200 hover:text-blue-600"
             >
               Kirish
             </button>
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none"
+              className="p-1.5 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none"
               aria-label="Menyu"
             >
               {isMobileMenuOpen ? <XIcon className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -302,39 +310,39 @@ export const LandingView: React.FC<LandingViewProps> = ({
           </div>
         </div>
 
-        {/* Mobile Dropdown Drawer */}
+        {/* Mobile Dropdown Drawer attached below the floating pill */}
         {isMobileMenuOpen && (
-          <div className="sm:hidden border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-[#070D1E]/95 backdrop-blur-2xl px-5 py-5 space-y-4 animate-in slide-in-from-top-3 duration-200">
-            <div className="flex flex-col space-y-3 font-medium text-sm text-slate-700 dark:text-slate-200">
+          <div className="sm:hidden mt-2 p-5 rounded-3xl bg-white/95 dark:bg-[#0A1024]/95 backdrop-blur-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-xl space-y-4 animate-in slide-in-from-top-3 duration-200">
+            <div className="flex flex-col space-y-2.5 font-medium text-sm text-slate-700 dark:text-slate-200">
               <button
-                onClick={() => scrollToSection('mocks-section')}
-                className="text-left py-1 hover:text-[#E07A5F]"
+                onClick={() => scrollToSection('features')}
+                className="text-left py-1 hover:text-blue-600 dark:hover:text-blue-400"
+              >
+                Imkoniyatlar
+              </button>
+              <button
+                onClick={() => scrollToSection('mocks')}
+                className="text-left py-1 hover:text-blue-600 dark:hover:text-blue-400"
               >
                 Mock Testlar (Bluebook)
               </button>
               <button
-                onClick={() => scrollToSection('sqb-section')}
-                className="text-left py-1 hover:text-[#E07A5F]"
+                onClick={() => scrollToSection('qbank')}
+                className="text-left py-1 hover:text-blue-600 dark:hover:text-blue-400"
               >
                 Savollar Banki (3000+)
               </button>
               <button
-                onClick={() => scrollToSection('vocab-section')}
-                className="text-left py-1 hover:text-[#E07A5F]"
+                onClick={() => scrollToSection('vocab')}
+                className="text-left py-1 hover:text-blue-600 dark:hover:text-blue-400"
               >
                 SAT Lug'at &amp; Flashcards
               </button>
               <button
-                onClick={() => scrollToSection('features-section')}
-                className="text-left py-1 hover:text-[#E07A5F]"
+                onClick={() => scrollToSection('results')}
+                className="text-left py-1 hover:text-blue-600 dark:hover:text-blue-400"
               >
-                Platforma Imkoniyatlari
-              </button>
-              <button
-                onClick={() => scrollToSection('timeline-section')}
-                className="text-left py-1 hover:text-[#E07A5F]"
-              >
-                3-Bosqichli Reja
+                Natijalar &amp; AI
               </button>
             </div>
 
@@ -346,9 +354,9 @@ export const LandingView: React.FC<LandingViewProps> = ({
                   setIsMobileMenuOpen(false);
                   onOpenAuthModal('signup');
                 }}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#E07A5F] to-[#E76F51] text-white text-xs font-bold shadow-md shadow-[#E07A5F]/20 flex items-center gap-1.5"
+                className="px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-bold shadow-md shadow-blue-500/20 flex items-center gap-1.5"
               >
-                <span>Bepul Ro'yxatdan O'tish</span>
+                <span>Bepul Boshlash</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -561,7 +569,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
       </section>
 
       {/* 3. SOCIAL PROOF & LIVE STATS COUNTER (GrowMock 4-Col Grid) */}
-      <section className="py-10 sm:py-16 bg-white dark:bg-[#0B1123] border-y border-slate-200/80 dark:border-slate-800/80">
+      <section id="results" className="scroll-mt-28 py-10 sm:py-16 bg-white dark:bg-[#0B1123] border-y border-slate-200/80 dark:border-slate-800/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {/* Stat 1 */}
@@ -620,7 +628,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
       </section>
 
       {/* 4. CORE MODULES SHOWCASE (Bento Feature Grid) */}
-      <section id="features-section" className="py-16 sm:py-24">
+      <section id="features" className="scroll-mt-28 py-16 sm:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="text-center max-w-3xl mx-auto space-y-3">
             <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#E07A5F] px-3 py-1 rounded-full bg-[#E07A5F]/10 border border-[#E07A5F]/20">
@@ -637,7 +645,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
           {/* Bento Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
             {/* Bento Card 1: Bluebook Standard Mocks (Span 2) */}
-            <div id="mocks-section" className="md:col-span-2 p-6 sm:p-8 rounded-3xl bg-white dark:bg-[#0E1528] border border-slate-200 dark:border-slate-800 hover:border-[#E07A5F]/50 transition-all duration-300 shadow-sm hover:shadow-xl group">
+            <div id="mocks" className="scroll-mt-28 md:col-span-2 p-6 sm:p-8 rounded-3xl bg-white dark:bg-[#0E1528] border border-slate-200 dark:border-slate-800 hover:border-[#E07A5F]/50 transition-all duration-300 shadow-sm hover:shadow-xl group">
               <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 rounded-2xl bg-orange-500/10 text-[#E07A5F] flex items-center justify-center font-black">
                   <FileText className="w-6 h-6" />
@@ -672,7 +680,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
             </div>
 
             {/* Bento Card 2: Question Bank (SQB) */}
-            <div id="sqb-section" className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-[#0E1528] border border-slate-200 dark:border-slate-800 hover:border-[#2A9D8F]/50 transition-all duration-300 shadow-sm hover:shadow-xl group">
+            <div id="qbank" className="scroll-mt-28 p-6 sm:p-8 rounded-3xl bg-white dark:bg-[#0E1528] border border-slate-200 dark:border-slate-800 hover:border-[#2A9D8F]/50 transition-all duration-300 shadow-sm hover:shadow-xl group">
               <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-[#2A9D8F] flex items-center justify-center font-black">
                   <Database className="w-6 h-6" />
@@ -704,7 +712,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
             </div>
 
             {/* Bento Card 3: Vocabulary Hub */}
-            <div id="vocab-section" className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-[#0E1528] border border-slate-200 dark:border-slate-800 hover:border-purple-500/50 transition-all duration-300 shadow-sm hover:shadow-xl group">
+            <div id="vocab" className="scroll-mt-28 p-6 sm:p-8 rounded-3xl bg-white dark:bg-[#0E1528] border border-slate-200 dark:border-slate-800 hover:border-purple-500/50 transition-all duration-300 shadow-sm hover:shadow-xl group">
               <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center font-black">
                   <BookOpen className="w-6 h-6" />
@@ -779,7 +787,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
       </section>
 
       {/* 5. STEP-BY-STEP PREPARATION TIMELINE (GrowMock 3-Step Journey) */}
-      <section id="timeline-section" className="py-16 sm:py-24 bg-white dark:bg-[#0B1123] border-y border-slate-200/80 dark:border-slate-800/80">
+      <section id="timeline" className="scroll-mt-28 py-16 sm:py-24 bg-white dark:bg-[#0B1123] border-y border-slate-200/80 dark:border-slate-800/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="text-center max-w-3xl mx-auto space-y-3">
             <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#2A9D8F] px-3 py-1 rounded-full bg-[#2A9D8F]/10 border border-[#2A9D8F]/20">
@@ -931,32 +939,32 @@ export const LandingView: React.FC<LandingViewProps> = ({
 
             <div className="flex flex-wrap items-center gap-6 font-medium">
               <button
-                onClick={() => scrollToSection('mocks-section')}
-                className="hover:text-[#E07A5F] transition-colors cursor-pointer"
+                onClick={() => scrollToSection('mocks')}
+                className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
               >
                 Mock Testlar
               </button>
               <button
-                onClick={() => scrollToSection('sqb-section')}
-                className="hover:text-[#E07A5F] transition-colors cursor-pointer"
+                onClick={() => scrollToSection('qbank')}
+                className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
               >
                 Savollar Banki
               </button>
               <button
-                onClick={() => scrollToSection('vocab-section')}
-                className="hover:text-[#E07A5F] transition-colors cursor-pointer"
+                onClick={() => scrollToSection('vocab')}
+                className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
               >
                 SAT Lug'at
               </button>
               <button
-                onClick={() => scrollToSection('features-section')}
-                className="hover:text-[#E07A5F] transition-colors cursor-pointer"
+                onClick={() => scrollToSection('features')}
+                className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
               >
                 Imkoniyatlar
               </button>
               <button
                 onClick={() => onOpenAuthModal('signin')}
-                className="hover:text-[#E07A5F] transition-colors cursor-pointer"
+                className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
               >
                 Kirish
               </button>

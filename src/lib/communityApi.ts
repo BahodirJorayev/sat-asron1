@@ -76,14 +76,18 @@ export async function searchGlobalCommunity(
     if (!profileErr && Array.isArray(profileData)) {
       profileData.forEach((p) => {
         if (!foundUserIds.has(p.id)) {
-          foundUserIds.add(p.id);
-          usersResults.push({
-            id: p.id,
-            fullName: p.full_name || p.username || 'Talaba',
-            username: p.username || 'user',
-            avatarUrl: p.avatar_url,
-            role: p.role,
-          });
+          const matchName = (p.full_name || '').toLowerCase().includes(qLower);
+          const matchUsername = (p.username || '').toLowerCase().includes(qLower);
+          if (matchName || matchUsername) {
+            foundUserIds.add(p.id);
+            usersResults.push({
+              id: p.id,
+              fullName: p.full_name || p.username || 'Talaba',
+              username: p.username || 'user',
+              avatarUrl: p.avatar_url,
+              role: p.role,
+            });
+          }
         }
       });
     }
@@ -104,33 +108,34 @@ export async function searchGlobalCommunity(
       channelData.forEach((ch) => {
         // Exclude private channels from global search unless the user is member
         const isPublicEntity = ch.is_public !== false && ch.type !== 'private_group' && ch.type !== 'PRIVATE_GROUP';
-        if (isPublicEntity && !foundChannelIds.has(ch.id)) {
-            foundChannelIds.add(ch.id);
-            channelResults.push({
-              id: ch.id,
-              name: ch.name || 'Kanal',
-              username: ch.username,
-              description: ch.description,
-              type: (ch.type?.toUpperCase() as ChatType) || 'PUBLIC_CHANNEL',
-              avatarUrl: ch.avatar_url,
-              inviteToken: ch.invite_token,
-              isPublic: true,
-            });
-          }
-        });
-      }
-    } catch (err) {
+        const matchName = (ch.name || '').toLowerCase().includes(qLower);
+        const matchUsername = (ch.username || '').toLowerCase().includes(qLower);
+        if (isPublicEntity && !foundChannelIds.has(ch.id) && (matchName || matchUsername)) {
+          foundChannelIds.add(ch.id);
+          channelResults.push({
+            id: ch.id,
+            name: ch.name || 'Kanal',
+            username: ch.username,
+            description: ch.description,
+            type: (ch.type?.toUpperCase() as ChatType) || 'PUBLIC_CHANNEL',
+            avatarUrl: ch.avatar_url,
+            inviteToken: ch.invite_token,
+            isPublic: true,
+          });
+        }
+      });
+    }
+  } catch (err) {
     console.warn('Supabase community_channels search notice:', err);
   }
 
-  // 3. Search and merge local/seed Users
+  // 3. Search and merge local/seed Users (strictly matching query)
   localUsers.forEach((u) => {
     if (foundUserIds.has(u.id)) return;
-    const matchName = u.fullName?.toLowerCase().includes(qLower);
-    const matchUser = u.username?.toLowerCase().includes(qLower);
-    const matchEmail = u.email?.toLowerCase().includes(qLower);
+    const matchName = (u.fullName || '').toLowerCase().includes(qLower);
+    const matchUser = (u.username || '').toLowerCase().includes(qLower);
 
-    if (matchName || matchUser || matchEmail) {
+    if (matchName || matchUser) {
       foundUserIds.add(u.id);
       usersResults.push({
         id: u.id,

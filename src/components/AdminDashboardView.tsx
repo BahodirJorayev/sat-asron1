@@ -47,11 +47,16 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
 
       if (!error && count !== null) {
         setTotalStudents(count);
+      } else if (users && users.length > 0) {
+        setTotalStudents(users.length);
       }
     } catch (err) {
       console.error('Failed to fetch total users count:', err);
+      if (users && users.length > 0) {
+        setTotalStudents(users.length);
+      }
     }
-  }, []);
+  }, [users]);
 
   // 2. Live Recent Scholars list from public.profiles
   const fetchRecentScholars = useCallback(async () => {

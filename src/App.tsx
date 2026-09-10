@@ -1020,25 +1020,53 @@ export default function App() {
         if (authIntent === 'signup' && !profile) {
           localStorage.removeItem('asron_auth_intent');
           localStorage.removeItem('asron_auth_notice');
-          await supabase.from('profiles').insert({
-            id: user.id,
-            email: user.email,
-            full_name: user.user_metadata?.full_name || user.user_metadata?.name || 'Talaba',
-            username: user.email?.split('@')[0] || `user_${user.id.slice(0, 5)}`,
-            avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
-          });
+          await supabase.from('profiles').upsert(
+            {
+              id: user.id,
+              email: user.email,
+              full_name: user.user_metadata?.full_name || user.user_metadata?.name || 'Talaba',
+              username: user.email?.split('@')[0] || `user_${user.id.slice(0, 5)}`,
+              avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
+              target_score: 1500,
+              created_at: new Date().toISOString(),
+            },
+            { onConflict: 'id' }
+          );
+          try {
+            await supabase.from('user_progress').upsert(
+              {
+                user_id: user.id,
+                updated_at: new Date().toISOString(),
+              },
+              { onConflict: 'user_id' }
+            );
+          } catch {}
         } else if (authIntent === 'signin') {
           localStorage.removeItem('asron_auth_intent');
           localStorage.removeItem('asron_auth_notice');
         } else if (!profile) {
           // Fallback auto-provision if neither intent was stored
-          await supabase.from('profiles').insert({
-            id: user.id,
-            email: user.email,
-            full_name: user.user_metadata?.full_name || user.user_metadata?.name || 'Talaba',
-            username: user.email?.split('@')[0] || `user_${user.id.slice(0, 5)}`,
-            avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
-          });
+          await supabase.from('profiles').upsert(
+            {
+              id: user.id,
+              email: user.email,
+              full_name: user.user_metadata?.full_name || user.user_metadata?.name || 'Talaba',
+              username: user.email?.split('@')[0] || `user_${user.id.slice(0, 5)}`,
+              avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
+              target_score: 1500,
+              created_at: new Date().toISOString(),
+            },
+            { onConflict: 'id' }
+          );
+          try {
+            await supabase.from('user_progress').upsert(
+              {
+                user_id: user.id,
+                updated_at: new Date().toISOString(),
+              },
+              { onConflict: 'user_id' }
+            );
+          } catch {}
         }
 
         if (!isMounted) return;

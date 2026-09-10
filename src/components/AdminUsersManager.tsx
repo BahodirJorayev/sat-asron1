@@ -96,7 +96,12 @@ export const AdminUsersManager: React.FC<AdminUsersManagerProps> = ({
     setTimeout(() => setActionSuccessMsg(null), 3500);
   };
 
-  const effectiveUsers = liveUsers.length > 0 ? liveUsers : users;
+  const effectiveUsers = useMemo(() => {
+    if (liveUsers.length === 0) return users;
+    const liveIds = new Set(liveUsers.map((u) => u.id));
+    const historicalOnly = users.filter((u) => !liveIds.has(u.id));
+    return [...liveUsers, ...historicalOnly];
+  }, [liveUsers, users]);
 
   const filteredUsers = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();

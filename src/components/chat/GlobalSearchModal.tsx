@@ -169,14 +169,19 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
 
         const mappedUsers: ProfileSearchResult[] = [];
         if (users && Array.isArray(users)) {
+          const qLower = cleanTerm.toLowerCase();
           users.forEach((p: any) => {
-            mappedUsers.push({
-              id: p.id,
-              fullName: p.full_name || p.username || 'Talaba',
-              username: p.username || 'user',
-              avatarUrl: p.avatar_url,
-              role: p.role || 'STUDENT',
-            });
+            const matchName = (p.full_name || '').toLowerCase().includes(qLower);
+            const matchUsername = (p.username || '').toLowerCase().includes(qLower);
+            if (matchName || matchUsername) {
+              mappedUsers.push({
+                id: p.id,
+                fullName: p.full_name || p.username || 'Talaba',
+                username: p.username || 'user',
+                avatarUrl: p.avatar_url,
+                role: p.role || 'STUDENT',
+              });
+            }
           });
         }
 

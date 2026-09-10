@@ -101,15 +101,17 @@ export default function AdminVocabularyPage() {
 
   // Filtered words
   const filteredWords = useMemo(() => {
+    if (!Array.isArray(words)) return [];
     return words.filter((w) => {
+      if (!w) return false;
       if (selectedBookFilter !== 'ALL' && w.bookId !== selectedBookFilter) {
         return false;
       }
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
-        const matchesWord = w.word.toLowerCase().includes(q);
-        const matchesDef = w.definition.toLowerCase().includes(q);
-        const matchesUz = w.definitionUz?.toLowerCase().includes(q);
+        const matchesWord = (w.word || '').toLowerCase().includes(q);
+        const matchesDef = (w.definition || '').toLowerCase().includes(q);
+        const matchesUz = (w.definitionUz || '').toLowerCase().includes(q);
         if (!matchesWord && !matchesDef && !matchesUz) return false;
       }
       return true;
@@ -235,7 +237,9 @@ export default function AdminVocabularyPage() {
     e.preventDefault();
     if (!wordFormData.word.trim() || !wordFormData.definition.trim()) return;
 
-    const assignedBook = books.find((b) => b.id === wordFormData.bookId) || books[0];
+    const assignedBook = (books && books.length > 0)
+      ? (books.find((b) => b.id === wordFormData.bookId) || books[0])
+      : { id: 'a1111111-b001-4000-8000-000000000001', title: 'Erica Meltzer SAT Vocabulary' };
 
     const wordToSave: VocabularyWord = {
       id: editingWord?.id || `w-${Date.now()}`,
@@ -316,7 +320,9 @@ export default function AdminVocabularyPage() {
 
   const handleCommitBulkImport = async () => {
     if (!bulkRawText.trim()) return;
-    const targetBook = books.find((b) => b.id === bulkBookId) || books[0];
+    const targetBook = (books && books.length > 0)
+      ? (books.find((b) => b.id === bulkBookId) || books[0])
+      : { id: 'a1111111-b001-4000-8000-000000000001', title: 'Erica Meltzer SAT Vocabulary' };
 
     try {
       let itemsToImport: any[] = [];
@@ -489,10 +495,48 @@ export default function AdminVocabularyPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#E2E8F0] dark:divide-[#1E293B]">
-                    {filteredWords.length === 0 ? (
+                    {isLoading ? (
+                      [...Array(6)].map((_, i) => (
+                        <tr key={`skel-${i}`} className="animate-pulse">
+                          <td className="py-4 px-4">
+                            <div className="h-4 w-28 bg-slate-200 dark:bg-slate-800 rounded" />
+                          </td>
+                          <td className="py-4 px-3">
+                            <div className="h-4 w-12 bg-slate-200 dark:bg-slate-800 rounded" />
+                          </td>
+                          <td className="py-4 px-3">
+                            <div className="h-4 w-24 bg-slate-200 dark:bg-slate-800 rounded" />
+                          </td>
+                          <td className="py-4 px-4">
+                            <div className="h-4 w-48 bg-slate-200 dark:bg-slate-800 rounded" />
+                          </td>
+                          <td className="py-4 px-3">
+                            <div className="h-4 w-16 bg-slate-200 dark:bg-slate-800 rounded" />
+                          </td>
+                          <td className="py-4 px-3 text-right">
+                            <div className="h-4 w-10 bg-slate-200 dark:bg-slate-800 rounded ml-auto" />
+                          </td>
+                        </tr>
+                      ))
+                    ) : filteredWords.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="py-8 text-center text-[#94A3B8]">
-                          Hech qanday so'z topilmadi.
+                        <td colSpan={6} className="py-12 text-center">
+                          <div className="flex flex-col items-center justify-center gap-2 text-[#94A3B8]">
+                            <BookOpen className="w-8 h-8 opacity-40 text-[#E07A5F]" />
+                            <p className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                              Hech qanday so'z topilmadi
+                            </p>
+                            <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">
+                              Qidiruv so'zini o'zgartiring yoki yangi so'z qo'shing.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenWordModal()}
+                              className="mt-2 px-3.5 py-1.5 rounded-xl bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] text-xs font-mono font-bold cursor-pointer hover:opacity-90 transition-opacity"
+                            >
+                              Yangi So'z Qo'shish
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ) : (
@@ -502,14 +546,16 @@ export default function AdminVocabularyPage() {
                           className="hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]/40 transition-colors"
                         >
                           <td className="py-3 px-4 font-bold text-sm text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-2">
-                            <span>{word.word}</span>
-                            <button
-                              type="button"
-                              onClick={() => speakWord(word.word, 0.85)}
-                              className="text-[#94A3B8] hover:text-[#E07A5F] cursor-pointer"
-                            >
-                              <Volume2 size={13} />
-                            </button>
+                            <span>{word.word || 'N/A'}</span>
+                            {word.word && (
+                              <button
+                                type="button"
+                                onClick={() => speakWord(word.word, 0.85)}
+                                className="text-[#94A3B8] hover:text-[#E07A5F] cursor-pointer"
+                              >
+                                <Volume2 size={13} />
+                              </button>
+                            )}
                             {word.phonetic && (
                               <span className="text-[11px] font-normal text-[#94A3B8]">
                                 {word.phonetic}
@@ -518,22 +564,26 @@ export default function AdminVocabularyPage() {
                           </td>
                           <td className="py-3 px-3">
                             <span className="px-2 py-0.5 rounded-md bg-[#F1F5F9] dark:bg-[#0A0F1D] text-[#64748B] dark:text-[#94A3B8]">
-                              {word.partOfSpeech}
+                              {word.partOfSpeech || 'adj.'}
                             </span>
                           </td>
                           <td className="py-3 px-3 text-[#64748B] dark:text-[#94A3B8]">
-                            {word.bookSource}
+                            {word.bookSource || 'SAT Vocabulary'}
                           </td>
                           <td className="py-3 px-4 max-w-sm">
                             <div className="font-sans text-xs text-[#0F172A] dark:text-[#F8FAFC] line-clamp-1">
-                              {word.definition}
+                              {word.definition || '—'}
                             </div>
-                            <div className="font-sans text-[11px] text-[#E07A5F] font-medium line-clamp-1">
-                              {word.definitionUz}
-                            </div>
+                            {word.definitionUz && (
+                              <div className="font-sans text-[11px] text-[#E07A5F] font-medium line-clamp-1">
+                                {word.definitionUz}
+                              </div>
+                            )}
                           </td>
                           <td className="py-3 px-3 text-[#64748B] dark:text-[#94A3B8]">
-                            {word.synonyms.slice(0, 2).join(', ') || '—'}
+                            {Array.isArray(word.synonyms) && word.synonyms.length > 0
+                              ? word.synonyms.slice(0, 2).join(', ')
+                              : '—'}
                           </td>
                           <td className="py-3 px-3 text-right">
                             <div className="flex items-center justify-end gap-1">
@@ -579,71 +629,105 @@ export default function AdminVocabularyPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {books.map((book) => {
-                const bookWordsCount = words.filter(
-                  (w) =>
-                    w.bookId === book.id ||
-                    w.bookSource?.toLowerCase().includes(book.title.toLowerCase())
-                ).length;
-
-                return (
+              {isLoading ? (
+                [...Array(4)].map((_, i) => (
                   <div
-                    key={book.id}
-                    className="p-6 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-xs flex flex-col justify-between space-y-4"
+                    key={`book-skel-${i}`}
+                    className="p-6 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-xs space-y-4 animate-pulse"
                   >
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-[#FAF5F0] dark:bg-[#1E293B] text-[#E07A5F] font-bold">
-                          Tartib: #{book.orderIndex}
-                        </span>
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => handleOpenBookModal(book)}
-                            className="p-1.5 text-[#64748B] hover:text-[#0F172A] dark:hover:text-white rounded-md cursor-pointer"
-                          >
-                            <Edit2 size={14} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteBook(book.id)}
-                            className="p-1.5 text-rose-500 hover:text-rose-700 rounded-md cursor-pointer"
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                    <div className="flex justify-between items-center">
+                      <div className="h-4 w-16 bg-slate-200 dark:bg-slate-800 rounded" />
+                      <div className="h-4 w-12 bg-slate-200 dark:bg-slate-800 rounded" />
+                    </div>
+                    <div className="h-5 w-44 bg-slate-200 dark:bg-slate-800 rounded" />
+                    <div className="h-3.5 w-28 bg-slate-200 dark:bg-slate-800 rounded" />
+                    <div className="h-10 w-full bg-slate-200 dark:bg-slate-800 rounded" />
+                  </div>
+                ))
+              ) : books.length === 0 ? (
+                <div className="col-span-full p-12 text-center rounded-2xl border border-dashed border-[#E2E8F0] dark:border-[#1E293B] bg-white dark:bg-[#121A2F]">
+                  <BookOpen className="w-10 h-10 mx-auto text-[#E07A5F] opacity-40 mb-2" />
+                  <h3 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC]">Kitoblar mavjud emas</h3>
+                  <p className="text-xs text-[#64748B] dark:text-[#94A3B8] mt-1 mb-4">Birinchi lug'at kitobini qo'shing</p>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenBookModal()}
+                    className="px-4 py-2 rounded-xl bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] text-xs font-mono font-bold hover:opacity-90 transition-opacity cursor-pointer"
+                  >
+                    Yangi Kitob Qo'shish
+                  </button>
+                </div>
+              ) : (
+                books.map((book) => {
+                  const bookTitle = (book.title || '').toLowerCase();
+                  const bookWordsCount = Array.isArray(words)
+                    ? words.filter(
+                        (w) =>
+                          w &&
+                          (w.bookId === book.id ||
+                            (w.bookSource && bookTitle && w.bookSource.toLowerCase().includes(bookTitle)))
+                      ).length
+                    : 0;
+
+                  return (
+                    <div
+                      key={book.id}
+                      className="p-6 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-xs flex flex-col justify-between space-y-4"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-[#FAF5F0] dark:bg-[#1E293B] text-[#E07A5F] font-bold">
+                            Tartib: #{book.orderIndex ?? 1}
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => handleOpenBookModal(book)}
+                              className="p-1.5 text-[#64748B] hover:text-[#0F172A] dark:hover:text-white rounded-md cursor-pointer"
+                            >
+                              <Edit2 size={14} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteBook(book.id)}
+                              className="p-1.5 text-rose-500 hover:text-rose-700 rounded-md cursor-pointer"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
                         </div>
+
+                        <h3 className="text-base font-extrabold text-[#0F172A] dark:text-[#F8FAFC]">
+                          {book.title || 'Untitled Book'}
+                        </h3>
+                        {book.author && (
+                          <p className="text-xs font-mono text-[#64748B] dark:text-[#94A3B8]">
+                            Muallif: {book.author}
+                          </p>
+                        )}
+                        <p className="text-xs text-[#475569] dark:text-[#CBD5E1] leading-relaxed">
+                          {book.description || 'Tavsif berilmagan.'}
+                        </p>
                       </div>
 
-                      <h3 className="text-base font-extrabold text-[#0F172A] dark:text-[#F8FAFC]">
-                        {book.title}
-                      </h3>
-                      {book.author && (
-                        <p className="text-xs font-mono text-[#64748B] dark:text-[#94A3B8]">
-                          Muallif: {book.author}
-                        </p>
-                      )}
-                      <p className="text-xs text-[#475569] dark:text-[#CBD5E1] leading-relaxed">
-                        {book.description}
-                      </p>
+                      <div className="pt-3 border-t border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-between text-xs font-mono">
+                        <span className="text-[#64748B] dark:text-[#94A3B8]">
+                          Jami so'zlar: <strong>{bookWordsCount}</strong>
+                        </span>
+                        {book.pdfUrl && (
+                          <a
+                            href={book.pdfUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[#E07A5F] hover:underline flex items-center gap-1 font-bold"
+                          >
+                            <FileText size={13} />
+                            <span>PDF Manzili</span>
+                          </a>
+                        )}
+                      </div>
                     </div>
-
-                    <div className="pt-3 border-t border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-between text-xs font-mono">
-                      <span className="text-[#64748B] dark:text-[#94A3B8]">
-                        Jami so'zlar: <strong>{bookWordsCount}</strong>
-                      </span>
-                      {book.pdfUrl && (
-                        <a
-                          href={book.pdfUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-[#E07A5F] hover:underline flex items-center gap-1 font-bold"
-                        >
-                          <FileText size={13} />
-                          <span>PDF Manzili</span>
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           </div>
         )}

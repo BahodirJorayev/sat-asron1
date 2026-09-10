@@ -89,7 +89,7 @@ export const VocabularyHub: React.FC<VocabularyHubProps> = ({
 
   // Active book
   const activeBook = useMemo(() => {
-    return books.find((b) => b.slug === selectedBookSlug) || books[0];
+    return books.find((b) => b?.slug === selectedBookSlug) || books[0] || null;
   }, [books, selectedBookSlug]);
 
   // Filter words by active book
@@ -97,9 +97,10 @@ export const VocabularyHub: React.FC<VocabularyHubProps> = ({
     if (!activeBook) return [];
     return words.filter(
       (w) =>
-        w.bookId === activeBook.id ||
-        (w.bookSource && w.bookSource.toLowerCase().includes(activeBook.title.toLowerCase())) ||
-        (activeBook.slug === 'erica-meltzer' && (!w.bookId || w.bookSource?.includes('Erica')))
+        w &&
+        (w.bookId === activeBook.id ||
+          (w.bookSource && w.bookSource.toLowerCase().includes((activeBook.title || '').toLowerCase())) ||
+          (activeBook.slug === 'erica-meltzer' && (!w.bookId || w.bookSource?.includes('Erica'))))
     );
   }, [words, activeBook]);
 
@@ -252,12 +253,14 @@ export const VocabularyHub: React.FC<VocabularyHubProps> = ({
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-2xl bg-[#F8FAFC] dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] w-full sm:w-fit">
           {books.map((b) => {
+            if (!b) return null;
             const isActive = b.slug === selectedBookSlug;
             const bookCount = words.filter(
               (w) =>
-                w.bookId === b.id ||
-                w.bookSource?.toLowerCase().includes(b.title.toLowerCase()) ||
-                (b.slug === 'erica-meltzer' && (!w.bookId || w.bookSource?.includes('Erica')))
+                w &&
+                (w.bookId === b.id ||
+                  (w.bookSource && w.bookSource.toLowerCase().includes((b.title || '').toLowerCase())) ||
+                  (b.slug === 'erica-meltzer' && (!w.bookId || w.bookSource?.includes('Erica'))))
             ).length;
 
             return (
@@ -396,80 +399,92 @@ export const VocabularyHub: React.FC<VocabularyHubProps> = ({
               <span>Jami {filteredWordsList.length} ta so'z ko'rsatilmoqda</span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredWordsList.map((word) => {
-                const prog = userProgressMap[word.id];
+            {filteredWordsList.length === 0 ? (
+              <div className="text-center py-12 rounded-2xl bg-white dark:bg-[#121A2F] border border-dashed border-[#CBD5E1] dark:border-[#334155] p-6">
+                <p className="text-sm font-semibold text-[#64748B] dark:text-[#94A3B8]">
+                  Ushbu qidiruv bo'yicha birorta ham so'z topilmadi.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredWordsList.map((word) => {
+                  const prog = userProgressMap[word.id];
 
-                return (
-                  <div
-                    key={word.id}
-                    className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-xs space-y-3 flex flex-col justify-between"
-                  >
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-base font-extrabold text-[#0F172A] dark:text-[#F8FAFC]">
-                            {word.word}
-                          </h3>
-                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-[#F1F5F9] dark:bg-[#0A0F1D] text-[#64748B] dark:text-[#94A3B8]">
-                            {word.partOfSpeech}
-                          </span>
-                          {word.phonetic && (
-                            <span className="text-xs font-mono text-[#94A3B8]">
-                              {word.phonetic}
+                  return (
+                    <div
+                      key={word.id}
+                      className="p-5 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-xs space-y-3 flex flex-col justify-between"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-base font-extrabold text-[#0F172A] dark:text-[#F8FAFC]">
+                              {word.word}
+                            </h3>
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-[#F1F5F9] dark:bg-[#0A0F1D] text-[#64748B] dark:text-[#94A3B8]">
+                              {word.partOfSpeech}
                             </span>
-                          )}
+                            {word.phonetic && (
+                              <span className="text-xs font-mono text-[#94A3B8]">
+                                {word.phonetic}
+                              </span>
+                            )}
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => speakWord(word.word || '', 0.85)}
+                            className="p-1.5 rounded-lg text-[#E07A5F] hover:bg-[#FAF5F0] dark:hover:bg-[#1E293B] cursor-pointer"
+                          >
+                            <Volume2 size={14} />
+                          </button>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => speakWord(word.word, 0.85)}
-                          className="p-1.5 rounded-lg text-[#E07A5F] hover:bg-[#FAF5F0] dark:hover:bg-[#1E293B] cursor-pointer"
-                        >
-                          <Volume2 size={14} />
-                        </button>
+                        {/* English Definition */}
+                        <p className="text-xs text-[#475569] dark:text-[#CBD5E1] leading-relaxed">
+                          {word.definition}
+                        </p>
+
+                        {/* Uzbek Translation */}
+                        <div className="p-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
+                          {word.definitionUz || word.definition}
+                        </div>
+
+                        {/* Sample sentence */}
+                        <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8] italic">
+                          "{word.sampleSentence}"
+                        </p>
                       </div>
 
-                      {/* English Definition */}
-                      <p className="text-xs text-[#475569] dark:text-[#CBD5E1] leading-relaxed">
-                        {word.definition}
-                      </p>
+                      <div className="flex items-center justify-between pt-2 border-t border-[#E2E8F0] dark:border-[#1E293B] text-[11px] font-mono">
+                        <div className="flex items-center gap-1 text-[#64748B] dark:text-[#94A3B8]">
+                          <span>Sinonimlar: </span>
+                          <strong>
+                            {Array.isArray(word.synonyms) && word.synonyms.length > 0
+                              ? word.synonyms.slice(0, 3).join(', ')
+                              : '—'}
+                          </strong>
+                        </div>
 
-                      {/* Uzbek Translation */}
-                      <div className="p-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
-                        {word.definitionUz || word.definition}
+                        {prog?.isKnown ? (
+                          <span className="text-[#2A9D8F] flex items-center gap-1 font-bold">
+                            <CheckCircle2 size={12} />
+                            <span>Yodlangan</span>
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleMarkWordProgress(word.id, true)}
+                            className="text-[#E07A5F] hover:underline cursor-pointer font-bold"
+                          >
+                            + Yodlandiga kiritish
+                          </button>
+                        )}
                       </div>
-
-                      {/* Sample sentence */}
-                      <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8] italic">
-                        "{word.sampleSentence}"
-                      </p>
                     </div>
-
-                    <div className="flex items-center justify-between pt-2 border-t border-[#E2E8F0] dark:border-[#1E293B] text-[11px] font-mono">
-                      <div className="flex items-center gap-1 text-[#64748B] dark:text-[#94A3B8]">
-                        <span>Sinonimlar: </span>
-                        <strong>{word.synonyms.slice(0, 3).join(', ')}</strong>
-                      </div>
-
-                      {prog?.isKnown ? (
-                        <span className="text-[#2A9D8F] flex items-center gap-1 font-bold">
-                          <CheckCircle2 size={12} />
-                          <span>Yodlangan</span>
-                        </span>
-                      ) : (
-                        <button
-                          onClick={() => handleMarkWordProgress(word.id, true)}
-                          className="text-[#E07A5F] hover:underline cursor-pointer font-bold"
-                        >
-                          + Yodlandiga kiritish
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -18,7 +18,10 @@ export async function fetchVocabBooks(): Promise<VocabularyBook[]> {
     try {
       const cached = localStorage.getItem(STORAGE_KEYS.BOOKS);
       if (cached) {
-        books = JSON.parse(cached);
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          books = parsed;
+        }
       }
     } catch {}
   }
@@ -30,19 +33,19 @@ export async function fetchVocabBooks(): Promise<VocabularyBook[]> {
         .select('*')
         .order('order_index', { ascending: true });
 
-      if (data && !error && data.length > 0) {
+      if (data && !error && Array.isArray(data) && data.length > 0) {
         books = data.map((d: any) => ({
           id: d.id,
-          title: d.title,
-          slug: d.slug,
-          author: d.author,
+          title: d.title || 'Official SAT Vocabulary Book',
+          slug: d.slug || `book-${d.id}`,
+          author: d.author || 'ASRON SAT Editorial',
           description: d.description || '',
           pdfUrl: d.pdf_url || '',
           orderIndex: d.order_index ?? 0,
           isOfficial: d.is_official ?? true,
           coverColor: d.cover_color || '#E07A5F',
-          createdAt: d.created_at,
-          updatedAt: d.updated_at,
+          createdAt: d.created_at || new Date().toISOString(),
+          updatedAt: d.updated_at || new Date().toISOString(),
         }));
 
         if (typeof localStorage !== 'undefined') {
@@ -54,7 +57,7 @@ export async function fetchVocabBooks(): Promise<VocabularyBook[]> {
     console.warn('Notice fetching vocabulary_books from Supabase:', err);
   }
 
-  return books;
+  return Array.isArray(books) && books.length > 0 ? books : INITIAL_VOCAB_BOOKS;
 }
 
 /**
@@ -121,7 +124,10 @@ export async function fetchVocabWords(bookId?: string): Promise<VocabularyWord[]
     try {
       const cached = localStorage.getItem(STORAGE_KEYS.WORDS);
       if (cached) {
-        words = JSON.parse(cached);
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          words = parsed;
+        }
       }
     } catch {}
   }
@@ -134,24 +140,32 @@ export async function fetchVocabWords(bookId?: string): Promise<VocabularyWord[]
       }
 
       const { data, error } = await query;
-      if (data && !error && data.length > 0) {
+      if (data && !error && Array.isArray(data) && data.length > 0) {
         const remoteWords: VocabularyWord[] = data.map((d: any) => ({
           id: d.id,
-          bookId: d.book_id,
-          bookSource: d.book_source,
-          word: d.word,
-          partOfSpeech: d.part_of_speech,
-          phonetic: d.phonetic,
-          definition: d.definition,
-          definitionUz: d.definition_uz,
-          sampleSentence: d.sample_sentence,
-          synonyms: d.synonyms || [],
-          antonyms: d.antonyms || [],
-          difficulty: d.difficulty,
-          tone: d.tone,
-          etymology: d.etymology,
-          createdAt: d.created_at,
-          updatedAt: d.updated_at,
+          bookId: d.book_id || 'a1111111-b001-4000-8000-000000000001',
+          bookSource: d.book_source || 'Erica Meltzer SAT Vocabulary',
+          word: (d.word || '').trim(),
+          partOfSpeech: d.part_of_speech || 'adj.',
+          phonetic: d.phonetic || '',
+          definition: d.definition || '',
+          definitionUz: d.definition_uz || '',
+          sampleSentence: d.sample_sentence || '',
+          synonyms: Array.isArray(d.synonyms)
+            ? d.synonyms
+            : typeof d.synonyms === 'string'
+            ? d.synonyms.split(',').map((s: string) => s.trim()).filter(Boolean)
+            : [],
+          antonyms: Array.isArray(d.antonyms)
+            ? d.antonyms
+            : typeof d.antonyms === 'string'
+            ? d.antonyms.split(',').map((s: string) => s.trim()).filter(Boolean)
+            : [],
+          difficulty: (d.difficulty?.toUpperCase() as any) || 'MEDIUM',
+          tone: d.tone || 'Neutral',
+          etymology: d.etymology || '',
+          createdAt: d.created_at || new Date().toISOString(),
+          updatedAt: d.updated_at || new Date().toISOString(),
         }));
 
         if (!bookId && typeof localStorage !== 'undefined') {
@@ -166,11 +180,13 @@ export async function fetchVocabWords(bookId?: string): Promise<VocabularyWord[]
     console.warn('Notice fetching vocabulary_words from Supabase:', err);
   }
 
+  const safeWords = Array.isArray(words) && words.length > 0 ? words : INITIAL_VOCAB_WORDS;
+
   if (bookId) {
-    return words.filter((w) => w.bookId === bookId);
+    return safeWords.filter((w) => w && w.bookId === bookId);
   }
 
-  return words;
+  return safeWords;
 }
 
 /**
@@ -370,6 +386,29 @@ export async function saveUserVocabProgressRemote(
         },
         { onConflict: 'user_id,word_id' }
       );
+
+      // Also sync into unified user_progress table for real-time cross-device sync
+      try {
+        const { data: currentProgress } = await supabase
+          .from('user_progress')
+          .select('vocab_mastery')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        const updatedVocabMastery = {
+          ...(currentProgress?.vocab_mastery || {}),
+          [wordId]: { isKnown, srsStage, lastReviewedAt: now },
+        };
+
+        await supabase.from('user_progress').upsert(
+          {
+            user_id: userId,
+            vocab_mastery: updatedVocabMastery,
+            updated_at: now,
+          },
+          { onConflict: 'user_id' }
+        );
+      } catch {}
     }
   } catch (err) {
     console.warn('Notice saving user_vocab_progress to Supabase:', err);

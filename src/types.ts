@@ -36,6 +36,20 @@ export interface User {
   unlockedBadges?: string[];
   weakestSubSkills?: string[];
   targetExamDate?: string;
+  // IELTS Dual-Exam Profile metrics
+  ieltsTargetBand?: number;
+  ieltsListeningBand?: number;
+  ieltsReadingBand?: number;
+  ieltsWritingBand?: number;
+  ieltsSpeakingBand?: number;
+  ieltsOverallBand?: number;
+  ieltsPracticeHours?: number;
+  ieltsRecentMocks?: Array<{
+    id: string;
+    title: string;
+    band: number;
+    date: string;
+  }>;
   streakDays: number;
   lastActiveDate?: string;
   streakFreezes: number;

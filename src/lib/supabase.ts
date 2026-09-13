@@ -156,13 +156,19 @@ function saveUserToRegisteredIndex(user: User) {
   } catch {}
 }
 
+// Standardized deterministic email normalizer for manual auth
+export const normalizeEmail = (identifier: string): string => {
+  const clean = identifier.trim().toLowerCase().replace(/^@+/, '');
+  return clean.includes('@') ? clean : `${clean}@asron.sat`;
+};
+
 // Resolve email or username identifier to authentic email
 export async function resolveLoginIdentifierToEmail(identifier: string): Promise<string> {
   const trimmed = identifier.trim();
-  if (trimmed.includes('@') && trimmed.includes('.')) {
+  if (trimmed.includes('@')) {
     return trimmed.toLowerCase();
   }
-  const cleanUsername = trimmed.toLowerCase().replace(/^@/, '').replace(/[^a-z0-9_]/g, '');
+  const cleanUsername = trimmed.toLowerCase().replace(/^@+/, '');
   try {
     const { data } = await supabase
       .from('profiles')
@@ -173,7 +179,7 @@ export async function resolveLoginIdentifierToEmail(identifier: string): Promise
       return data.email.toLowerCase();
     }
   } catch {}
-  return `${cleanUsername}@asron.sat`;
+  return normalizeEmail(cleanUsername);
 }
 
 // Email or Username / Password Sign In
@@ -186,12 +192,37 @@ export async function signInWithEmail(
       return { data: null, error: { message: "Foydalanuvchi nomi yoki parol noto'g'ri." } };
     }
 
-    const email = await resolveLoginIdentifierToEmail(identifierOrEmail);
+    const cleanInput = identifierOrEmail.trim();
+    let emailToTry = normalizeEmail(cleanInput);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email,
+    // 1. Authenticate with standardized normalized email
+    let { data, error } = await supabase.auth.signInWithPassword({
+      email: emailToTry,
       password: pass,
     });
+
+    // 2. Resilient fallback: If not found or failed, and input didn't contain @, check profiles for custom email
+    if ((error || !data?.user) && !cleanInput.includes('@')) {
+      const cleanUsername = cleanInput.toLowerCase().replace(/^@+/, '');
+      try {
+        const { data: profRow } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('username', cleanUsername)
+          .maybeSingle();
+
+        if (profRow?.email && profRow.email.toLowerCase() !== emailToTry.toLowerCase()) {
+          const retryRes = await supabase.auth.signInWithPassword({
+            email: profRow.email.toLowerCase(),
+            password: pass,
+          });
+          if (!retryRes.error && retryRes.data?.user) {
+            data = retryRes.data;
+            error = null;
+          }
+        }
+      } catch {}
+    }
 
     if (error || !data?.user) {
       console.warn('Supabase login error:', error?.message);
@@ -204,19 +235,41 @@ export async function signInWithEmail(
       };
     }
 
+    // 3. Ensure profile exists and sync
     let customProfile: Partial<User> | undefined;
+    const cleanUsername = cleanInput.toLowerCase().replace(/^@+/, '');
     try {
       const { data: prof } = await supabase
         .from('profiles')
-        .select('id, full_name, username, avatar_url, target_score')
+        .select('*')
         .eq('id', data.user.id)
         .maybeSingle();
+
       if (prof) {
         customProfile = {
           fullName: prof.full_name,
           username: prof.username,
           avatarUrl: prof.avatar_url,
           targetScore: prof.target_score,
+          role: (prof.role?.toUpperCase() as any) || 'STUDENT',
+        };
+      } else {
+        // Auto-heal missing profile row
+        const autoName = data.user.user_metadata?.full_name || cleanUsername;
+        await supabase.from('profiles').upsert({
+          id: data.user.id,
+          full_name: autoName,
+          username: cleanUsername,
+          email: data.user.email || emailToTry,
+          role: 'student',
+          avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanUsername}`,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'id' });
+
+        customProfile = {
+          fullName: autoName,
+          username: cleanUsername,
+          role: 'STUDENT',
         };
       }
     } catch {}
@@ -228,6 +281,12 @@ export async function signInWithEmail(
       saveUserToRegisteredIndex(appUser);
     }
     setAuthCookie(appUser);
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('profileUpdated', { detail: appUser }));
+      window.dispatchEvent(new CustomEvent('asron_profile_updated', { detail: appUser }));
+    }
+
     return { data: { user: appUser }, error: null };
   } catch (err: any) {
     return { data: null, error: { message: "Foydalanuvchi nomi yoki parol noto'g'ri.", raw: err } };
@@ -310,7 +369,7 @@ export async function signUpWithUsername(
   pass: string
 ): Promise<{ data: { user?: User } | null; error: any }> {
   try {
-    const cleanUsername = username.trim().toLowerCase().replace('@', '').replace(/[^a-z0-9_]/g, '');
+    const cleanUsername = username.trim().toLowerCase().replace(/^@+/, '');
     const cleanFullName = fullName.trim();
     if (!cleanFullName) {
       return { data: null, error: { message: "To'liq ism kiritilishi shart." } };
@@ -322,10 +381,10 @@ export async function signUpWithUsername(
       return { data: null, error: { message: "Parol kamida 6 ta belgidan iborat bo'lishi kerak." } };
     }
 
-    const syntheticEmail = `${cleanUsername}@asron.sat`;
+    const email = normalizeEmail(username);
 
     const { data, error } = await supabase.auth.signUp({
-      email: syntheticEmail,
+      email: email,
       password: pass,
       options: {
         data: {
@@ -349,12 +408,13 @@ export async function signUpWithUsername(
     try {
       await supabase.from('profiles').upsert({
         id: data.user.id,
-        email: syntheticEmail,
         full_name: cleanFullName,
         username: cleanUsername,
+        email: data.user.email || email,
+        role: 'student',
         avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanUsername}`,
         target_score: 1500,
-        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       }, { onConflict: 'id' });
     } catch (e) {
       console.warn('Profiles table sync error:', e);
@@ -380,7 +440,8 @@ export async function signUpWithUsername(
     const createdUser: User = mapSupabaseUserToAppUser(data.user, {
       fullName: cleanFullName,
       username: cleanUsername,
-      email: syntheticEmail,
+      email: data.user.email || email,
+      role: 'STUDENT',
       phoneNumber: '',
     });
 
@@ -390,6 +451,11 @@ export async function signUpWithUsername(
       saveUserToRegisteredIndex(createdUser);
     }
     setAuthCookie(createdUser);
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('profileUpdated', { detail: createdUser }));
+      window.dispatchEvent(new CustomEvent('asron_profile_updated', { detail: createdUser }));
+    }
 
     return { data: { user: createdUser }, error: null };
   } catch (err: any) {

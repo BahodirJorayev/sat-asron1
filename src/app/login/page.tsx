@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, ArrowRight, Loader2, AlertCircle, X } from 'lucide-react';
-import { supabase, setAuthCookie, mapSupabaseUserToAppUser, resolveLoginIdentifierToEmail } from '../../lib/supabase';
+import { supabase, signInWithEmail } from '../../lib/supabase';
 import { usePlatformSettings } from '../../hooks/usePlatformSettings';
 import { AsronLogo } from '../../components/AsronLogo';
 
@@ -43,48 +43,20 @@ export default function LoginPage() {
     setAuthNotice(null);
 
     try {
-      const resolvedEmail = await resolveLoginIdentifierToEmail(identifier);
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: resolvedEmail,
-        password: password,
-      });
-
-      if (error || !data.user) {
-        setErrorMessage("Foydalanuvchi nomi yoki parol noto'g'ri.");
+      const res = await signInWithEmail(identifier, password);
+      if (res.data?.user) {
+        router.push('/dashboard');
+        router.refresh();
+        if (typeof window !== 'undefined') {
+          window.location.href = '/dashboard';
+        }
+      } else {
+        setErrorMessage(res.error?.message || "Foydalanuvchi nomi yoki parol noto'g'ri.");
         setIsLoading(false);
-        return; // HARD STOP - DO NOT REDIRECT
-      }
-
-      // Fetch live cloud profile to ensure instant multi-device hydration
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id, full_name, username, avatar_url, target_score')
-        .eq('id', data.user.id)
-        .maybeSingle();
-
-      const appUser = mapSupabaseUserToAppUser(data.user, {
-        fullName: profile?.full_name,
-        username: profile?.username,
-        avatarUrl: profile?.avatar_url,
-        targetScore: profile?.target_score,
-      });
-
-      setAuthCookie(appUser);
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('aurasat_user_profile', JSON.stringify(appUser));
-        localStorage.setItem('aura_sat_auth_user', JSON.stringify(appUser));
-      }
-
-      // Force client navigation to dashboard
-      router.push('/dashboard');
-      router.refresh();
-      if (typeof window !== 'undefined') {
-        window.location.href = '/dashboard';
       }
     } catch (err: any) {
       setErrorMessage("Foydalanuvchi nomi yoki parol noto'g'ri.");
       setIsLoading(false);
-      return; // HARD STOP
     }
   };
 

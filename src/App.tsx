@@ -85,6 +85,7 @@ import { IeltsMockTestsCatalogView } from './components/ielts/IeltsMockTestsCata
 import { IeltsSectionalPracticeView } from './components/ielts/IeltsSectionalPracticeView';
 import { IeltsVocabularyView } from './components/ielts/IeltsVocabularyView';
 import { ResourcesHubView } from './components/resources/ResourcesHubView';
+import { RoadmapHub } from './components/resources/RoadmapHub';
 import { useExamProgram } from './context/ExamProgramContext';
 import {
   fetchGlobalPlatformSettings,
@@ -2144,6 +2145,18 @@ export default function App() {
         );
 
       case 'roadmap':
+        if (isIelts) {
+          return (
+            <RoadmapHub
+              user={currentUser}
+              onOpenPaywall={() => setIsPaywallOpen(true)}
+              onNavigateMocks={() => {
+                setActiveTab('mocks');
+                if (typeof window !== 'undefined') window.location.hash = '#/mocks';
+              }}
+            />
+          );
+        }
         return (
           <RoadmapView
             user={currentUser}

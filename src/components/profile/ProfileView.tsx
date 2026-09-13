@@ -25,12 +25,22 @@ import {
   Camera,
   Loader2,
   Upload,
+  Headphones,
+  BookOpen,
+  PenTool,
+  Mic,
+  Clock,
+  Sparkles,
+  Layers,
+  Award,
+  ChevronRight,
 } from 'lucide-react';
 import { User } from '../../types';
 import { supabase, saveUserProfile, signOutUser } from '../../lib/supabase';
 import { useTheme } from '../../context/ThemeContext';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { useUserProgress } from '../../hooks/useUserProgress';
+import { useExamProgram } from '../../context/ExamProgramContext';
 import { EditProfileModal } from './EditProfileModal';
 
 interface ProfileViewProps {
@@ -102,6 +112,41 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const { resolvedTheme, setTheme } = useTheme();
   const { profile, updateProfile, uploadAvatar } = useUserProfile();
   const { progress: userProg } = useUserProgress(user);
+  const { examType: globalExamType } = useExamProgram();
+
+  // Dual-Exam Track Switcher ('SAT' | 'IELTS')
+  const [profileTrack, setProfileTrack] = useState<'SAT' | 'IELTS'>(() => {
+    return globalExamType === 'IELTS' ? 'IELTS' : 'SAT';
+  });
+
+  const [ieltsTargetBand, setIeltsTargetBand] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('asron_ielts_target_band');
+      if (saved) return parseFloat(saved) || 7.5;
+    }
+    return user.ieltsTargetBand || 7.5;
+  });
+
+  const [ieltsSubmissions, setIeltsSubmissions] = useState<any[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('asron_ielts_submissions');
+        if (saved) return JSON.parse(saved);
+      } catch {}
+    }
+    return [];
+  });
+
+  const handleUpdateTargetBand = (band: number) => {
+    setIeltsTargetBand(band);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('asron_ielts_target_band', band.toString());
+      window.dispatchEvent(new CustomEvent('asron_target_band_changed', { detail: { band } }));
+    }
+    const updated = { ...user, ieltsTargetBand: band };
+    setUser(updated);
+    onUpdateUser?.(updated);
+  };
 
   // Avatar Upload State
   const [isUploadingAvatar, setIsUploadingAvatar] = useState<boolean>(false);
@@ -613,13 +658,13 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           {/* Quick Target Indicator & Edit Action */}
           <div className="flex items-center gap-2 self-start sm:self-auto">
             <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B]">
-              <Target size={15} className="text-[#E07A5F]" />
+              <Target size={15} className={profileTrack === 'IELTS' ? 'text-orange-500' : 'text-[#E07A5F]'} />
               <div className="text-left">
                 <div className="text-[10px] font-mono uppercase text-[#64748B] dark:text-[#94A3B8] font-bold">
-                  Maqsadli Ball
+                  {profileTrack === 'IELTS' ? 'IELTS Maqsad' : 'SAT Maqsad'}
                 </div>
                 <div className="text-xs sm:text-sm font-extrabold font-mono text-[#0F172A] dark:text-[#F8FAFC]">
-                  {targetScore} / 1600
+                  {profileTrack === 'IELTS' ? `Band ${ieltsTargetBand} / 9.0` : `${targetScore} / 1600`}
                 </div>
               </div>
             </div>
@@ -776,68 +821,342 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
         </form>
       </section>
 
-      {/* SECTION 2: Akademik Natijalar (0-State Safe, Pure Academic Minimalism) */}
+      {/* SECTION 2: Dual-Exam Akademik Natijalar (SAT & IELTS) */}
       <section
         aria-label="Akademik Natijalar"
-        className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-2xs space-y-4 transition-colors"
+        className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#121A2F] border border-[#E2E8F0] dark:border-[#1E293B] shadow-2xs space-y-5 transition-colors"
       >
-        <div className="flex items-center gap-2.5 pb-3 border-b border-[#E2E8F0] dark:border-[#1E293B]">
-          <div className="p-2 rounded-xl bg-blue-500/10 text-blue-500">
-            <BarChart3 size={16} strokeWidth={2.2} />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E2E8F0] dark:border-[#1E293B]">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-500">
+              <BarChart3 size={16} strokeWidth={2.2} />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                Akademik Natijalar &amp; Analitika
+              </h2>
+              <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8]">
+                {profileTrack === 'SAT'
+                  ? "Digital SAT mashqlari va sinov testlaridagi shaxsiy ko'rsatkichlar"
+                  : "IELTS 4-ko'nikma diagnostikasi, band ballari va mock imtihonlar tarixi"}
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC]">
-              Akademik Natijalar
-            </h2>
-            <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8]">
-              Digital SAT mashqlari va sinov testlaridagi shaxsiy ko'rsatkichlar
-            </p>
+
+          {/* Program Switcher Tabs: [ 🏛️ SAT Natijalari | 🇬🇧 IELTS Natijalari ] */}
+          <div className="flex items-center p-1 rounded-2xl bg-slate-100 dark:bg-[#0A0F1D] border border-slate-200 dark:border-slate-800 self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={() => setProfileTrack('SAT')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                profileTrack === 'SAT'
+                  ? 'bg-white dark:bg-[#1E293B] text-blue-600 dark:text-blue-400 shadow-sm'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <span>🏛️ SAT Natijalari</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setProfileTrack('IELTS')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                profileTrack === 'IELTS'
+                  ? 'bg-white dark:bg-[#1E293B] text-orange-600 dark:text-orange-400 shadow-sm'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <span>🇬🇧 IELTS Natijalari</span>
+            </button>
           </div>
         </div>
 
-        {/* 3 Metric Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-          {/* Card 1: Ishlangan Savollar */}
-          <div className="p-4 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] space-y-1">
-            <div className="text-[10px] font-mono uppercase font-semibold text-[#64748B] dark:text-[#94A3B8]">
-              Ishlangan Savollar
-            </div>
-            <div className="text-2xl sm:text-3xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC]">
-              {userProg.total_questions_done ?? Object.keys(userProg.completed_questions || {}).length ?? user.totalQuestionsDone ?? 0}
-            </div>
-            <div className="text-[10px] font-mono text-slate-400 dark:text-slate-500">
-              {(userProg.total_questions_done ?? Object.keys(userProg.completed_questions || {}).length ?? 0) > 0
-                ? 'Savollar banki & Bo‘limlar'
-                : '0 ta savol yechilgan'}
-            </div>
-          </div>
+        {profileTrack === 'SAT' ? (
+          /* SAT Track Cards */
+          <div className="space-y-4">
+            {/* 3 Metric Cards Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+              {/* Card 1: Ishlangan Savollar */}
+              <div className="p-4 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] space-y-1">
+                <div className="text-[10px] font-mono uppercase font-semibold text-[#64748B] dark:text-[#94A3B8]">
+                  Ishlangan Savollar
+                </div>
+                <div className="text-2xl sm:text-3xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC]">
+                  {userProg.total_questions_done ?? Object.keys(userProg.completed_questions || {}).length ?? user.totalQuestionsDone ?? 0}
+                </div>
+                <div className="text-[10px] font-mono text-slate-400 dark:text-slate-500">
+                  {(userProg.total_questions_done ?? Object.keys(userProg.completed_questions || {}).length ?? 0) > 0
+                    ? 'Savollar banki & Bo‘limlar'
+                    : '0 ta savol yechilgan'}
+                </div>
+              </div>
 
-          {/* Card 2: O'rtacha Aniqlik */}
-          <div className="p-4 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] space-y-1">
-            <div className="text-[10px] font-mono uppercase font-semibold text-[#64748B] dark:text-[#94A3B8]">
-              O'rtacha Aniqlik
-            </div>
-            <div className="text-2xl sm:text-3xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC]">
-              {userProg.overall_accuracy ?? user.overallAccuracy ?? 0}%
-            </div>
-            <div className="text-[10px] font-mono text-slate-400 dark:text-slate-500">
-              {(userProg.overall_accuracy ?? 0) > 0 ? 'Moslashuvchan diagnostika' : 'Hali savol yechilmadi'}
-            </div>
-          </div>
+              {/* Card 2: O'rtacha Aniqlik */}
+              <div className="p-4 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] space-y-1">
+                <div className="text-[10px] font-mono uppercase font-semibold text-[#64748B] dark:text-[#94A3B8]">
+                  O'rtacha Aniqlik
+                </div>
+                <div className="text-2xl sm:text-3xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC]">
+                  {userProg.overall_accuracy ?? user.overallAccuracy ?? 0}%
+                </div>
+                <div className="text-[10px] font-mono text-slate-400 dark:text-slate-500">
+                  {(userProg.overall_accuracy ?? 0) > 0 ? 'Moslashuvchan diagnostika' : 'Hali savol yechilmadi'}
+                </div>
+              </div>
 
-          {/* Card 3: Topshirilgan Mock Testlar */}
-          <div className="p-4 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] space-y-1">
-            <div className="text-[10px] font-mono uppercase font-semibold text-[#64748B] dark:text-[#94A3B8]">
-              Mock Testlar
+              {/* Card 3: Topshirilgan Mock Testlar */}
+              <div className="p-4 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] space-y-1">
+                <div className="text-[10px] font-mono uppercase font-semibold text-[#64748B] dark:text-[#94A3B8]">
+                  Topshirilgan Mocklar
+                </div>
+                <div className="text-2xl sm:text-3xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC]">
+                  {mockTestsCompleted}
+                </div>
+                <div className="text-[10px] font-mono text-slate-400 dark:text-slate-500">
+                  {mockTestsCompleted > 0 ? 'Rasmiy topshirilgan testlar' : 'Mock topshirilmagan'}
+                </div>
+              </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC]">
-              {mockTestsCompleted}
-            </div>
-            <div className="text-[10px] font-mono text-slate-400 dark:text-slate-500">
-              {mockTestsCompleted > 0 ? 'Rasmiy topshirilgan testlar' : 'Mock topshirilmagan'}
+
+            {/* SAT Section Breakdown: Reading & Writing vs Math */}
+            <div className="p-4 sm:p-5 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="text-xs font-mono font-bold uppercase tracking-wide text-slate-600 dark:text-slate-400 flex items-center gap-2">
+                  <Target size={14} className="text-[#E07A5F]" />
+                  <span>SAT Ball Taqsimoti &amp; Maqsad (1600 Standarti)</span>
+                </div>
+                <span className="text-xs font-mono font-bold text-blue-600 dark:text-blue-400">
+                  Maqsad: {targetScore} / 1600
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* RW Progress */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs font-mono">
+                    <span className="text-slate-600 dark:text-slate-300 font-medium">Reading &amp; Writing</span>
+                    <span className="font-bold text-[#0F172A] dark:text-white">
+                      {Math.min(800, Math.round((targetScore || 1550) * 0.49 / 10) * 10)} / 800
+                    </span>
+                  </div>
+                  <div className="w-full h-2.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-500"
+                      style={{ width: `${(Math.min(800, Math.round((targetScore || 1550) * 0.49 / 10) * 10) / 800) * 100}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Math Progress */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs font-mono">
+                    <span className="text-slate-600 dark:text-slate-300 font-medium">Mathematics</span>
+                    <span className="font-bold text-[#0F172A] dark:text-white">
+                      {Math.min(800, (targetScore || 1550) - Math.min(800, Math.round((targetScore || 1550) * 0.49 / 10) * 10))} / 800
+                    </span>
+                  </div>
+                  <div className="w-full h-2.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-500"
+                      style={{ width: `${(Math.min(800, (targetScore || 1550) - Math.min(800, Math.round((targetScore || 1550) * 0.49 / 10) * 10)) / 800) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          /* IELTS Track Cards */
+          <div className="space-y-4">
+            {/* Top IELTS Target Band Selector Card */}
+            <div className="p-4 sm:p-5 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="text-xs font-mono font-bold uppercase tracking-wide text-orange-600 dark:text-orange-400 flex items-center gap-2">
+                    <Award size={15} />
+                    <span>IELTS Maqsadli Band (Target Band)</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    O'zingiz erishmoqchi bo'lgan maqsadli bandni tanlang — diagnostika shunga moslashadi
+                  </p>
+                </div>
+
+                {/* Target Band Pills */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {[6.5, 7.0, 7.5, 8.0, 8.5, 9.0].map((b) => (
+                    <button
+                      key={b}
+                      type="button"
+                      onClick={() => handleUpdateTargetBand(b)}
+                      className={`px-3 py-1 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
+                        ieltsTargetBand === b
+                          ? 'bg-orange-600 text-white shadow-sm'
+                          : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      {b.toFixed(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* 4 Skills Progress Bars Grid */}
+            <div className="p-4 sm:p-5 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] space-y-4">
+              <div className="text-xs font-mono font-bold uppercase tracking-wide text-slate-600 dark:text-slate-400 flex items-center gap-2">
+                <Layers size={14} className="text-orange-500" />
+                <span>4-Ko‘nikma Bo‘yicha Joriy Natijalar (9.0 Shkalasi)</span>
+              </div>
+
+              {(() => {
+                const latestSub = ieltsSubmissions[0];
+                const listBand = Number(latestSub?.listeningBand ?? user.ieltsListeningBand ?? 7.5);
+                const readBand = Number(latestSub?.readingBand ?? user.ieltsReadingBand ?? 7.5);
+                const writBand = Number(latestSub?.writingBand ?? user.ieltsWritingBand ?? 7.0);
+                const spkBand = Number(latestSub?.speakingBand ?? user.ieltsSpeakingBand ?? 7.0);
+
+                const skills = [
+                  { name: 'Listening', icon: Headphones, band: listBand, color: 'from-sky-500 to-blue-500' },
+                  { name: 'Reading', icon: BookOpen, band: readBand, color: 'from-emerald-500 to-teal-500' },
+                  { name: 'Writing', icon: PenTool, band: writBand, color: 'from-amber-500 to-orange-500' },
+                  { name: 'Speaking', icon: Mic, band: spkBand, color: 'from-purple-500 to-indigo-500' },
+                ];
+
+                return (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {skills.map((s) => {
+                      const Icon = s.icon;
+                      const pct = Math.min(100, Math.round((s.band / 9) * 100));
+                      return (
+                        <div key={s.name} className="space-y-1.5 p-3 rounded-lg bg-white dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800/60">
+                          <div className="flex items-center justify-between text-xs font-mono">
+                            <span className="flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+                              <Icon size={13} className="text-slate-400" />
+                              {s.name}
+                            </span>
+                            <span className="font-bold text-[#0F172A] dark:text-white">
+                              Band {s.band.toFixed(1)} <span className="text-slate-400 text-[10px]">/ 9.0</span>
+                            </span>
+                          </div>
+                          <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                            <div
+                              className={`h-full bg-gradient-to-r ${s.color} rounded-full transition-all duration-500`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* 3 Metric Cards Grid for IELTS */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+              <div className="p-4 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] space-y-1">
+                <div className="text-[10px] font-mono uppercase font-semibold text-[#64748B] dark:text-[#94A3B8]">
+                  Umumiy Baholangan Band
+                </div>
+                <div className="text-2xl sm:text-3xl font-extrabold font-mono tabular-nums text-orange-600 dark:text-orange-400">
+                  {(() => {
+                    const sub = ieltsSubmissions[0];
+                    const l = Number(sub?.listeningBand ?? user.ieltsListeningBand ?? 7.5);
+                    const r = Number(sub?.readingBand ?? user.ieltsReadingBand ?? 7.5);
+                    const w = Number(sub?.writingBand ?? user.ieltsWritingBand ?? 7.0);
+                    const s = Number(sub?.speakingBand ?? user.ieltsSpeakingBand ?? 7.0);
+                    const overall = (l + r + w + s) / 4;
+                    return (Math.round(overall * 2) / 2).toFixed(1);
+                  })()}
+                </div>
+                <div className="text-[10px] font-mono text-slate-400 dark:text-slate-500">
+                  4 ta ko'nikma o'rtachasi
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] space-y-1">
+                <div className="text-[10px] font-mono uppercase font-semibold text-[#64748B] dark:text-[#94A3B8]">
+                  Jami Amaliyot Vaqti
+                </div>
+                <div className="text-2xl sm:text-3xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC]">
+                  {Math.max(12, ieltsSubmissions.length * 2.5 + Math.round((userProg.total_questions_done || 0) * 0.1))}h
+                </div>
+                <div className="text-[10px] font-mono text-slate-400 dark:text-slate-500">
+                  Audio &amp; matn tahlillari
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] space-y-1">
+                <div className="text-[10px] font-mono uppercase font-semibold text-[#64748B] dark:text-[#94A3B8]">
+                  Topshirilgan Mocklar
+                </div>
+                <div className="text-2xl sm:text-3xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC]">
+                  {ieltsSubmissions.length}
+                </div>
+                <div className="text-[10px] font-mono text-slate-400 dark:text-slate-500">
+                  {ieltsSubmissions.length > 0 ? "To'liq simulyatsiyalar" : "Hali topshirilmadi"}
+                </div>
+              </div>
+            </div>
+
+            {/* Recent IELTS Mocks List */}
+            <div className="p-4 sm:p-5 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] space-y-3">
+              <div className="text-xs font-mono font-bold uppercase tracking-wide text-slate-600 dark:text-slate-400 flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Clock size={14} className="text-orange-500" />
+                  So'nggi IELTS Mock Natijalari
+                </span>
+                <span className="text-[11px] text-slate-400 lowercase">
+                  {ieltsSubmissions.length} ta yozuv
+                </span>
+              </div>
+
+              {ieltsSubmissions.length === 0 ? (
+                <div className="text-center py-6 text-slate-400 text-xs font-mono space-y-2">
+                  <p>Hozircha topshirilgan IELTS mock imtihoni mavjud emas.</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (typeof window !== 'undefined') window.location.hash = '#/mocks';
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 dark:text-orange-400 text-xs font-mono font-bold transition-all cursor-pointer"
+                  >
+                    <span>IELTS Mock Topshirish</span>
+                    <ChevronRight size={13} />
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {ieltsSubmissions.slice(0, 5).map((sub: any, idx: number) => (
+                    <div
+                      key={sub.testId || idx}
+                      className="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800 flex items-center justify-between gap-3 text-xs"
+                    >
+                      <div className="min-w-0">
+                        <div className="font-bold text-slate-900 dark:text-white truncate">
+                          {sub.testTitle || `IELTS Mock Test #${idx + 1}`}
+                        </div>
+                        <div className="text-[10px] font-mono text-slate-400">
+                          {sub.submittedAt ? new Date(sub.submittedAt).toLocaleDateString() : 'Yaqinda'}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <div className="hidden sm:flex items-center gap-1 text-[10px] font-mono text-slate-500">
+                          <span>L: {sub.listeningBand ?? 7.0}</span>
+                          <span>•</span>
+                          <span>R: {sub.readingBand ?? 7.0}</span>
+                        </div>
+                        <span className="px-2.5 py-1 rounded-lg bg-orange-500/10 text-orange-600 dark:text-orange-400 font-mono font-bold text-xs">
+                          Band {sub.overallBand ?? '7.0'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* SECTION 3: Xavfsizlik & Chiqish */}

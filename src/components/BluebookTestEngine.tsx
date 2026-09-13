@@ -23,6 +23,7 @@ import {
 import { MockTest, Question, MockTestQuestion, TestAttempt, User } from '../types';
 import { FloatingDesmosModal } from './FloatingDesmosModal';
 import { FormulaReferenceSheet } from './FormulaReferenceSheet';
+import { ExamExitConfirmModal } from './common/ExamExitConfirmModal';
 
 interface Props {
   test: MockTest;
@@ -42,6 +43,36 @@ export const BluebookTestEngine: React.FC<Props> = ({
   const [currentModule, setCurrentModule] = useState<1 | 2>(1);
   const [module2Tier, setModule2Tier] = useState<'EASY' | 'HARD'>('HARD');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+
+  // Exit guard confirmation state
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+
+  // Broadcast exam mode to hide global header & mobile bottom nav, and guard browser back
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('asron_exam_mode_change', { detail: { isExamMode: true } }));
+      window.history.pushState({ bluebookExam: true }, '', window.location.href);
+    }
+    const handlePopState = () => {
+      setShowExitConfirm(true);
+      window.history.pushState({ bluebookExam: true }, '', window.location.href);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('asron_exam_mode_change', { detail: { isExamMode: false } }));
+      }
+    };
+  }, []);
+
+  const handleConfirmExit = () => {
+    setShowExitConfirm(false);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('asron_exam_mode_change', { detail: { isExamMode: false } }));
+    }
+    onExit();
+  };
 
   // User responses & flags
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -429,11 +460,13 @@ export const BluebookTestEngine: React.FC<Props> = ({
 
           {/* Exit test */}
           <button
-            onClick={onExit}
-            className="p-1.5 rounded text-[#9CA3AF] hover:text-red-400 hover:bg-[#1A1A1A] ml-2 cursor-pointer"
-            title="Exit Test Simulation"
+            type="button"
+            onClick={() => setShowExitConfirm(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#1A1A1A] hover:bg-rose-500/20 text-[#9CA3AF] hover:text-rose-400 border border-[#1F2937] hover:border-rose-500/30 text-xs font-mono font-bold transition-colors ml-2 cursor-pointer"
+            title="Testdan chiqish"
           >
             <X className="w-4 h-4" />
+            <span className="hidden sm:inline">Chiqish</span>
           </button>
         </div>
       </header>
@@ -669,6 +702,17 @@ export const BluebookTestEngine: React.FC<Props> = ({
         isDarkMode={true}
       />
       <FormulaReferenceSheet isOpen={showFormulas} onClose={() => setShowFormulas(false)} />
+
+      {/* Safe Exit Guard Modal */}
+      <ExamExitConfirmModal
+        isOpen={showExitConfirm}
+        title="Testdan chiqmoqchimisiz?"
+        message="Joriy urinishingiz yakunlanadi va saqlanmagan javoblar yo‘qotilishi mumkin."
+        confirmLabel="Testni yakunlash va chiqish"
+        cancelLabel="Bekor qilish"
+        onConfirm={handleConfirmExit}
+        onCancel={() => setShowExitConfirm(false)}
+      />
     </div>
   );
 };

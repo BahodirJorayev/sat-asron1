@@ -7,6 +7,7 @@ import {
   FileText,
   BookOpen,
   AlertCircle,
+  Compass,
   Users,
 } from 'lucide-react';
 import { User } from '../types';
@@ -27,58 +28,98 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
 }) => {
   const { t } = useLanguage();
   const { totalUnread } = useUnreadMessages();
-  const { isIelts } = useExamProgram();
+  const { isIelts, isSat } = useExamProgram();
   const [isChatOpen, setIsChatOpen] = React.useState(false);
+  const [isExamMode, setIsExamMode] = React.useState(false);
 
   React.useEffect(() => {
     const handleChatState = (e: any) => {
       setIsChatOpen(!!e?.detail?.isOpen);
     };
+    const handleExamModeState = (e: any) => {
+      setIsExamMode(!!e?.detail?.isExamMode);
+    };
+
     window.addEventListener('asron_chat_state_change', handleChatState);
+    window.addEventListener('asron_exam_mode_change', handleExamModeState);
 
     return () => {
       window.removeEventListener('asron_chat_state_change', handleChatState);
+      window.removeEventListener('asron_exam_mode_change', handleExamModeState);
     };
   }, []);
 
-  // Hide entirely when inside an active mobile chat conversation viewport
-  if (isChatOpen) {
+  // Hide entirely when inside an active mobile chat conversation viewport or during exam mode
+  if (isChatOpen || isExamMode) {
     return null;
   }
 
-  // Exact 6-item minimal navigation array establishing 100% desktop/mobile parity
-  const navItems = [
-    {
-      id: 'dashboard',
-      label: isIelts ? 'IELTS Uy' : t('nav.home', 'Uy'),
-      icon: Home,
-    },
-    {
-      id: 'bluebook',
-      label: isIelts ? 'IELTS Mock' : t('nav.mocks', 'Testlar'),
-      icon: FileText,
-    },
-    {
-      id: 'qbank',
-      label: isIelts ? "Bo'limlar" : t('nav.questions', 'Savollar'),
-      icon: Layers,
-    },
-    {
-      id: 'vocab',
-      label: isIelts ? "Lug'at" : t('nav.vocabulary', "Lug'at"),
-      icon: BookOpen,
-    },
-    {
-      id: 'vault',
-      label: t('nav.mistakes', 'Xatolar'),
-      icon: AlertCircle,
-    },
-    {
-      id: 'community',
-      label: t('nav.community', 'Hamjamiyat'),
-      icon: Users,
-    },
-  ];
+  // Exact minimal navigation array establishing 100% desktop/mobile parity
+  const navItems = isIelts
+    ? [
+        {
+          id: 'dashboard',
+          label: 'IELTS Uy',
+          icon: Home,
+        },
+        {
+          id: 'bluebook',
+          label: 'Testlar',
+          icon: FileText,
+        },
+        {
+          id: 'vocab',
+          label: "Lug'at",
+          icon: BookOpen,
+        },
+        {
+          id: 'vault',
+          label: t('nav.mistakes', 'Xatolar'),
+          icon: AlertCircle,
+        },
+        {
+          id: 'community',
+          label: t('nav.community', 'Hamjamiyat'),
+          icon: Users,
+        },
+        {
+          id: 'resources',
+          label: 'Resurslar',
+          icon: Compass,
+        },
+      ]
+    : [
+        {
+          id: 'dashboard',
+          label: t('nav.home', 'Uy'),
+          icon: Home,
+        },
+        {
+          id: 'qbank',
+          label: t('nav.questions', 'Savollar'),
+          icon: Layers,
+        },
+        {
+          id: 'bluebook',
+          label: t('nav.mocks', 'Testlar'),
+          icon: FileText,
+        },
+        {
+          id: 'vocab',
+          label: t('nav.vocabulary', "Lug'at"),
+          icon: BookOpen,
+        },
+        {
+          id: 'vault',
+          label: t('nav.mistakes', 'Xatolar'),
+          icon: AlertCircle,
+        },
+        {
+          id: 'community',
+          label: t('nav.community', 'Hamjamiyat'),
+          icon: Users,
+        },
+      ];
 
   const CANONICAL_HASH_MAP: Record<string, string> = {
     dashboard: '#/dashboard',
@@ -87,6 +128,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     vocab: '#/vocab',
     vault: '#/mistakes',
     community: '#/community',
+    resources: '#/resources',
   };
 
   const isItemActive = (id: string) => {
@@ -123,6 +165,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     if (id === 'vocab') return activeTab === 'vocab' || activeTab === 'vocabulary';
     if (id === 'vault') return activeTab === 'vault' || activeTab === 'mistakes';
     if (id === 'community') return activeTab === 'community' || activeTab === 'chat';
+    if (id === 'resources') return activeTab === 'resources';
     return activeTab === id;
   };
 

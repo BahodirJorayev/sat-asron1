@@ -106,9 +106,27 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         if (typeof window !== 'undefined') window.location.hash = '#/dashboard';
       },
     },
+    ...(isSat
+      ? [
+          {
+            id: 'qbank',
+            label: t('nav.questions', 'Savollar Banki'),
+            icon: Database,
+            onClick: () => {
+              if (isModuleLocked('questions')) {
+                showLockedNotice(t('nav.questions', 'Savollar'));
+                return;
+              }
+              setActiveTab('qbank');
+              if (typeof window !== 'undefined') window.location.hash = '#/qbank';
+            },
+            isLocked: isModuleLocked('questions'),
+          },
+        ]
+      : []),
     {
       id: 'bluebook',
-      label: isIelts ? 'Mock Imtihonlar' : t('nav.mocks', 'Testlar'),
+      label: isIelts ? 'Testlar' : t('nav.mocks', 'Mock Testlar'),
       icon: FileText,
       onClick: () => {
         if (isModuleLocked('mocks')) {
@@ -121,22 +139,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       isLocked: isModuleLocked('mocks'),
     },
     {
-      id: 'qbank',
-      label: isIelts ? "Bo'limlar (Practice)" : t('nav.questions', 'Savollar'),
-      icon: Database,
-      onClick: () => {
-        if (isModuleLocked('questions')) {
-          showLockedNotice(isIelts ? "Bo'limlar" : t('nav.questions', 'Savollar'));
-          return;
-        }
-        setActiveTab('qbank');
-        if (typeof window !== 'undefined') window.location.hash = '#/qbank';
-      },
-      isLocked: isModuleLocked('questions'),
-    },
-    {
       id: 'vocab',
-      label: isIelts ? "IELTS Lug'at" : t('nav.vocabulary', "Lug'at"),
+      label: isIelts ? "IELTS Lug'at" : t('nav.vocabulary', "SAT Lug'at"),
       icon: BookOpen,
       onClick: () => {
         if (isModuleLocked('vocabulary')) {

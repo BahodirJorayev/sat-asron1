@@ -26,7 +26,8 @@ import {
   BarChart3,
   Calendar,
   Layers,
-  FileText
+  FileText,
+  ArrowLeft
 } from 'lucide-react';
 import { User, IeltsMockTest, IeltsTestSubmission } from '../../types';
 import {
@@ -36,6 +37,7 @@ import {
   rawToIeltsBandReading
 } from '../../data/ieltsDatabase';
 import { IeltsPasscodeModal } from './IeltsPasscodeModal';
+import { ExamExitConfirmModal } from '../common/ExamExitConfirmModal';
 
 interface IeltsMockTestsCatalogViewProps {
   user?: User | null;
@@ -105,21 +107,44 @@ export const IeltsMockTestsCatalogView: React.FC<IeltsMockTestsCatalogViewProps>
     return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
-  // Timer countdown for active test simulation
+  // Exit confirmation modal state
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+
+  // Broadcast exam mode to hide bottom nav / global header and guard browser back
   useEffect(() => {
-    if (!activeTesting || testTimeRemaining <= 0) return;
-    const timer = setInterval(() => {
-      setTestTimeRemaining((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          handleSubmitTestSimulation();
-          return 0;
+    if (activeTesting) {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('asron_exam_mode_change', { detail: { isExamMode: true } }));
+        window.history.pushState({ examMode: true }, '', window.location.href);
+      }
+      const handlePopState = () => {
+        setShowExitConfirm(true);
+        window.history.pushState({ examMode: true }, '', window.location.href);
+      };
+      window.addEventListener('popstate', handlePopState);
+      return () => {
+        window.removeEventListener('popstate', handlePopState);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('asron_exam_mode_change', { detail: { isExamMode: false } }));
         }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [activeTesting, testTimeRemaining]);
+      };
+    } else {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('asron_exam_mode_change', { detail: { isExamMode: false } }));
+      }
+    }
+  }, [activeTesting]);
+
+  const handleConfirmExit = () => {
+    setShowExitConfirm(false);
+    setActiveTesting(null);
+    setTestTimeRemaining(0);
+    setStudentAnswers({});
+    setStudentWritingInput('');
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('asron_exam_mode_change', { detail: { isExamMode: false } }));
+    }
+  };
 
   // Handle Passcode Unlock Success
   const handlePasscodeSuccess = (unlockedTest: IeltsMockTest) => {
@@ -533,26 +558,46 @@ export const IeltsMockTestsCatalogView: React.FC<IeltsMockTestsCatalogViewProps>
       {/* Interactive IELTS Simulation Taking Modal */}
       {activeTesting && (
         <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col text-white">
-          {/* Top Bar */}
-          <div className="px-6 py-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
-            <div>
-              <span className="text-xs font-bold text-orange-400 uppercase tracking-wider">
-                IELTS Simulyator
-              </span>
-              <h2 className="text-base font-bold text-white truncate max-w-md">
-                {activeTesting.title}
-              </h2>
+          {/* Top Bar with Minimalist Distraction-Free Exam Controls */}
+          <div className="px-4 sm:px-6 py-3.5 bg-slate-900 border-b border-slate-800 flex items-center justify-between gap-4 shrink-0">
+            {/* Left: Exit Guard Button & Test Info */}
+            <div className="flex items-center gap-3 min-w-0">
+              <button
+                type="button"
+                onClick={() => setShowExitConfirm(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-rose-500/20 text-slate-300 hover:text-rose-400 border border-slate-700 hover:border-rose-500/30 text-xs font-mono font-bold transition-all cursor-pointer shrink-0"
+                title="Testdan chiqish"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="hidden sm:inline">Chiqish</span>
+              </button>
+
+              <div className="min-w-0 truncate">
+                <div className="text-[10px] font-mono font-bold text-orange-400 uppercase tracking-wider">
+                  IELTS Simulyator
+                </div>
+                <h2 className="text-sm sm:text-base font-extrabold text-white truncate">
+                  {activeTesting.title}
+                </h2>
+              </div>
             </div>
 
-            {/* Timer */}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 border border-slate-700 text-orange-400 font-mono font-bold text-lg">
-                <Clock className="w-5 h-5 text-orange-400" />
-                {formatTime(testTimeRemaining)}
+            {/* Center: Progress & Timer */}
+            <div className="flex items-center gap-2 sm:gap-4">
+              <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700/60 text-slate-300 font-mono text-xs">
+                <span>Javoblar:</span>
+                <span className="font-bold text-orange-400">{Object.keys(studentAnswers).length} / 40</span>
               </div>
+
+              <div className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-slate-800 border border-slate-700 text-orange-400 font-mono font-bold text-sm sm:text-base">
+                <Clock className="w-4 h-4 text-orange-400" />
+                <span>{formatTime(testTimeRemaining)}</span>
+              </div>
+
               <button
+                type="button"
                 onClick={handleSubmitTestSimulation}
-                className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg transition-all"
+                className="px-4 sm:px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-mono font-bold text-xs sm:text-sm shadow-lg transition-all cursor-pointer shrink-0"
               >
                 Testni Yakunlash
               </button>
@@ -675,6 +720,17 @@ export const IeltsMockTestsCatalogView: React.FC<IeltsMockTestsCatalogViewProps>
           </div>
         </div>
       )}
+
+      {/* Safe Exit Guard Modal */}
+      <ExamExitConfirmModal
+        isOpen={showExitConfirm}
+        title="Testdan chiqmoqchimisiz?"
+        message="Joriy urinishingiz yakunlanadi va saqlanmagan javoblar yo‘qotilishi mumkin."
+        confirmLabel="Testni yakunlash va chiqish"
+        cancelLabel="Bekor qilish"
+        onConfirm={handleConfirmExit}
+        onCancel={() => setShowExitConfirm(false)}
+      />
 
       {/* Test Result Modal */}
       {showResultModal && lastSubmission && (

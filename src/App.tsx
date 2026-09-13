@@ -80,6 +80,7 @@ import { ViewSkeletonLoader } from './components/common/ViewSkeletonLoader';
 import { ViewErrorBoundary } from './components/common/ViewErrorBoundary';
 import { SafeViewWrapper } from './components/common/SafeViewWrapper';
 import { IeltsDashboardView } from './components/ielts/IeltsDashboardView';
+import { IeltsTestsHub } from './components/ielts/IeltsTestsHub';
 import { IeltsMockTestsCatalogView } from './components/ielts/IeltsMockTestsCatalogView';
 import { IeltsSectionalPracticeView } from './components/ielts/IeltsSectionalPracticeView';
 import { IeltsVocabularyView } from './components/ielts/IeltsVocabularyView';
@@ -193,6 +194,19 @@ export default function App() {
     };
     window.addEventListener('asron_auth_signout', handleSignOutEvent);
     return () => window.removeEventListener('asron_auth_signout', handleSignOutEvent);
+  }, []);
+
+  // Global distraction-free exam mode state
+  const [isExamMode, setIsExamMode] = useState<boolean>(false);
+
+  useEffect(() => {
+    const handleExamModeChange = (e: any) => {
+      setIsExamMode(!!e?.detail?.isExamMode);
+    };
+    window.addEventListener('asron_exam_mode_change', handleExamModeChange);
+    return () => {
+      window.removeEventListener('asron_exam_mode_change', handleExamModeChange);
+    };
   }, []);
 
   // Map currentView to activeTab for Sidebar/Header/MobileBottomNav active states
@@ -1948,9 +1962,11 @@ export default function App() {
       case 'questions':
         if (isIelts) {
           return (
-            <IeltsSectionalPracticeView
+            <IeltsTestsHub
+              initialTab="practice"
               user={currentUser}
               onOpenPaywall={() => setIsPaywallOpen(true)}
+              onOpenMistakeVault={() => setActiveTab('vault')}
             />
           );
         }
@@ -1968,9 +1984,11 @@ export default function App() {
       case 'mocks':
         if (isIelts) {
           return (
-            <IeltsMockTestsCatalogView
+            <IeltsTestsHub
+              initialTab="mocks"
               user={currentUser}
               onOpenPaywall={() => setIsPaywallOpen(true)}
+              onOpenMistakeVault={() => setActiveTab('vault')}
             />
           );
         }
@@ -2241,8 +2259,8 @@ export default function App() {
 
   return (
     <div className={`min-h-screen ${activeTab === 'community' ? 'h-[100dvh] overflow-hidden overflow-x-hidden overflow-y-hidden' : ''} bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#0F172A] dark:text-[#F8FAFC] flex font-sans selection:bg-[#E07A5F] selection:text-white`}>
-      {/* 1. Left Fixed Sidebar (Visible in Dashboard & Study Views) */}
-      {isAuthenticated && activeTab !== 'landing' && activeTab !== 'blog' && (
+      {/* 1. Left Fixed Sidebar (Visible in Dashboard & Study Views, hidden during active exam) */}
+      {isAuthenticated && activeTab !== 'landing' && activeTab !== 'blog' && !isExamMode && !activeBluebookTest && (
         <Sidebar
           user={currentUser}
           activeTab={activeTab}
@@ -2282,9 +2300,9 @@ export default function App() {
       )}
 
       {/* 2. Main Content Area */}
-      <div className={`flex-1 flex flex-col min-w-0 ${activeTab === 'community' || activeTab === 'chat' ? 'h-[100dvh] md:h-screen overflow-hidden overflow-x-hidden overflow-y-hidden' : 'overflow-x-hidden'}`}>
+      <div className={`flex-1 flex flex-col min-w-0 ${isExamMode || activeBluebookTest ? 'h-[100dvh] overflow-hidden' : activeTab === 'community' || activeTab === 'chat' ? 'h-[100dvh] md:h-screen overflow-hidden overflow-x-hidden overflow-y-hidden' : 'overflow-x-hidden'}`}>
         {/* Maintenance Mode Alert if enabled and student is logged in */}
-        {globalSettings.isMaintenance && currentUser.role !== 'ADMIN' && currentUser.role !== 'SUPER_ADMIN' && (
+        {globalSettings.isMaintenance && currentUser.role !== 'ADMIN' && currentUser.role !== 'SUPER_ADMIN' && !isExamMode && !activeBluebookTest && (
           <div className="w-full bg-rose-950/80 border-b border-rose-800/60 px-4 py-2 text-xs font-mono text-rose-200 flex items-center justify-between z-50 shrink-0">
             <span>⚠️ Platform Maintenance Mode Active. Some features are temporarily offline.</span>
             <button
@@ -2296,8 +2314,8 @@ export default function App() {
           </div>
         )}
 
-        {/* Top Header with Quick Actions (Hidden on Landing page to prevent duplicate headers) */}
-        {isAuthenticated && activeTab !== 'landing' && (
+        {/* Top Header with Quick Actions (Hidden during exam mode and on Landing page) */}
+        {isAuthenticated && activeTab !== 'landing' && !isExamMode && !activeBluebookTest && (
           <div className={activeTab === 'community' || activeTab === 'chat' ? 'hidden md:block shrink-0' : 'shrink-0'}>
             <Header
               user={currentUser}
@@ -2324,15 +2342,15 @@ export default function App() {
         )}
 
         {/* Main Routed Views */}
-        <main className={`flex-1 ${activeTab === 'community' || activeTab === 'chat' ? 'h-[100dvh] md:h-[calc(100dvh-64px)] overflow-hidden overflow-x-hidden overflow-y-hidden pb-0' : activeTab === 'landing' ? 'pb-0' : 'pb-16'}`}>
+        <main className={`flex-1 ${isExamMode || activeBluebookTest ? 'pb-0' : activeTab === 'community' || activeTab === 'chat' ? 'h-[100dvh] md:h-[calc(100dvh-64px)] overflow-hidden overflow-x-hidden overflow-y-hidden pb-0' : activeTab === 'landing' ? 'pb-0' : 'pb-16'}`}>
           <SafeViewWrapper key={currentView} viewName={currentView}>
             {renderView(currentView)}
           </SafeViewWrapper>
         </main>
       </div>
 
-      {/* Mobile Bottom Navigation Bar (Visible only on < 768px in student/dashboard views) */}
-      {isAuthenticated && activeTab !== 'landing' && activeTab !== 'blog' && !activeBluebookTest && (
+      {/* Mobile Bottom Navigation Bar (Visible only on < 768px in student/dashboard views, completely hidden in exam mode) */}
+      {isAuthenticated && activeTab !== 'landing' && activeTab !== 'blog' && !activeBluebookTest && !isExamMode && (
         <MobileBottomNav
           activeTab={activeTab}
           setActiveTab={setActiveTab}

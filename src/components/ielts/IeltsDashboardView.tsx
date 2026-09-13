@@ -24,7 +24,7 @@ import {
   FileText,
   Target
 } from 'lucide-react';
-import { User, IeltsMockTest } from '../../types';
+import { User, IeltsMockTest, IeltsTestSubmission } from '../../types';
 import { INITIAL_IELTS_MOCK_TESTS, calculateIeltsOverallBand } from '../../data/ieltsDatabase';
 
 interface IeltsDashboardViewProps {
@@ -56,22 +56,104 @@ export const IeltsDashboardView: React.FC<IeltsDashboardViewProps> = ({
     }
   };
 
-  // Skill Bands (dynamic mock or stored)
-  const [skillBands, setSkillBands] = useState({
-    listening: 7.5,
-    reading: 8.0,
-    writing: 6.5,
-    speaking: 7.0,
+  // Real IELTS Submissions State
+  const [submissions, setSubmissions] = useState<IeltsTestSubmission[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('asron_ielts_submissions');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) return parsed;
+        }
+      } catch (err) {
+        console.error('Error loading IELTS submissions:', err);
+      }
+    }
+    return [];
   });
 
+  useEffect(() => {
+    const handleSync = () => {
+      try {
+        const saved = localStorage.getItem('asron_ielts_submissions');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) setSubmissions(parsed);
+        } else {
+          setSubmissions([]);
+        }
+      } catch {}
+    };
+
+    window.addEventListener('storage', handleSync);
+    window.addEventListener('ielts_submission_added', handleSync);
+    return () => {
+      window.removeEventListener('storage', handleSync);
+      window.removeEventListener('ielts_submission_added', handleSync);
+    };
+  }, []);
+
+  const hasSubmissions = submissions.length > 0;
+
+  // Real Skill Bands dynamically computed from user's actual submissions
+  const skillBands = useMemo(() => {
+    if (!hasSubmissions) {
+      return {
+        listening: 0,
+        reading: 0,
+        writing: 0,
+        speaking: 0,
+      };
+    }
+    const latest = submissions[0];
+    return {
+      listening: Number(latest.listeningBand) || 0,
+      reading: Number(latest.readingBand) || 0,
+      writing: Number(latest.writingBand) || 0,
+      speaking: Number(latest.speakingBand) || 0,
+    };
+  }, [submissions, hasSubmissions]);
+
   const currentOverallBand = useMemo(() => {
+    if (!hasSubmissions) return 0;
+    const latest = submissions[0];
+    if (latest.overallBand && latest.overallBand > 0) return latest.overallBand;
     return calculateIeltsOverallBand(
       skillBands.listening,
       skillBands.reading,
       skillBands.writing,
       skillBands.speaking
     );
-  }, [skillBands]);
+  }, [submissions, hasSubmissions, skillBands]);
+
+  // Real progression history
+  const progressionPoints = useMemo(() => {
+    if (!hasSubmissions) {
+      return [
+        { label: 'Maqsad', band: targetBand, date: 'Natija', isTarget: true }
+      ];
+    }
+    const chrono = [...submissions].reverse().slice(-5);
+    const points = chrono.map((sub, idx) => ({
+      label: sub.testTitle ? sub.testTitle.replace('IELTS ', '').slice(0, 10) : `Mock #${idx + 1}`,
+      band: sub.overallBand || 0,
+      date: sub.submittedAt ? new Date(sub.submittedAt).toLocaleDateString('uz-UZ', { day: 'numeric', month: 'short' }) : 'Yaqinda',
+      isTarget: false,
+    }));
+    points.push({ label: 'Maqsad', band: targetBand, date: 'Natija', isTarget: true });
+    return points;
+  }, [submissions, hasSubmissions, targetBand]);
+
+  const bandGrowthBadge = useMemo(() => {
+    if (!hasSubmissions) return 'Mock topshirilmagan';
+    if (submissions.length === 1) return '1 ta Mock topshirildi';
+    const oldest = submissions[submissions.length - 1].overallBand;
+    const latest = submissions[0].overallBand;
+    const diff = latest - oldest;
+    if (diff > 0) return `+${diff.toFixed(1)} Band O‘sish`;
+    if (diff < 0) return `${diff.toFixed(1)} Band Farq`;
+    return 'Barqaror Natija';
+  }, [submissions, hasSubmissions]);
 
   // Daily Action Plan Tasks (with interactive check persistence)
   const [dailyTasks, setDailyTasks] = useState<Array<{ id: string; title: string; skill: string; completed: boolean }>>(() => {
@@ -138,12 +220,24 @@ export const IeltsDashboardView: React.FC<IeltsDashboardViewProps> = ({
             <div className="flex items-center gap-3 pr-0 sm:pr-4 border-b sm:border-b-0 sm:border-r border-white/10 pb-3 sm:pb-0">
               <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex flex-col items-center justify-center font-mono shadow-inner">
                 <span className="text-[10px] uppercase font-bold text-emerald-300">Band</span>
-                <span className="text-2xl font-black leading-none">{currentOverallBand.toFixed(1)}</span>
+                <span className="text-2xl font-black leading-none">
+                  {hasSubmissions && currentOverallBand > 0 ? currentOverallBand.toFixed(1) : '—'}
+                </span>
               </div>
               <div>
-                <div className="text-xs font-semibold text-white">Taxminiy Natija</div>
+                <div className="text-xs font-semibold text-white">
+                  {hasSubmissions ? 'Rasmiy Natija' : 'Mock topshirilmagan'}
+                </div>
                 <div className="text-[11px] text-emerald-400 font-mono">
-                  {currentOverallBand >= 8.0 ? 'Expert User' : currentOverallBand >= 7.0 ? 'Good User' : 'Competent User'}
+                  {hasSubmissions && currentOverallBand > 0
+                    ? currentOverallBand >= 8.0
+                      ? 'Expert User'
+                      : currentOverallBand >= 7.0
+                      ? 'Good User'
+                      : currentOverallBand >= 6.0
+                      ? 'Competent User'
+                      : 'Modest User'
+                    : 'Hali test topshirilmadi'}
                 </div>
               </div>
             </div>
@@ -188,22 +282,27 @@ export const IeltsDashboardView: React.FC<IeltsDashboardViewProps> = ({
               <span>Listening</span>
             </div>
             <span className="text-base font-extrabold font-mono text-sky-600 dark:text-sky-400">
-              {skillBands.listening.toFixed(1)}
+              {hasSubmissions && skillBands.listening > 0 ? skillBands.listening.toFixed(1) : '—'}
             </span>
           </div>
 
           <div className="space-y-1">
             <div className="flex justify-between text-[11px] font-mono text-slate-500">
               <span>Section 1–4 O‘zlashtirish</span>
-              <span className="font-bold">83%</span>
+              <span className="font-bold">
+                {hasSubmissions && skillBands.listening > 0 ? `${Math.round((skillBands.listening / 9) * 100)}%` : '0%'}
+              </span>
             </div>
             <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-              <div className="h-full bg-sky-500 rounded-full" style={{ width: '83%' }} />
+              <div
+                className="h-full bg-sky-500 rounded-full transition-all duration-500"
+                style={{ width: `${hasSubmissions && skillBands.listening > 0 ? Math.round((skillBands.listening / 9) * 100) : 0}%` }}
+              />
             </div>
           </div>
 
           <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
-            32/40 to‘g‘ri javob (O‘rtacha)
+            {hasSubmissions ? 'So‘nggi topshirilgan natija' : 'Mock topshirilmagan (0/40)'}
           </div>
         </div>
 
@@ -217,22 +316,27 @@ export const IeltsDashboardView: React.FC<IeltsDashboardViewProps> = ({
               <span>Reading</span>
             </div>
             <span className="text-base font-extrabold font-mono text-emerald-600 dark:text-emerald-400">
-              {skillBands.reading.toFixed(1)}
+              {hasSubmissions && skillBands.reading > 0 ? skillBands.reading.toFixed(1) : '—'}
             </span>
           </div>
 
           <div className="space-y-1">
             <div className="flex justify-between text-[11px] font-mono text-slate-500">
               <span>T/F/NG &amp; Headings</span>
-              <span className="font-bold">88%</span>
+              <span className="font-bold">
+                {hasSubmissions && skillBands.reading > 0 ? `${Math.round((skillBands.reading / 9) * 100)}%` : '0%'}
+              </span>
             </div>
             <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-              <div className="h-full bg-emerald-500 rounded-full" style={{ width: '88%' }} />
+              <div
+                className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                style={{ width: `${hasSubmissions && skillBands.reading > 0 ? Math.round((skillBands.reading / 9) * 100) : 0}%` }}
+              />
             </div>
           </div>
 
           <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
-            35/40 to‘g‘ri javob (O‘rtacha)
+            {hasSubmissions ? 'So‘nggi topshirilgan natija' : 'Mock topshirilmagan (0/40)'}
           </div>
         </div>
 
@@ -246,22 +350,27 @@ export const IeltsDashboardView: React.FC<IeltsDashboardViewProps> = ({
               <span>Writing</span>
             </div>
             <span className="text-base font-extrabold font-mono text-purple-600 dark:text-purple-400">
-              {skillBands.writing.toFixed(1)}
+              {hasSubmissions && skillBands.writing > 0 ? skillBands.writing.toFixed(1) : '—'}
             </span>
           </div>
 
           <div className="space-y-1">
             <div className="flex justify-between text-[11px] font-mono text-slate-500">
               <span>Task 1 &amp; Task 2</span>
-              <span className="font-bold">72%</span>
+              <span className="font-bold">
+                {hasSubmissions && skillBands.writing > 0 ? `${Math.round((skillBands.writing / 9) * 100)}%` : '0%'}
+              </span>
             </div>
             <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-              <div className="h-full bg-purple-500 rounded-full" style={{ width: '72%' }} />
+              <div
+                className="h-full bg-purple-500 rounded-full transition-all duration-500"
+                style={{ width: `${hasSubmissions && skillBands.writing > 0 ? Math.round((skillBands.writing / 9) * 100) : 0}%` }}
+              />
             </div>
           </div>
 
           <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
-            Grammar &amp; Cohesion ustida ishlash
+            {hasSubmissions && skillBands.writing > 0 ? 'Baholangan natija' : 'Mock topshirilmagan'}
           </div>
         </div>
 
@@ -275,22 +384,27 @@ export const IeltsDashboardView: React.FC<IeltsDashboardViewProps> = ({
               <span>Speaking</span>
             </div>
             <span className="text-base font-extrabold font-mono text-amber-600 dark:text-amber-400">
-              {skillBands.speaking.toFixed(1)}
+              {hasSubmissions && skillBands.speaking > 0 ? skillBands.speaking.toFixed(1) : '—'}
             </span>
           </div>
 
           <div className="space-y-1">
             <div className="flex justify-between text-[11px] font-mono text-slate-500">
               <span>Fluency &amp; Lexicon</span>
-              <span className="font-bold">78%</span>
+              <span className="font-bold">
+                {hasSubmissions && skillBands.speaking > 0 ? `${Math.round((skillBands.speaking / 9) * 100)}%` : '0%'}
+              </span>
             </div>
             <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-              <div className="h-full bg-amber-500 rounded-full" style={{ width: '78%' }} />
+              <div
+                className="h-full bg-amber-500 rounded-full transition-all duration-500"
+                style={{ width: `${hasSubmissions && skillBands.speaking > 0 ? Math.round((skillBands.speaking / 9) * 100) : 0}%` }}
+              />
             </div>
           </div>
 
           <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
-            Part 2 Monologlar mashg‘uloti
+            {hasSubmissions && skillBands.speaking > 0 ? 'Baholangan natija' : 'Mock topshirilmagan'}
           </div>
         </div>
       </div>
@@ -306,53 +420,58 @@ export const IeltsDashboardView: React.FC<IeltsDashboardViewProps> = ({
                 <span>IELTS Ballar O‘sish Dinamikasi</span>
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Diagnostikadan boshlab so‘nggi topshirilgan mock testlargacha bo‘lgan traektoriya.
+                Topshirilgan mock testlar bo‘yicha umumiy ballar traektoriyasi.
               </p>
             </div>
 
             <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-bold self-start sm:self-auto">
-              +1.5 Band O‘sish
+              {bandGrowthBadge}
             </span>
           </div>
 
           {/* Clean Interactive SVG Progression Graph */}
           <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#0A0F1D] border border-slate-200 dark:border-[#1E293B]">
-            <div className="h-44 w-full flex items-end justify-between gap-2 px-2 pt-6">
-              {[
-                { label: 'Diag Test', band: 6.0, date: '15-Yan' },
-                { label: 'Mock #1', band: 6.5, date: '01-Fev' },
-                { label: 'Mock #2', band: 7.0, date: '15-Fev' },
-                { label: 'Class W3', band: 7.0, date: '01-Mar' },
-                { label: 'Oxirgi Mock', band: 7.5, date: '12-Mar' },
-                { label: 'Maqsad', band: targetBand, date: 'Natija', isTarget: true },
-              ].map((point, idx) => {
-                const heightPercent = Math.min(100, Math.max(20, ((point.band - 5.0) / 4.0) * 100));
-                return (
-                  <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
-                    <span className={`text-[11px] font-mono font-bold transition-transform group-hover:-translate-y-1 ${
-                      point.isTarget ? 'text-amber-500' : 'text-emerald-600 dark:text-emerald-400'
-                    }`}>
-                      {point.band.toFixed(1)}
-                    </span>
+            {hasSubmissions ? (
+              <div className="h-44 w-full flex items-end justify-between gap-2 px-2 pt-6">
+                {progressionPoints.map((point, idx) => {
+                  const heightPercent = Math.min(100, Math.max(20, ((point.band - 4.0) / 5.0) * 100));
+                  return (
+                    <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
+                      <span className={`text-[11px] font-mono font-bold transition-transform group-hover:-translate-y-1 ${
+                        point.isTarget ? 'text-amber-500' : 'text-emerald-600 dark:text-emerald-400'
+                      }`}>
+                        {point.band.toFixed(1)}
+                      </span>
 
-                    <div className="w-full max-w-[36px] bg-slate-200 dark:bg-slate-800 rounded-t-lg overflow-hidden h-28 flex items-end">
-                      <div
-                        className={`w-full transition-all duration-500 rounded-t-lg ${
-                          point.isTarget
-                            ? 'bg-amber-500/80 border-t-2 border-amber-300'
-                            : 'bg-emerald-500/80 hover:bg-emerald-500'
-                        }`}
-                        style={{ height: `${heightPercent}%` }}
-                      />
+                      <div className="w-full max-w-[36px] bg-slate-200 dark:bg-slate-800 rounded-t-lg overflow-hidden h-28 flex items-end">
+                        <div
+                          className={`w-full transition-all duration-500 rounded-t-lg ${
+                            point.isTarget
+                              ? 'bg-amber-500/80 border-t-2 border-amber-300'
+                              : 'bg-emerald-500/80 hover:bg-emerald-500'
+                          }`}
+                          style={{ height: `${heightPercent}%` }}
+                        />
+                      </div>
+
+                      <span className="text-[10px] font-mono text-slate-500 truncate max-w-[65px]">
+                        {point.label}
+                      </span>
                     </div>
-
-                    <span className="text-[10px] font-mono text-slate-500 truncate max-w-[55px]">
-                      {point.label}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="h-44 w-full flex flex-col items-center justify-center text-center p-6 space-y-2">
+                <BarChart3 className="w-8 h-8 text-slate-300 dark:text-slate-600" />
+                <div className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                  Hozircha testlar tarixi mavjud emas
+                </div>
+                <p className="text-[11px] text-slate-400 max-w-sm">
+                  Birinchi rasmiy yoki dars mock testini topshirishingiz bilan o‘sish traektoriyasi shu yerda avtomatik aks etadi.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 

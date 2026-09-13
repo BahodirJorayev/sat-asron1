@@ -75,9 +75,39 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
     }
   }, []);
 
+  // 3. Live Mock Test Attempts from Supabase
+  const [realMockLogs, setRealMockLogs] = useState<any[]>([]);
+
+  const fetchRealMockLogs = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('mock_test_attempts')
+        .select('id, user_id, test_id, total_score, created_at')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (!error && data && data.length > 0) {
+        setRealMockLogs(
+          data.map((att) => ({
+            id: `mock-att-${att.id}`,
+            type: 'MOCK_SUBMIT',
+            text: `Mock test topshirildi (Natija: ${att.total_score || '—'})`,
+            time: att.created_at ? new Date(att.created_at).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }) : 'Yaqinda',
+            badge: 'MOCK TEST',
+            badgeClass: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
+          }))
+        );
+      } else {
+        setRealMockLogs([]);
+      }
+    } catch (err) {
+      console.error('Failed to fetch real mock logs:', err);
+    }
+  }, []);
+
   const handleRefreshPulse = async () => {
     setIsRefreshing(true);
-    await Promise.all([fetchTotalUsersCount(), fetchRecentScholars()]);
+    await Promise.all([fetchTotalUsersCount(), fetchRecentScholars(), fetchRealMockLogs()]);
     setIsRefreshing(false);
   };
 
@@ -85,6 +115,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
     let isMounted = true;
     fetchTotalUsersCount();
     fetchRecentScholars();
+    fetchRealMockLogs();
 
     // 3. Supabase Realtime Presence Channel for Currently Online Users
     const presenceChannel = supabase.channel('online-presence', {
@@ -127,67 +158,43 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
       supabase.removeChannel(presenceChannel);
       supabase.removeChannel(profilesSyncChannel);
     };
-  }, [fetchTotalUsersCount, fetchRecentScholars]);
+  }, [fetchTotalUsersCount, fetchRecentScholars, fetchRealMockLogs]);
 
-  // Recent system logs in Uzbek (Executive Minimalism, no cartoon emojis)
-  const [activityLogs] = useState([
-    {
-      id: 'act-1',
-      type: 'MOCK_SUBMIT',
-      text: 'O‘quvchi @jasurbek_sat "Bluebook Rasmiy Mock #1" testini yakunladi (Natija: 1510)',
-      time: '3 daqiqa oldin',
-      badge: 'MOCK TEST',
-      badgeClass: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
-    },
-    {
-      id: 'act-2',
-      type: 'NEW_SCHOLAR',
-      text: 'Yangi talaba @aziza_sat platformada ro‘yxatdan o‘tdi (Maqsad: 1550+)',
-      time: '12 daqiqa oldin',
-      badge: 'RO‘YXATDAN O‘TISH',
-      badgeClass: 'text-sky-400 bg-sky-500/10 border-sky-500/30',
-    },
-    {
-      id: 'act-3',
-      type: 'QUESTION_BANK',
-      text: 'Savollar bankiga 20 ta yangi "Advanced Math" masalalari kiritildi',
-      time: '28 daqiqa oldin',
-      badge: 'SAVOLLAR BANKI',
-      badgeClass: 'text-purple-400 bg-purple-500/10 border-purple-500/30',
-    },
-    {
-      id: 'act-4',
-      type: 'ACCESS_CODE',
-      text: 'Maxsus kurs mock testi uchun "ASRON-2026" kodi bilan muvaffaqiyatli kirish qayd etildi',
-      time: '45 daqiqa oldin',
-      badge: 'XAVFSIZLIK',
-      badgeClass: 'text-[#E07A5F] bg-[#E07A5F]/10 border-[#E07A5F]/30',
-    },
-    {
-      id: 'act-5',
-      type: 'SYSTEM',
-      text: 'Platforma sozlamalari va Desmos formulalari replikatsiyasi yangilandi',
-      time: '1 soat oldin',
-      badge: 'TIZIM',
-      badgeClass: 'text-amber-400 bg-amber-500/10 border-amber-500/30',
-    },
-  ]);
+  // Real IELTS mock submissions
+  const ieltsLogs = useMemo(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const saved = localStorage.getItem('asron_ielts_submissions');
+      if (saved) {
+        const subs = JSON.parse(saved);
+        if (Array.isArray(subs)) {
+          return subs.slice(0, 5).map((s) => ({
+            id: `ielts-${s.id}`,
+            type: 'IELTS_SUBMIT',
+            text: `IELTS "${s.testTitle || 'Mock'}" yakunlandi (Band: ${s.overallBand?.toFixed(1) || '—'})`,
+            time: s.submittedAt ? new Date(s.submittedAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }) : 'Yaqinda',
+            badge: 'IELTS MOCK',
+            badgeClass: 'text-amber-400 bg-amber-500/10 border-amber-500/30',
+          }));
+        }
+      }
+    } catch {}
+    return [];
+  }, []);
 
-  // Combine live registered users with mock logs
+  // Combine live registered users with real mock logs (pure real data)
   const dynamicLogs = useMemo(() => {
-    if (recentScholars && recentScholars.length > 0) {
-      const realUserLogs = recentScholars.map((u) => ({
-        id: `real-user-${u.id}`,
-        type: 'NEW_SCHOLAR',
-        text: `Yangi talaba @${u.username || 'user'} (${u.full_name || 'Foydalanuvchi'}) ro'yxatdan o'tdi`,
-        time: u.created_at ? new Date(u.created_at).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }) : 'Yaqinda',
-        badge: "RO'YXATDAN O'TISH",
-        badgeClass: 'text-sky-400 bg-sky-500/10 border-sky-500/30',
-      }));
-      return [...realUserLogs, ...activityLogs].slice(0, 8);
-    }
-    return activityLogs;
-  }, [recentScholars, activityLogs]);
+    const scholarLogs = (recentScholars || []).map((u) => ({
+      id: `real-user-${u.id}`,
+      type: 'NEW_SCHOLAR',
+      text: `Yangi talaba @${u.username || 'user'} (${u.full_name || 'Foydalanuvchi'}) ro'yxatdan o'tdi`,
+      time: u.created_at ? new Date(u.created_at).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }) : 'Yaqinda',
+      badge: "RO'YXATDAN O'TISH",
+      badgeClass: 'text-sky-400 bg-sky-500/10 border-sky-500/30',
+    }));
+
+    return [...scholarLogs, ...realMockLogs, ...ieltsLogs].slice(0, 8);
+  }, [recentScholars, realMockLogs, ieltsLogs]);
 
   return (
     <div id="admin-dashboard-view" className="space-y-6 font-sans">
@@ -338,22 +345,28 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
               </div>
             </div>
 
-            <div className="divide-y divide-[#E2E8F0] dark:divide-[#1E293B]">
-              {dynamicLogs.map((log) => (
-                <div key={log.id} className="py-3.5 flex items-start justify-between gap-3 text-xs">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold border ${log.badgeClass}`}>
-                        {log.badge}
-                      </span>
-                      <span className="text-[11px] font-mono text-[#64748B] dark:text-[#94A3B8]">{log.time}</span>
+            {dynamicLogs.length > 0 ? (
+              <div className="divide-y divide-[#E2E8F0] dark:divide-[#1E293B]">
+                {dynamicLogs.map((log) => (
+                  <div key={log.id} className="py-3.5 flex items-start justify-between gap-3 text-xs">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold border ${log.badgeClass}`}>
+                          {log.badge}
+                        </span>
+                        <span className="text-[11px] font-mono text-[#64748B] dark:text-[#94A3B8]">{log.time}</span>
+                      </div>
+                      <p className="text-[#0F172A] dark:text-[#F8FAFC] font-medium leading-relaxed">{log.text}</p>
                     </div>
-                    <p className="text-[#0F172A] dark:text-[#F8FAFC] font-medium leading-relaxed">{log.text}</p>
+                    <ChevronRight className="w-4 h-4 text-[#94A3B8] mt-1 shrink-0" />
                   </div>
-                  <ChevronRight className="w-4 h-4 text-[#94A3B8] mt-1 shrink-0" />
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-10 text-center text-slate-400 dark:text-slate-500 text-xs font-mono">
+                Hozircha tizim faoliyati qayd etilmagan
+              </div>
+            )}
           </div>
         </div>
 

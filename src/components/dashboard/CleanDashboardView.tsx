@@ -19,7 +19,7 @@ import { ExamCountdownWidget } from './ExamCountdownWidget';
 import { supabase } from '../../lib/supabase';
 import { useLanguage } from '../../context/LanguageContext';
 import { useUserProfile } from '../../hooks/useUserProfile';
-
+import { useUserProgress } from '../../hooks/useUserProgress';
 
 interface Props {
   user: User;
@@ -111,10 +111,11 @@ export const CleanDashboardView: React.FC<Props> = ({
 
 
   const { profile } = useUserProfile();
+  const { progress } = useUserProgress(user);
   const studentName = profile?.fullName || user?.fullName || user?.username || 'Talaba';
-  const streakDays = user?.streakDays || 0;
-  const questionsDone = user?.totalQuestionsDone || 0;
-  const accuracy = user?.overallAccuracy || 0;
+  const streakDays = progress?.streak_days ?? (user?.streakDays || 0);
+  const questionsDone = progress?.total_questions_done ?? Object.keys(progress?.completed_questions || {}).length ?? (user?.totalQuestionsDone || 0);
+  const accuracy = questionsDone > 0 ? (progress?.overall_accuracy ?? (user?.overallAccuracy || 0)) : 0;
 
   const handleLaunchFirstBluebook = () => {
     if (mockTests && mockTests.length > 0 && onStartBluebookTest) {

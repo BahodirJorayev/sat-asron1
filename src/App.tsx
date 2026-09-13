@@ -81,6 +81,8 @@ import { ViewErrorBoundary } from './components/common/ViewErrorBoundary';
 import { SafeViewWrapper } from './components/common/SafeViewWrapper';
 import { IeltsDashboardView } from './components/ielts/IeltsDashboardView';
 import { IeltsMockTestsCatalogView } from './components/ielts/IeltsMockTestsCatalogView';
+import { IeltsSectionalPracticeView } from './components/ielts/IeltsSectionalPracticeView';
+import { IeltsVocabularyView } from './components/ielts/IeltsVocabularyView';
 import { ResourcesHubView } from './components/resources/ResourcesHubView';
 import { useExamProgram } from './context/ExamProgramContext';
 import {
@@ -1944,6 +1946,14 @@ export default function App() {
         );
 
       case 'questions':
+        if (isIelts) {
+          return (
+            <IeltsSectionalPracticeView
+              user={currentUser}
+              onOpenPaywall={() => setIsPaywallOpen(true)}
+            />
+          );
+        }
         return (
           <QuestionBankView
             user={currentUser}
@@ -1976,6 +1986,14 @@ export default function App() {
         );
 
       case 'vocabulary':
+        if (isIelts) {
+          return (
+            <IeltsVocabularyView
+              user={currentUser}
+              onOpenPaywall={() => setIsPaywallOpen(true)}
+            />
+          );
+        }
         return (
           <VocabularyHub
             user={currentUser}

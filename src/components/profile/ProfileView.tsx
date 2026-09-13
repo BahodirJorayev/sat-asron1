@@ -30,6 +30,7 @@ import { User } from '../../types';
 import { supabase, saveUserProfile, signOutUser } from '../../lib/supabase';
 import { useTheme } from '../../context/ThemeContext';
 import { useUserProfile } from '../../hooks/useUserProfile';
+import { useUserProgress } from '../../hooks/useUserProgress';
 import { EditProfileModal } from './EditProfileModal';
 
 interface ProfileViewProps {
@@ -100,6 +101,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   // Apple-grade Theme state
   const { resolvedTheme, setTheme } = useTheme();
   const { profile, updateProfile, uploadAvatar } = useUserProfile();
+  const { progress: userProg } = useUserProgress(user);
 
   // Avatar Upload State
   const [isUploadingAvatar, setIsUploadingAvatar] = useState<boolean>(false);
@@ -241,14 +243,38 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
     fetchProfile();
 
-    // Check mock test attempts
+    // Check mock test attempts strictly for active user
     const fetchMockCount = async () => {
       try {
-        const { count, error } = await supabase
-          .from('mock_test_attempts')
-          .select('*', { count: 'exact', head: true });
-        if (!error && typeof count === 'number' && isMounted) {
-          setMockTestsCompleted(count);
+        const { data: authData } = await supabase.auth.getUser();
+        const activeUserId = authData?.user?.id || user.id;
+        let totalMocks = 0;
+
+        if (activeUserId) {
+          const { count, error } = await supabase
+            .from('mock_test_attempts')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', activeUserId);
+          if (!error && typeof count === 'number') {
+            totalMocks += count;
+          }
+        }
+
+        // Add IELTS mock test submissions
+        if (typeof window !== 'undefined') {
+          try {
+            const saved = localStorage.getItem('asron_ielts_submissions');
+            if (saved) {
+              const parsed = JSON.parse(saved);
+              if (Array.isArray(parsed)) {
+                totalMocks += parsed.length;
+              }
+            }
+          } catch {}
+        }
+
+        if (isMounted) {
+          setMockTestsCompleted(totalMocks);
         }
       } catch (e) {}
     };
@@ -777,10 +803,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               Ishlangan Savollar
             </div>
             <div className="text-2xl sm:text-3xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC]">
-              {user.totalQuestionsDone || 0}
+              {userProg.total_questions_done ?? Object.keys(userProg.completed_questions || {}).length ?? user.totalQuestionsDone ?? 0}
             </div>
             <div className="text-[10px] font-mono text-slate-400 dark:text-slate-500">
-              3,000+ rasmiy savollar bazasidan
+              {(userProg.total_questions_done ?? Object.keys(userProg.completed_questions || {}).length ?? 0) > 0
+                ? 'Savollar banki & Bo‘limlar'
+                : '0 ta savol yechilgan'}
             </div>
           </div>
 
@@ -790,10 +818,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               O'rtacha Aniqlik
             </div>
             <div className="text-2xl sm:text-3xl font-extrabold font-mono tabular-nums text-[#0F172A] dark:text-[#F8FAFC]">
-              {user.overallAccuracy || 0}%
+              {userProg.overall_accuracy ?? user.overallAccuracy ?? 0}%
             </div>
             <div className="text-[10px] font-mono text-slate-400 dark:text-slate-500">
-              Moslashuvchan MST diagnostikasi
+              {(userProg.overall_accuracy ?? 0) > 0 ? 'Moslashuvchan diagnostika' : 'Hali savol yechilmadi'}
             </div>
           </div>
 
@@ -806,7 +834,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               {mockTestsCompleted}
             </div>
             <div className="text-[10px] font-mono text-slate-400 dark:text-slate-500">
-              Rasmiy 2-bosqichli simulyator
+              {mockTestsCompleted > 0 ? 'Rasmiy topshirilgan testlar' : 'Mock topshirilmagan'}
             </div>
           </div>
         </div>

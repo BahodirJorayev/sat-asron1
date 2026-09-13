@@ -3,44 +3,49 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RotateCcw, Home } from 'lucide-react';
 
-export interface ViewErrorBoundaryProps {
+export interface SafeViewWrapperProps {
   children: ReactNode;
-  moduleName?: string;
+  viewName: string;
   onReset?: () => void;
   fallbackTitle?: string;
 }
 
-interface ViewErrorBoundaryState {
+interface SafeViewWrapperState {
   hasError: boolean;
   error: Error | null;
 }
 
 /**
- * Robust ViewErrorBoundary to isolate view-level runtime exceptions.
- * Prevents a single view crash from crashing the whole application shell (Sidebar, Header, Navigation).
+ * Route-keyed SafeViewWrapper to permanently prevent cascading view crashes
+ * and guarantee error states NEVER leak across navigation routes (e.g. into Dashboard/Home).
  */
-export class ViewErrorBoundary extends Component<ViewErrorBoundaryProps, ViewErrorBoundaryState> {
-  public declare props: ViewErrorBoundaryProps;
+export class SafeViewWrapper extends Component<SafeViewWrapperProps, SafeViewWrapperState> {
+  public declare props: SafeViewWrapperProps;
   public declare setState: (
-    state: Partial<ViewErrorBoundaryState> | ((prevState: ViewErrorBoundaryState) => Partial<ViewErrorBoundaryState>),
+    state: Partial<SafeViewWrapperState> | ((prevState: SafeViewWrapperState) => Partial<SafeViewWrapperState>),
     callback?: () => void
   ) => void;
 
-  public state: ViewErrorBoundaryState = {
+  public state: SafeViewWrapperState = {
     hasError: false,
     error: null,
   };
 
-  public static getDerivedStateFromError(error: Error): ViewErrorBoundaryState {
+  public static getDerivedStateFromError(error: Error): SafeViewWrapperState {
     return { hasError: true, error };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error(`[ViewErrorBoundary caught error in ${this.props.moduleName || 'View'}]:`, error, errorInfo);
+    console.error(
+      `[SafeViewWrapper caught error in view "${this.props.viewName}"]:`,
+      error,
+      errorInfo
+    );
   }
 
-  public componentDidUpdate(prevProps: ViewErrorBoundaryProps) {
-    if (prevProps.moduleName !== this.props.moduleName && this.state.hasError) {
+  public componentDidUpdate(prevProps: SafeViewWrapperProps) {
+    // Automatically and immediately reset error state when viewName changes!
+    if (prevProps.viewName !== this.props.viewName && this.state.hasError) {
       this.setState({ hasError: false, error: null });
     }
   }
@@ -55,11 +60,12 @@ export class ViewErrorBoundary extends Component<ViewErrorBoundaryProps, ViewErr
     if (typeof window !== 'undefined') {
       window.location.hash = '#/dashboard';
     }
+    this.props.onReset?.();
   };
 
   public render() {
     if (this.state.hasError) {
-      const name = this.props.moduleName || 'Sahifa';
+      const name = this.props.viewName || 'Sahifa';
       return (
         <div className="p-6 sm:p-10 max-w-3xl mx-auto my-8 rounded-3xl bg-white dark:bg-[#121A2F] border border-rose-200 dark:border-rose-900/40 shadow-lg text-[#0F172A] dark:text-[#F8FAFC] space-y-6 font-sans animate-in fade-in zoom-in-95 duration-200">
           <div className="flex items-center gap-3 text-rose-600 dark:text-rose-400">
@@ -77,7 +83,8 @@ export class ViewErrorBoundary extends Component<ViewErrorBoundaryProps, ViewErr
           </div>
 
           <p className="text-xs sm:text-sm text-[#64748B] dark:text-[#94A3B8] font-mono leading-relaxed bg-slate-50 dark:bg-[#0A0F1D] p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
-            {this.state.error?.message || "Kutilmagan ma'lumotlar formati sababli modulni to'liq render qilib bo'lmadi. Sahifani qayta yuklang yoki dashboardga qayting."}
+            {this.state.error?.message ||
+              "Kutilmagan ma'lumotlar formati sababli modulni to'liq render qilib bo'lmadi. Sahifani qayta yuklang yoki dashboardga qayting."}
           </p>
 
           <div className="flex flex-wrap items-center gap-3 pt-2">
@@ -103,8 +110,12 @@ export class ViewErrorBoundary extends Component<ViewErrorBoundaryProps, ViewErr
       );
     }
 
-    return this.props.children;
+    return (
+      <div className="w-full flex-1 animate-in fade-in slide-in-from-bottom-1 duration-200 min-h-full">
+        {this.props.children}
+      </div>
+    );
   }
 }
 
-export default ViewErrorBoundary;
+export default SafeViewWrapper;

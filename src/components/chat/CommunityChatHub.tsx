@@ -92,6 +92,7 @@ import {
 } from '../../lib/chatRealtimeService';
 import { supabase } from '../../lib/supabase';
 import { useLanguage } from '../../context/LanguageContext';
+import { useUnreadMessages } from '../../hooks/useUnreadMessages';
 
 interface Props {
   currentUser: User;
@@ -107,6 +108,7 @@ export const CommunityChatHub: React.FC<Props> = ({
   onSelectUserProfile,
 }) => {
   const { t } = useLanguage();
+  const { unreadMap, markAsRead, setActiveChat } = useUnreadMessages();
   // Safe user fallback for unauthenticated visitors or pending auth sessions
   const currentUser: User = useMemo(() => {
     if (rawUser && rawUser.id) return rawUser;
@@ -209,15 +211,23 @@ export const CommunityChatHub: React.FC<Props> = ({
     }
   }, []);
 
-  // Load messages whenever activeChatId changes
+  // Load messages whenever activeChatId changes and mark as read
   useEffect(() => {
     if (activeChat) {
       const initialMsgs = getChatMessages(activeChat.id);
       setMessages(initialMsgs);
       setReplyingTo(null);
       setEditingMessage(null);
+      markAsRead(activeChat.id);
+      setActiveChat(activeChat.id);
     }
-  }, [activeChat?.id]);
+  }, [activeChat?.id, markAsRead, setActiveChat]);
+
+  useEffect(() => {
+    return () => {
+      setActiveChat(null);
+    };
+  }, [setActiveChat]);
 
   // Realtime Supabase Subscription
   useEffect(() => {
@@ -920,23 +930,53 @@ export const CommunityChatHub: React.FC<Props> = ({
                       {searchResults.users.map((u) => (
                         <div
                           key={u.id}
-                          onClick={() => handleSelectUserFromSearch(u)}
-                          className="p-2.5 rounded-xl flex items-center gap-3 hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] cursor-pointer transition-colors"
+                          className="p-2.5 rounded-xl flex items-center justify-between gap-2 hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] cursor-pointer transition-colors group"
                         >
-                          <EntityAvatar
-                            name={u.fullName}
-                            avatarUrl={u.avatarUrl}
-                            size="md"
-                            shape="circle"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className="text-xs font-bold truncate text-[#0F172A] dark:text-[#F8FAFC]">
-                              {u.fullName}
-                            </div>
-                            <div className="text-[11px] font-mono text-[#E07A5F] truncate">
-                              @{u.username}
+                          <div
+                            onClick={() => handleSelectUserFromSearch(u)}
+                            className="flex items-center gap-3 flex-1 min-w-0"
+                          >
+                            <EntityAvatar
+                              name={u.fullName}
+                              avatarUrl={u.avatarUrl}
+                              size="md"
+                              shape="circle"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="text-xs font-bold truncate text-[#0F172A] dark:text-[#F8FAFC]">
+                                {u.fullName}
+                              </div>
+                              <div className="text-[11px] font-mono text-[#E07A5F] truncate">
+                                @{u.username}
+                              </div>
                             </div>
                           </div>
+
+                          {onSelectUserProfile && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onSelectUserProfile({
+                                  id: u.id,
+                                  fullName: u.fullName,
+                                  username: u.username,
+                                  email: u.email || `${u.username}@asron.sat`,
+                                  avatarUrl: u.avatarUrl,
+                                  role: (u.role as any) || 'student',
+                                  targetScore: 1450,
+                                  currentScore: 1200,
+                                  planTier: 'FREE',
+                                  dailyStreak: 1,
+                                  joinedDate: new Date().toISOString(),
+                                });
+                              }}
+                              className="px-2.5 py-1 rounded-lg text-[10px] font-mono font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-[#E07A5F] hover:text-white transition-all shrink-0"
+                              title="Profilni ko'rish"
+                            >
+                              Profil
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -1029,12 +1069,15 @@ export const CommunityChatHub: React.FC<Props> = ({
             <div className="flex-1 overflow-y-auto overscroll-contain divide-y divide-slate-100 dark:divide-slate-800/60 custom-scrollbar">
               {filteredChats.map((chat) => {
                 const isSelected = chat.id === activeChat?.id;
+                const unreadCount = unreadMap[chat.id] || 0;
 
                 return (
                   <div
                     key={chat.id}
                     onClick={() => {
                       setActiveChatId(chat.id);
+                      markAsRead(chat.id);
+                      setActiveChat(chat.id);
                       setIsMobileChatViewOpen(true);
                     }}
                     className={`p-3.5 flex items-center gap-3 cursor-pointer transition-colors ${
@@ -1061,11 +1104,11 @@ export const CommunityChatHub: React.FC<Props> = ({
 
                     {/* Content Details */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-xs font-bold truncate text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-1.5">
-                          <span>{chat.name}</span>
+                      <div className="flex items-center justify-between gap-2">
+                        <h4 className="text-xs font-bold truncate text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-1.5 min-w-0">
+                          <span className="truncate">{chat.name}</span>
                           {chat.username && (
-                            <span className="text-[10px] font-mono text-[#E07A5F] font-normal">
+                            <span className="text-[10px] font-mono text-[#E07A5F] font-normal shrink-0">
                               @{chat.username}
                             </span>
                           )}
@@ -1073,7 +1116,7 @@ export const CommunityChatHub: React.FC<Props> = ({
                             <CheckCircle2 className="w-3.5 h-3.5 text-[#E07A5F] shrink-0" />
                           )}
                         </h4>
-                        <span className="text-[10px] font-mono text-[#94A3B8]">
+                        <span className="text-[10px] font-mono text-[#94A3B8] shrink-0">
                           {chat.lastMessage?.createdAt
                             ? new Date(chat.lastMessage.createdAt).toLocaleTimeString([], {
                                 hour: '2-digit',
@@ -1083,9 +1126,16 @@ export const CommunityChatHub: React.FC<Props> = ({
                         </span>
                       </div>
 
-                      <p className="text-xs text-[#64748B] dark:text-[#94A3B8] truncate mt-0.5">
-                        {chat.lastMessage?.content || chat.description || 'Muloqot boshlanmadi'}
-                      </p>
+                      <div className="flex items-center justify-between gap-2 mt-0.5">
+                        <p className="text-xs text-[#64748B] dark:text-[#94A3B8] truncate flex-1 min-w-0">
+                          {chat.lastMessage?.content || chat.description || 'Muloqot boshlanmadi'}
+                        </p>
+                        {unreadCount > 0 && (
+                          <span className="shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center shadow-xs">
+                            {unreadCount > 9 ? '9+' : unreadCount}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );

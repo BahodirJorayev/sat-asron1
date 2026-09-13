@@ -137,7 +137,7 @@ export const UserProfileProvider: React.FC<UserProfileProviderProps> = ({
       if (!user || !isMounted) return;
 
       // Supabase Realtime channel listening to postgres_changes on profiles for this specific user
-      const channelName = `user_profile_sync_${user.id}`;
+      const channelName = `user_profile_sync_${user.id}_${Math.random().toString(36).substring(2, 7)}`;
       const channel = supabase
         .channel(channelName)
         .on(
@@ -188,7 +188,11 @@ export const UserProfileProvider: React.FC<UserProfileProviderProps> = ({
             }
           }
         )
-        .subscribe();
+        .subscribe((status) => {
+          if (status === 'CHANNEL_ERROR') {
+            console.warn('Realtime profiles channel warning suppressed safely');
+          }
+        });
 
       if (!isMounted) {
         supabase.removeChannel(channel);

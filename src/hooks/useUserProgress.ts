@@ -161,10 +161,13 @@ export function useUserProgress(activeUser?: User | null) {
   useEffect(() => {
     if (!userId) return;
 
+    let isMounted = true;
     fetchProgress(userId);
 
-    const channel = supabase
-      .channel(`user_progress_sync_${userId}`)
+    const channelId = `user_sync_${userId}_${Math.random().toString(36).substring(2, 7)}`;
+    const channel = supabase.channel(channelId);
+
+    channel
       .on(
         'postgres_changes',
         {
@@ -174,7 +177,7 @@ export function useUserProgress(activeUser?: User | null) {
           filter: `user_id=eq.${userId}`,
         },
         (payload: any) => {
-          if (payload.new && payload.new.user_id === userId && !isSyncingRef.current) {
+          if (isMounted && payload.new && payload.new.user_id === userId && !isSyncingRef.current) {
             const remote: UserProgressData = {
               user_id: userId,
               completed_questions: payload.new.completed_questions || {},
@@ -197,16 +200,21 @@ export function useUserProgress(activeUser?: User | null) {
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR') {
+          console.warn('Realtime user_progress channel warning suppressed safely');
+        }
+      });
 
     const handleLocalBroadcast = (e: any) => {
-      if (e.detail && e.detail.user_id === userId) {
+      if (isMounted && e.detail && e.detail.user_id === userId) {
         setProgress(e.detail);
       }
     };
     window.addEventListener(BROADCAST_EVENT, handleLocalBroadcast);
 
     return () => {
+      isMounted = false;
       supabase.removeChannel(channel);
       window.removeEventListener(BROADCAST_EVENT, handleLocalBroadcast);
     };

@@ -7,9 +7,11 @@ import {
   FileText,
   BookOpen,
   AlertCircle,
+  Users,
 } from 'lucide-react';
 import { User } from '../types';
 import { useLanguage } from '../context/LanguageContext';
+import { useUnreadMessages } from '../hooks/useUnreadMessages';
 
 interface MobileBottomNavProps {
   activeTab: string;
@@ -23,11 +25,8 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   setActiveTab,
 }) => {
   const { t } = useLanguage();
+  const { totalUnread } = useUnreadMessages();
   const [isChatOpen, setIsChatOpen] = React.useState(false);
-  const [currentHash, setCurrentHash] = React.useState(() => {
-    if (typeof window !== 'undefined') return window.location.hash || '';
-    return '';
-  });
 
   React.useEffect(() => {
     const handleChatState = (e: any) => {
@@ -35,28 +34,17 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     };
     window.addEventListener('asron_chat_state_change', handleChatState);
 
-    const handleHash = () => setCurrentHash(window.location.hash || '');
-    window.addEventListener('hashchange', handleHash);
-
     return () => {
       window.removeEventListener('asron_chat_state_change', handleChatState);
-      window.removeEventListener('hashchange', handleHash);
     };
   }, []);
 
-  const isCommunity =
-    activeTab === 'community' ||
-    (typeof window !== 'undefined' &&
-      (window.location.pathname?.includes('community') ||
-       window.location.pathname?.includes('chat'))) ||
-    Boolean(currentHash && (currentHash.includes('community') || currentHash.includes('chat')));
-
-  // Hide entirely when inside community or viewing an active chat channel
-  if (isChatOpen || isCommunity) {
+  // Hide entirely when inside an active mobile chat conversation viewport
+  if (isChatOpen) {
     return null;
   }
 
-  // Exact 5-item Apple iOS minimal navigation array (Hamjamiyat moved to top-right header)
+  // Exact 6-item minimal navigation array establishing 100% desktop/mobile parity
   const navItems = [
     {
       id: 'dashboard',
@@ -83,44 +71,66 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       label: t('nav.mistakes', 'Xatolar'),
       icon: AlertCircle,
     },
+    {
+      id: 'community',
+      label: t('nav.community', 'Hamjamiyat'),
+      icon: Users,
+    },
   ];
+
+  const CANONICAL_HASH_MAP: Record<string, string> = {
+    dashboard: '#/dashboard',
+    qbank: '#/qbank',
+    bluebook: '#/mocks',
+    vocab: '#/vocab',
+    vault: '#/mistakes',
+    community: '#/community',
+  };
+
+  const isItemActive = (id: string) => {
+    if (id === 'dashboard') {
+      return (
+        activeTab === 'dashboard' ||
+        ![
+          'landing',
+          'blog',
+          'profile',
+          'settings',
+          'vocab',
+          'vocabulary',
+          'daily-workout',
+          'vault',
+          'mistakes',
+          'bluebook',
+          'mocks',
+          'qbank',
+          'questions',
+          'practice',
+          'community',
+          'chat',
+          'arena',
+          'ai-tutor',
+          'roadmap',
+          'admin',
+        ].includes(activeTab)
+      );
+    }
+    if (id === 'qbank') return activeTab === 'qbank' || activeTab === 'questions' || activeTab === 'practice';
+    if (id === 'bluebook') return activeTab === 'bluebook' || activeTab === 'mocks';
+    if (id === 'vocab') return activeTab === 'vocab' || activeTab === 'vocabulary';
+    if (id === 'vault') return activeTab === 'vault' || activeTab === 'mistakes';
+    if (id === 'community') return activeTab === 'community' || activeTab === 'chat';
+    return activeTab === id;
+  };
 
   return (
     <nav
       aria-label="Mobil Navigatsiya"
-      className="md:hidden fixed bottom-3 left-4 right-4 z-50 mx-auto max-w-sm rounded-full h-14 bg-white/75 dark:bg-[#0D1527]/75 backdrop-blur-2xl border border-white/40 dark:border-white/10 shadow-[0_10px_35px_rgba(0,0,0,0.08)] dark:shadow-[0_10px_35px_rgba(0,0,0,0.4)] flex items-center justify-around px-2 select-none transition-all duration-200"
+      className="md:hidden fixed bottom-3 left-3 right-3 z-50 mx-auto max-w-md rounded-full h-14 bg-white/85 dark:bg-[#0D1527]/85 backdrop-blur-2xl border border-white/40 dark:border-white/10 shadow-[0_10px_35px_rgba(0,0,0,0.08)] dark:shadow-[0_10px_35px_rgba(0,0,0,0.4)] flex items-center justify-around px-2 select-none transition-all duration-200"
     >
       {navItems.map((item) => {
         const Icon = item.icon;
-        const isActive =
-          activeTab === item.id ||
-          (item.id === 'dashboard' &&
-            ![
-              'landing',
-              'blog',
-              'profile',
-              'settings',
-              'vocab',
-              'vocabulary',
-              'daily-workout',
-              'vault',
-              'mistakes',
-              'bluebook',
-              'mocks',
-              'qbank',
-              'questions',
-              'practice',
-              'community',
-              'chat',
-              'arena',
-              'ai-tutor',
-              'roadmap',
-              'admin',
-            ].includes(activeTab)) ||
-          (item.id === 'qbank' && (activeTab === 'questions' || activeTab === 'practice')) ||
-          (item.id === 'bluebook' && activeTab === 'mocks') ||
-          (item.id === 'vocab' && activeTab === 'vocabulary') ||
-          (item.id === 'vault' && activeTab === 'mistakes');
+        const isActive = isItemActive(item.id);
 
         return (
           <button
@@ -128,13 +138,15 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             type="button"
             onClick={() => {
               setActiveTab(item.id);
-              if (typeof window !== 'undefined') window.location.hash = `#/${item.id}`;
+              if (typeof window !== 'undefined') {
+                window.location.hash = CANONICAL_HASH_MAP[item.id] || `#/${item.id}`;
+              }
             }}
-            className="group flex-1 flex flex-col items-center justify-center py-0.5 cursor-pointer active:scale-95 transition-transform"
+            className="group flex-1 flex flex-col items-center justify-center py-0.5 cursor-pointer active:scale-95 transition-transform relative min-w-0"
           >
             <div className="relative">
               <Icon
-                size={19}
+                size={18}
                 strokeWidth={isActive ? 2.4 : 1.7}
                 className={`transition-all duration-150 ${
                   isActive
@@ -143,6 +155,12 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                 }`}
               />
 
+              {item.id === 'community' && totalUnread > 0 && (
+                <span className="absolute -top-1 -right-2.5 min-w-[15px] h-3.5 px-1 rounded-full bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center shadow-xs">
+                  {totalUnread > 9 ? '9+' : totalUnread}
+                </span>
+              )}
+
               {/* Active Pip */}
               {isActive && (
                 <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#E07A5F]" />
@@ -150,7 +168,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             </div>
 
             <span
-              className={`text-[10px] font-medium tracking-tight mt-0.5 truncate transition-colors duration-150 ${
+              className={`text-[9.5px] font-medium tracking-tight mt-0.5 truncate max-w-[50px] transition-colors duration-150 ${
                 isActive
                   ? 'text-[#E07A5F] font-semibold'
                   : 'text-slate-500 dark:text-slate-400'

@@ -10,9 +10,11 @@ import {
   BookOpen,
   AlertCircle,
   Lock,
+  Users,
 } from 'lucide-react';
 import { usePlatformSettings } from '../../hooks/usePlatformSettings';
 import { useLanguage } from '../../context/LanguageContext';
+import { useUnreadMessages } from '../../hooks/useUnreadMessages';
 
 export interface BottomNavProps {
   activeTab?: string;
@@ -51,6 +53,12 @@ export const navItems = [
     href: '/mistakes',
     icon: AlertCircle,
   },
+  {
+    id: 'community',
+    label: 'Hamjamiyat',
+    href: '/community',
+    icon: Users,
+  },
 ];
 
 export const NAV_ITEMS = navItems;
@@ -62,6 +70,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   const pathname = usePathname() || '';
   const { isModuleHidden, isModuleLocked, showLockedNotice } = usePlatformSettings();
   const { t } = useLanguage();
+  const { totalUnread } = useUnreadMessages();
   const [isChatOpen, setIsChatOpen] = React.useState(false);
   const [currentHash, setCurrentHash] = React.useState(() => {
     if (typeof window !== 'undefined') return window.location.hash || '';
@@ -149,6 +158,12 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                 {/* Active pip */}
                 {isActive && (
                   <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#E07A5F]" />
+                )}
+
+                {item.id === 'community' && totalUnread > 0 && (
+                  <span className="absolute -top-1 -right-2 min-w-[15px] h-3.5 px-1 rounded-full bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center shadow-xs">
+                    {totalUnread > 9 ? '9+' : totalUnread}
+                  </span>
                 )}
 
                 {/* Lock indicator */}

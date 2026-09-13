@@ -16,6 +16,7 @@ import { SiteBrandingConfig } from '../data/blogAndBrandingData';
 import { SidebarFooter } from './SidebarFooter';
 import { usePlatformSettings } from '../hooks/usePlatformSettings';
 import { useLanguage } from '../context/LanguageContext';
+import { useUnreadMessages } from '../hooks/useUnreadMessages';
 import { AsronLogo } from './AsronLogo';
 
 export interface AppSidebarProps {
@@ -80,6 +81,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
 
   const { settings, isModuleHidden, isModuleLocked, showLockedNotice } = usePlatformSettings();
   const { t } = useLanguage();
+  const { totalUnread } = useUnreadMessages();
   const brandName = settings.platform_title || siteBranding?.brandName || 'ASRON SAT';
 
   const moduleMap: Record<string, 'questions' | 'mocks' | 'vocabulary' | 'mistakes' | 'community'> = {
@@ -322,7 +324,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                   <span className="absolute left-0 top-2.5 bottom-2.5 w-1 rounded-r-md bg-[#E07A5F]" />
                 )}
 
-                <div className="flex items-center gap-3 min-w-0">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
                   <Icon
                     size={17}
                     strokeWidth={isActive ? 2.2 : 1.7}
@@ -333,11 +335,23 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                   {!isCollapsed && <span className="truncate tracking-tight">{item.label}</span>}
                 </div>
 
+                {item.id === 'community' && totalUnread > 0 && (
+                  isCollapsed ? (
+                    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center shadow-xs">
+                      {totalUnread > 9 ? '9+' : totalUnread}
+                    </span>
+                  ) : (
+                    <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-4 px-1.5 rounded-full bg-blue-600 text-white text-[10px] font-bold shadow-xs shrink-0">
+                      {totalUnread > 9 ? '9+' : totalUnread}
+                    </span>
+                  )
+                )}
+
                 {item.isLocked && (
                   isCollapsed ? (
                     <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500" />
                   ) : (
-                    <Lock size={12} className="text-amber-500 shrink-0" />
+                    <Lock size={12} className="text-amber-500 shrink-0 ml-1.5" />
                   )
                 )}
               </button>

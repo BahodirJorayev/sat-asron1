@@ -111,10 +111,10 @@ export const CleanDashboardView: React.FC<Props> = ({
 
 
   const { profile } = useUserProfile();
-  const studentName = profile?.fullName || user.fullName || user.username || 'Talaba';
-  const streakDays = user.streakDays || 0;
-  const questionsDone = user.totalQuestionsDone || 0;
-  const accuracy = user.overallAccuracy || 0;
+  const studentName = profile?.fullName || user?.fullName || user?.username || 'Talaba';
+  const streakDays = user?.streakDays || 0;
+  const questionsDone = user?.totalQuestionsDone || 0;
+  const accuracy = user?.overallAccuracy || 0;
 
   const handleLaunchFirstBluebook = () => {
     if (mockTests && mockTests.length > 0 && onStartBluebookTest) {
@@ -135,8 +135,8 @@ export const CleanDashboardView: React.FC<Props> = ({
 
       {/* 2. Prominent Exam Countdown Timer Widget */}
       <ExamCountdownWidget
-        initialTargetDate={user.targetExamDate || '2026-10-03T08:00:00'}
-        userId={user.id}
+        initialTargetDate={user?.targetExamDate || '2026-10-03T08:00:00'}
+        userId={user?.id || 'guest-user'}
       />
 
       {/* 3. Core Metrics: Data-Dense Triad */}

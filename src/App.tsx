@@ -78,6 +78,7 @@ import { getSupabaseClient, mapSupabaseUserToAppUser, signOutUser, saveUserProfi
 import { useUserProgress, syncUserProgressRemote } from './hooks/useUserProgress';
 import { ViewSkeletonLoader } from './components/common/ViewSkeletonLoader';
 import { ViewErrorBoundary } from './components/common/ViewErrorBoundary';
+import { SafeViewWrapper } from './components/common/SafeViewWrapper';
 import {
   fetchGlobalPlatformSettings,
   saveGlobalPlatformSettings,
@@ -193,12 +194,47 @@ export default function App() {
     : currentView === 'mistakes' ? 'vault'
     : (currentView as string);
 
+  const CANONICAL_HASH_MAP: Record<string, string> = {
+    dashboard: '#/dashboard',
+    home: '#/dashboard',
+    uy: '#/dashboard',
+    qbank: '#/qbank',
+    questions: '#/qbank',
+    savollar: '#/qbank',
+    practice: '#/qbank',
+    bluebook: '#/mocks',
+    mocks: '#/mocks',
+    test: '#/mocks',
+    tests: '#/mocks',
+    testlar: '#/mocks',
+    vocab: '#/vocab',
+    vocabulary: '#/vocab',
+    lugat: '#/vocab',
+    "lug'at": '#/vocab',
+    vault: '#/mistakes',
+    mistakes: '#/mistakes',
+    xatolar: '#/mistakes',
+    community: '#/community',
+    chat: '#/community',
+    hamjamiyat: '#/community',
+    admin: '#/admin',
+    profile: '#/profile',
+    settings: '#/profile',
+    profil: '#/profile',
+    arena: '#/arena',
+    'ai-tutor': '#/ai-tutor',
+    roadmap: '#/roadmap',
+    'daily-workout': '#/daily-workout',
+    blog: '#/blog',
+    landing: '#/landing',
+  };
+
   const setActiveTab = (tabOrHash: string) => {
     const resolved = resolveRoute(tabOrHash);
     setCurrentView(resolved);
     if (typeof window !== 'undefined') {
-      const cleanTab = tabOrHash.replace(/^[#/]+/, '');
-      const targetHash = `#/${cleanTab || resolved}`;
+      const cleanTab = tabOrHash.toLowerCase().replace(/^[#/]+/, '');
+      const targetHash = CANONICAL_HASH_MAP[cleanTab] || CANONICAL_HASH_MAP[resolved] || `#/${cleanTab || resolved}`;
       if (window.location.hash !== targetHash) {
         window.location.hash = targetHash;
       }
@@ -2103,9 +2139,9 @@ export default function App() {
 
   const renderView = (view: ActiveView) => {
     return (
-      <ViewErrorBoundary moduleName={view} onReset={() => setActiveTab('dashboard')}>
+      <SafeViewWrapper key={view} viewName={view} onReset={() => setActiveTab('dashboard')}>
         {renderViewContent(view)}
-      </ViewErrorBoundary>
+      </SafeViewWrapper>
     );
   };
 
@@ -2204,7 +2240,7 @@ export default function App() {
       </div>
 
       {/* Mobile Bottom Navigation Bar (Visible only on < 768px in student/dashboard views) */}
-      {isAuthenticated && activeTab !== 'landing' && activeTab !== 'blog' && activeTab !== 'community' && activeTab !== 'chat' && !activeBluebookTest && (
+      {isAuthenticated && activeTab !== 'landing' && activeTab !== 'blog' && !activeBluebookTest && (
         <MobileBottomNav
           activeTab={activeTab}
           setActiveTab={setActiveTab}

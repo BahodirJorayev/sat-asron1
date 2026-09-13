@@ -202,12 +202,12 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     >
       {/* 1. Header (Brand & Collapse/Expand Toggle) */}
       {isCollapsed ? (
-        <div className="relative h-16 py-4 flex items-center justify-center border-b border-[#E2E8F0] dark:border-[#1E293B] group">
+        <div className="relative h-16 flex items-center justify-center border-b border-[#E2E8F0] dark:border-[#1E293B] group">
           <button
             type="button"
             onClick={handleToggleCollapse}
             aria-label={t('expandSidebar', 'Kengaytirish')}
-            className="w-10 h-10 rounded-xl bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#0F172A] dark:text-white flex items-center justify-center font-extrabold text-sm shadow-xs border border-[#E2E8F0] dark:border-[#1E293B] hover:border-[#E07A5F]/60 transition-all cursor-pointer relative overflow-hidden p-1.5"
+            className="w-12 h-12 mx-auto rounded-2xl bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#0F172A] dark:text-white flex items-center justify-center font-extrabold text-sm border border-[#E2E8F0] dark:border-[#1E293B] hover:border-[#E07A5F]/60 transition-all cursor-pointer relative overflow-hidden p-2"
           >
             {settings.logo_url && settings.logo_url !== '/brand/logo.svg' ? (
               <img
@@ -217,7 +217,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
               />
             ) : (
               <span className="transition-all duration-200 group-hover:opacity-0 group-hover:scale-75 w-full h-full flex items-center justify-center">
-                <AsronLogo size={24} variant="mark-only" />
+                <AsronLogo size={26} variant="mark-only" />
               </span>
             )}
             <span className="absolute inset-0 flex items-center justify-center opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100 transition-all text-[#0F172A] dark:text-[#F8FAFC]">
@@ -265,7 +265,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       )}
 
       {/* 2. Official 6 Navigation Items */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto [&::-webkit-scrollbar]:hidden scrollbar-none">
+      <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto [&::-webkit-scrollbar]:hidden scrollbar-none">
         {!isCollapsed && (
           <div className="px-3 pb-2 text-[10px] font-mono font-semibold uppercase tracking-wider text-[#64748B] dark:text-[#64748B]">
             {t('mainSections', 'Asosiy Bo‘limlar')}
@@ -306,53 +306,80 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             (item.id === 'community' && activeTab === 'chat');
 
           return (
-            <div key={item.id} className="relative group">
+            <div key={item.id} className="relative group w-full flex items-center justify-center">
+              {/* Sleek left border attached directly to the container edge, completely separated from icon */}
+              {isCollapsed && isActive && (
+                <span className="absolute left-0 w-1 h-6 top-1/2 -translate-y-1/2 bg-[#E07A5F] rounded-r-full" />
+              )}
+
               <button
                 type="button"
                 onClick={item.onClick}
                 aria-label={item.label}
-                className={`w-full flex items-center ${
-                  isCollapsed ? 'justify-center h-10 w-10 mx-auto' : 'justify-between px-3 py-2.5'
-                } rounded-xl text-xs font-medium transition-all duration-150 cursor-pointer ${
-                  isActive
-                    ? 'bg-[#F1F5F9] dark:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] font-semibold border border-[#E2E8F0] dark:border-[#334155]/60 shadow-2xs'
-                    : 'text-[#475569] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]/60'
-                }`}
+                className={
+                  isCollapsed
+                    ? `relative w-12 h-12 mx-auto flex items-center justify-center rounded-2xl transition-all duration-200 cursor-pointer ${
+                        isActive
+                          ? 'bg-orange-500/10 text-orange-600 dark:text-orange-400 font-semibold shadow-xs'
+                          : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                      }`
+                    : `w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all duration-150 cursor-pointer ${
+                        isActive
+                          ? 'bg-[#F1F5F9] dark:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] font-semibold border border-[#E2E8F0] dark:border-[#334155]/60 shadow-2xs'
+                          : 'text-[#475569] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]/60'
+                      }`
+                }
               >
-                {/* Active Accent Bar */}
-                {isActive && (
+                {/* When expanded: Left accent bar inside expanded button */}
+                {!isCollapsed && isActive && (
                   <span className="absolute left-0 top-2.5 bottom-2.5 w-1 rounded-r-md bg-[#E07A5F]" />
                 )}
 
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <Icon
-                    size={17}
-                    strokeWidth={isActive ? 2.2 : 1.7}
-                    className={`shrink-0 transition-colors ${
-                      isActive ? 'text-[#E07A5F]' : 'text-[#64748B] dark:text-[#94A3B8] group-hover:text-[#0F172A] dark:group-hover:text-[#F8FAFC]'
-                    }`}
-                  />
-                  {!isCollapsed && <span className="truncate tracking-tight">{item.label}</span>}
-                </div>
+                {isCollapsed ? (
+                  <>
+                    <Icon
+                      size={19}
+                      strokeWidth={isActive ? 2.2 : 1.7}
+                      className={`shrink-0 transition-colors ${
+                        isActive
+                          ? 'text-[#E07A5F]'
+                          : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white'
+                      }`}
+                    />
+                    {item.id === 'community' && totalUnread > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center shadow-xs">
+                        {totalUnread > 9 ? '9+' : totalUnread}
+                      </span>
+                    )}
+                    {item.isLocked && (
+                      <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white dark:ring-[#121A2F]" />
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <Icon
+                        size={17}
+                        strokeWidth={isActive ? 2.2 : 1.7}
+                        className={`shrink-0 transition-colors ${
+                          isActive
+                            ? 'text-[#E07A5F]'
+                            : 'text-[#64748B] dark:text-[#94A3B8] group-hover:text-[#0F172A] dark:group-hover:text-[#F8FAFC]'
+                        }`}
+                      />
+                      <span className="truncate tracking-tight">{item.label}</span>
+                    </div>
 
-                {item.id === 'community' && totalUnread > 0 && (
-                  isCollapsed ? (
-                    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center shadow-xs">
-                      {totalUnread > 9 ? '9+' : totalUnread}
-                    </span>
-                  ) : (
-                    <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-4 px-1.5 rounded-full bg-blue-600 text-white text-[10px] font-bold shadow-xs shrink-0">
-                      {totalUnread > 9 ? '9+' : totalUnread}
-                    </span>
-                  )
-                )}
+                    {item.id === 'community' && totalUnread > 0 && (
+                      <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-4 px-1.5 rounded-full bg-blue-600 text-white text-[10px] font-bold shadow-xs shrink-0">
+                        {totalUnread > 9 ? '9+' : totalUnread}
+                      </span>
+                    )}
 
-                {item.isLocked && (
-                  isCollapsed ? (
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500" />
-                  ) : (
-                    <Lock size={12} className="text-amber-500 shrink-0 ml-1.5" />
-                  )
+                    {item.isLocked && (
+                      <Lock size={12} className="text-amber-500 shrink-0 ml-1.5" />
+                    )}
+                  </>
                 )}
               </button>
 

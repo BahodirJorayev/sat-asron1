@@ -22,6 +22,7 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import { VocabularyBook, VocabularyWord } from '../../../types';
+import { supabase } from '../../../lib/supabase';
 import {
   fetchVocabBooks,
   saveVocabBookRemote,
@@ -75,25 +76,75 @@ export default function AdminVocabularyPage() {
   const [bulkPreview, setBulkPreview] = useState<any[]>([]);
   const [bulkError, setBulkError] = useState<string | null>(null);
 
-  // Load data on mount
+  // Load data on mount with defensive fallbacks
   useEffect(() => {
-    loadData();
+    fetchVocabWordsData();
   }, []);
 
-  const loadData = async () => {
+  const fetchVocabWordsData = async () => {
     setIsLoading(true);
     try {
-      const [loadedBooks, loadedWords] = await Promise.all([
-        fetchVocabBooks(),
-        fetchVocabWords(),
-      ]);
-      setBooks(loadedBooks);
-      setWords(loadedWords);
-      if (loadedBooks.length > 0 && !bulkBookId) {
-        setBulkBookId(loadedBooks[0].id);
+      let remoteWords: any[] = [];
+      try {
+        const { data, error } = await supabase
+          .from('vocabulary_words')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.warn('Vocab fetch fallback:', error);
+          const fallback = await fetchVocabWords().catch(() => []);
+          remoteWords = Array.isArray(fallback) ? fallback : [];
+        } else if (data && data.length > 0) {
+          remoteWords = data.map((d: any) => ({
+            id: d.id,
+            bookId: d.book_id || 'a1111111-b001-4000-8000-000000000001',
+            bookSource: d.book_source || 'Erica Meltzer SAT Vocabulary',
+            word: (d.word || '').trim(),
+            partOfSpeech: d.part_of_speech || 'adj.',
+            phonetic: d.phonetic || '',
+            definition: d.definition || '',
+            definitionUz: d.definition_uz || '',
+            sampleSentence: d.sample_sentence || '',
+            synonyms: Array.isArray(d.synonyms)
+              ? d.synonyms
+              : typeof d.synonyms === 'string'
+              ? d.synonyms.split(',').map((s: string) => s.trim()).filter(Boolean)
+              : [],
+            antonyms: Array.isArray(d.antonyms)
+              ? d.antonyms
+              : typeof d.antonyms === 'string'
+              ? d.antonyms.split(',').map((s: string) => s.trim()).filter(Boolean)
+              : [],
+            difficulty: (d.difficulty?.toUpperCase() as any) || 'MEDIUM',
+            tone: d.tone || 'Neutral',
+            etymology: d.etymology || '',
+            createdAt: d.created_at || new Date().toISOString(),
+            updatedAt: d.updated_at || new Date().toISOString(),
+          }));
+        } else {
+          const fallback = await fetchVocabWords().catch(() => []);
+          remoteWords = Array.isArray(fallback) ? fallback : [];
+        }
+      } catch (err) {
+        console.error('Unexpected vocab fetch error:', err);
+        const fallback = await fetchVocabWords().catch(() => []);
+        remoteWords = Array.isArray(fallback) ? fallback : [];
+      }
+
+      setWords(remoteWords);
+
+      // Also load books
+      const loadedBooks = await fetchVocabBooks().catch(() => []);
+      const safeBooks = Array.isArray(loadedBooks) ? loadedBooks : [];
+      setBooks(safeBooks);
+      if (safeBooks.length > 0 && !bulkBookId) {
+        setBulkBookId(safeBooks[0].id);
       }
     } catch (err) {
       console.warn('Error loading admin vocab data:', err);
+      setWords([]);
+      setBooks([]);
     } finally {
       setIsLoading(false);
     }
@@ -178,7 +229,7 @@ export default function AdminVocabularyPage() {
 
     await saveVocabBookRemote(bookToSave);
     setIsBookModalOpen(false);
-    loadData();
+    fetchVocabWordsData();
   };
 
   const handleDeleteBook = async (bookId: string) => {
@@ -194,7 +245,7 @@ export default function AdminVocabularyPage() {
     }
 
     await deleteVocabBookRemote(bookId);
-    loadData();
+    fetchVocabWordsData();
   };
 
   // ==============================================================
@@ -264,13 +315,13 @@ export default function AdminVocabularyPage() {
 
     await saveVocabWordRemote(wordToSave);
     setIsWordModalOpen(false);
-    loadData();
+    fetchVocabWordsData();
   };
 
   const handleDeleteWord = async (wordId: string) => {
     if (!confirm("Ushbu so'zni o'chirishni tasdiqlaysizmi?")) return;
     await deleteVocabWordRemote(wordId);
-    loadData();
+    fetchVocabWordsData();
   };
 
   // ==============================================================
@@ -372,7 +423,7 @@ export default function AdminVocabularyPage() {
       setIsBulkModalOpen(false);
       setBulkRawText('');
       alert(`${formattedWords.length} ta so'z muvaffaqiyatli import qilindi!`);
-      loadData();
+      fetchVocabWordsData();
     } catch (err: any) {
       alert(`Import xatoligi: ${err.message}`);
     }
@@ -518,13 +569,13 @@ export default function AdminVocabularyPage() {
                           </td>
                         </tr>
                       ))
-                    ) : filteredWords.length === 0 ? (
+                    ) : (filteredWords || []).length === 0 ? (
                       <tr>
                         <td colSpan={6} className="py-12 text-center">
                           <div className="flex flex-col items-center justify-center gap-2 text-[#94A3B8]">
                             <BookOpen className="w-8 h-8 opacity-40 text-[#E07A5F]" />
                             <p className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC]">
-                              Hech qanday so'z topilmadi
+                              Hozircha so'zlar kiritilmagan
                             </p>
                             <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">
                               Qidiruv so'zini o'zgartiring yoki yangi so'z qo'shing.
@@ -540,7 +591,7 @@ export default function AdminVocabularyPage() {
                         </td>
                       </tr>
                     ) : (
-                      filteredWords.map((word) => (
+                      (filteredWords || []).map((word) => (
                         <tr
                           key={word.id}
                           className="hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]/40 transition-colors"
@@ -658,7 +709,7 @@ export default function AdminVocabularyPage() {
                   </button>
                 </div>
               ) : (
-                books.map((book) => {
+                (books || []).map((book) => {
                   const bookTitle = (book.title || '').toLowerCase();
                   const bookWordsCount = Array.isArray(words)
                     ? words.filter(

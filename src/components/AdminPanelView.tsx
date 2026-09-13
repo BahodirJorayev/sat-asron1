@@ -180,7 +180,7 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
       count: usersList.length,
     },
     {
-      id: 'vocab',
+      id: 'vocabulary',
       label: 'Lug\'at CMS',
       icon: <Sparkles className="w-4 h-4" />,
     },
@@ -191,7 +191,10 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
     },
   ];
 
-  const currentTabInfo = adminNavItems.find((t) => t.id === activeAdminTab) || adminNavItems[0];
+  const currentTabInfo =
+    adminNavItems.find(
+      (t) => t.id === activeAdminTab || (t.id === 'vocabulary' && activeAdminTab === 'vocab')
+    ) || adminNavItems[0];
 
   return (
     <div
@@ -221,7 +224,8 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
             Asosiy Bo'limlar
           </div>
           {adminNavItems.map((tab) => {
-            const isActive = activeAdminTab === tab.id;
+            const isActive =
+              activeAdminTab === tab.id || (tab.id === 'vocabulary' && activeAdminTab === 'vocab');
             return (
               <button
                 key={tab.id}
@@ -410,7 +414,7 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
           )}
 
           {/* 5. SAT Lug'at CMS */}
-          {activeAdminTab === 'vocabulary' && (
+          {(activeAdminTab === 'vocabulary' || activeAdminTab === 'vocab') && (
             <AdminErrorBoundary fallbackTitle="Lug'at CMS yuklanishida xatolik">
               <div className="bg-white dark:bg-[#0E1526] rounded-xl p-4 border border-[#E2E8F0] dark:border-[#1E293B]">
                 <AdminVocabularyPage />

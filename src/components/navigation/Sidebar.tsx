@@ -133,21 +133,48 @@ export const Sidebar: React.FC<SidebarProps> = ({
       } ${className}`}
     >
       {/* 1. Brand Header & Collapse Toggle */}
-      <div className="h-16 px-4 border-b border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-between gap-2 shrink-0">
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-3 min-w-0 group cursor-pointer"
-        >
-          {settings.logo_url && settings.logo_url !== '/brand/logo.svg' ? (
-            <img
-              src={settings.logo_url}
-              alt="Logo"
-              className="w-9 h-9 rounded-xl object-contain border border-[#E2E8F0] dark:border-[#1E293B] shrink-0 shadow-2xs"
-            />
-          ) : (
-            <AsronLogo size={36} variant="mark-only" />
-          )}
-          {!isCollapsed && (
+      {isCollapsed ? (
+        <div className="relative h-16 flex items-center justify-center border-b border-[#E2E8F0] dark:border-[#1E293B] group">
+          <button
+            type="button"
+            onClick={handleToggle}
+            aria-label="Panelni kengaytirish"
+            className="w-12 h-12 mx-auto rounded-2xl bg-[#F8FAFC] dark:bg-[#0A0F1D] text-[#0F172A] dark:text-white flex items-center justify-center font-extrabold text-sm border border-[#E2E8F0] dark:border-[#1E293B] hover:border-[#E07A5F]/60 transition-all cursor-pointer relative overflow-hidden p-2"
+          >
+            {settings.logo_url && settings.logo_url !== '/brand/logo.svg' ? (
+              <img
+                src={settings.logo_url}
+                alt="Logo"
+                className="w-full h-full object-contain rounded-lg transition-all duration-200 group-hover:opacity-0 group-hover:scale-75"
+              />
+            ) : (
+              <span className="transition-all duration-200 group-hover:opacity-0 group-hover:scale-75 w-full h-full flex items-center justify-center">
+                <AsronLogo size={26} variant="mark-only" />
+              </span>
+            )}
+            <span className="absolute inset-0 flex items-center justify-center opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100 transition-all text-[#0F172A] dark:text-[#F8FAFC]">
+              <PanelLeftOpen size={18} />
+            </span>
+          </button>
+          <div className="absolute left-full ml-3 px-2.5 py-1.5 bg-[#0F172A] dark:bg-[#1E293B] text-white text-xs font-medium rounded-lg shadow-xl whitespace-nowrap z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-all -translate-x-1 group-hover:translate-x-0 border border-[#E2E8F0] dark:border-[#334155] flex items-center gap-1.5">
+            <span>{t('expandSidebar', 'Kengaytirish')}</span>
+          </div>
+        </div>
+      ) : (
+        <div className="h-16 px-4 border-b border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-between gap-2 shrink-0">
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-3 min-w-0 group cursor-pointer"
+          >
+            {settings.logo_url && settings.logo_url !== '/brand/logo.svg' ? (
+              <img
+                src={settings.logo_url}
+                alt="Logo"
+                className="w-9 h-9 rounded-xl object-contain border border-[#E2E8F0] dark:border-[#1E293B] shrink-0 shadow-2xs"
+              />
+            ) : (
+              <AsronLogo size={36} variant="mark-only" />
+            )}
             <div className="min-w-0 leading-tight">
               <div className="text-sm font-bold tracking-tight text-[#0F172A] dark:text-[#F8FAFC] truncate">
                 {settings.platform_title || 'ASRON SAT'}
@@ -156,21 +183,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 {settings.tagline || 'Digital SAT Platform'}
               </div>
             </div>
-          )}
-        </Link>
+          </Link>
 
-        <button
-          type="button"
-          onClick={handleToggle}
-          aria-label={isCollapsed ? "Panelni kengaytirish" : "Panelni yig'ish"}
-          className="p-1.5 rounded-lg text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] transition-colors cursor-pointer shrink-0"
-        >
-          {isCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={handleToggle}
+            aria-label="Panelni yig'ish"
+            className="p-1.5 rounded-lg text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] transition-colors cursor-pointer shrink-0"
+          >
+            <PanelLeftClose size={16} />
+          </button>
+        </div>
+      )}
 
       {/* 2. Strict 6 Navigation Items (No Profile, No Settings) */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto [&::-webkit-scrollbar]:hidden scrollbar-none">
+      <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto [&::-webkit-scrollbar]:hidden scrollbar-none">
         {!isCollapsed && (
           <div className="px-3 pb-2 text-[10px] font-mono font-semibold uppercase tracking-wider text-[#64748B] dark:text-[#64748B]">
             {t('mainSections', 'Asosiy Bo‘limlar')}
@@ -202,7 +229,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           const isActive = isCurrentActive();
 
           return (
-            <div key={item.id} className="relative group">
+            <div key={item.id} className="relative group w-full flex items-center justify-center">
+              {/* Sleek left border attached directly to the container edge, completely separated from icon */}
+              {isCollapsed && isActive && (
+                <span className="absolute left-0 w-1 h-6 top-1/2 -translate-y-1/2 bg-[#E07A5F] rounded-r-full" />
+              )}
+
               <Link
                 href={isLocked ? '#' : item.href}
                 onClick={(e) => {
@@ -216,21 +248,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   }
                 }}
                 title={isCollapsed ? (isLocked ? `${localizedLabel} (${t('locked', 'Qulflangan')})` : localizedLabel) : undefined}
-                className={`relative flex items-center gap-3 ${
-                  isCollapsed ? 'justify-center h-10 w-10 mx-auto' : 'px-3 py-2.5'
-                } rounded-xl text-xs font-medium transition-all duration-150 cursor-pointer ${
-                  isActive
-                    ? 'bg-[#F1F5F9] dark:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] font-semibold border border-[#E2E8F0] dark:border-[#334155]/60 shadow-2xs'
-                    : 'text-[#475569] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]/60'
-                }`}
+                className={
+                  isCollapsed
+                    ? `relative w-12 h-12 mx-auto flex items-center justify-center rounded-2xl transition-all duration-200 cursor-pointer ${
+                        isActive
+                          ? 'bg-orange-500/10 text-orange-600 dark:text-orange-400 font-semibold shadow-xs'
+                          : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                      }`
+                    : `relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all duration-150 cursor-pointer ${
+                        isActive
+                          ? 'bg-[#F1F5F9] dark:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] font-semibold border border-[#E2E8F0] dark:border-[#334155]/60 shadow-2xs'
+                          : 'text-[#475569] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]/60'
+                      }`
+                }
               >
-                {/* Minimal Active Bar */}
-                {isActive && (
+                {/* When expanded: Left accent bar inside expanded button */}
+                {!isCollapsed && isActive && (
                   <span className="absolute left-0 top-2.5 bottom-2.5 w-1 rounded-r-md bg-[#E07A5F]" />
                 )}
 
                 <Icon
-                  size={17}
+                  size={isCollapsed ? 19 : 17}
                   strokeWidth={isActive ? 2.2 : 1.7}
                   className={`shrink-0 transition-colors ${
                     isActive ? 'text-[#E07A5F]' : 'text-[#64748B] dark:text-[#94A3B8] group-hover:text-[#0F172A] dark:group-hover:text-[#F8FAFC]'
@@ -266,11 +304,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="pt-2 border-t border-[#E2E8F0] dark:border-[#1E293B]">
             <Link
               href="/dashboard/admin"
-              className={`flex items-center gap-3 ${
-                isCollapsed ? 'justify-center h-10 w-10 mx-auto' : 'px-3 py-2.5'
-              } rounded-xl text-xs font-medium transition-all text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40`}
+              className={
+                isCollapsed
+                  ? `relative w-12 h-12 mx-auto flex items-center justify-center rounded-2xl transition-all text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40`
+                  : `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40`
+              }
             >
-              <ShieldAlert size={17} />
+              <ShieldAlert size={isCollapsed ? 19 : 17} />
               {!isCollapsed && <span>{t('adminPanel', 'Admin Panel')}</span>}
             </Link>
           </div>
@@ -278,29 +318,45 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       {/* 3. Footer Strip (NO Redundant Theme Toggle, Clean Status Bar) */}
-      <div className="p-3 border-t border-[#E2E8F0] dark:border-[#1E293B] bg-[#F8FAFC]/70 dark:bg-[#0A0F1D]/60 shrink-0">
-        <div
-          className={`p-2 rounded-xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-[#1E293B] flex items-center ${
-            isCollapsed ? 'justify-center' : 'justify-between'
-          } gap-2 shadow-2xs`}
-        >
+      <div className="p-3 border-t border-[#E2E8F0] dark:border-[#1E293B] bg-[#F8FAFC]/70 dark:bg-[#0A0F1D]/60 shrink-0 flex items-center justify-center">
+        {isCollapsed ? (
           <Link
             href="/profile"
-            className="flex items-center gap-2 min-w-0 group cursor-pointer"
+            className="w-12 h-12 mx-auto rounded-2xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-[#1E293B] p-0.5 hover:border-[#E07A5F] transition-all cursor-pointer relative shadow-2xs flex items-center justify-center overflow-hidden"
             title="Profilga o'tish"
           >
             {hasAvatar ? (
               <img
                 src={safeAvatarUrl}
                 alt={safeFullName}
-                className="w-7 h-7 rounded-lg object-cover border border-slate-200 dark:border-slate-800 shrink-0"
+                className="w-full h-full rounded-xl object-cover"
               />
             ) : (
-              <div className="w-7 h-7 rounded-lg bg-[#E07A5F] text-white flex items-center justify-center font-mono text-xs font-bold shrink-0 shadow-2xs">
+              <div className="w-full h-full rounded-xl bg-[#E07A5F] text-white flex items-center justify-center font-mono text-sm font-bold shadow-2xs">
                 {monogram}
               </div>
             )}
-            {!isCollapsed && (
+            {/* Compact Green Online Status Dot */}
+            <span className="absolute bottom-1 right-1 w-2.5 h-2.5 bg-emerald-500 border-2 border-white dark:border-[#121A2F] rounded-full shadow-xs" />
+          </Link>
+        ) : (
+          <div className="w-full p-2 rounded-xl bg-white dark:bg-[#121A2F] border border-slate-200 dark:border-[#1E293B] flex items-center justify-between gap-2 shadow-2xs">
+            <Link
+              href="/profile"
+              className="flex items-center gap-2 min-w-0 group cursor-pointer"
+              title="Profilga o'tish"
+            >
+              {hasAvatar ? (
+                <img
+                  src={safeAvatarUrl}
+                  alt={safeFullName}
+                  className="w-7 h-7 rounded-lg object-cover border border-slate-200 dark:border-slate-800 shrink-0"
+                />
+              ) : (
+                <div className="w-7 h-7 rounded-lg bg-[#E07A5F] text-white flex items-center justify-center font-mono text-xs font-bold shrink-0 shadow-2xs">
+                  {monogram}
+                </div>
+              )}
               <div className="min-w-0 leading-tight">
                 <div className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] truncate group-hover:text-[#E07A5F] transition-colors">
                   {safeFullName}
@@ -309,10 +365,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   @{safeUsername}
                 </div>
               </div>
-            )}
-          </Link>
+            </Link>
 
-          {!isCollapsed && (
             <button
               type="button"
               onClick={() => {
@@ -326,8 +380,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             >
               <LogOut size={13} />
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </aside>
   );

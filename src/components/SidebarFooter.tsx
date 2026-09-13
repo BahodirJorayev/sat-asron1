@@ -131,20 +131,20 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
     return (
       <div className="sticky bottom-0 z-20 w-full bg-white/95 dark:bg-[#121A2F]/95 backdrop-blur-md p-2.5 border-t border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-center shrink-0">
         <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
-          <div className="relative group">
+          <div className="relative group w-full flex items-center justify-center">
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
                 aria-label="Foydalanuvchi menyusi"
-                className="w-10 h-10 rounded-2xl bg-[#F1F5F9] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] p-0.5 hover:border-[#E07A5F] transition-all cursor-pointer relative shadow-2xs flex items-center justify-center overflow-hidden focus:outline-hidden"
+                className="w-12 h-12 mx-auto rounded-2xl bg-[#F1F5F9] dark:bg-[#0A0F1D] border border-[#E2E8F0] dark:border-[#1E293B] p-0.5 hover:border-[#E07A5F] transition-all cursor-pointer relative shadow-2xs flex items-center justify-center overflow-hidden focus:outline-hidden"
               >
                 <img
                   src={avatarSrc}
                   alt={effectiveFullName}
                   className="w-full h-full rounded-xl object-cover"
                 />
-                {/* Green Online Status Dot */}
-                <span className="absolute bottom-0.5 right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-white dark:border-[#181B26] rounded-full shadow-xs" />
+                {/* Compact Green Online Status Dot */}
+                <span className="absolute bottom-1 right-1 w-2.5 h-2.5 bg-emerald-500 border-2 border-white dark:border-[#181B26] rounded-full shadow-xs" />
               </button>
             </DropdownMenuTrigger>
 

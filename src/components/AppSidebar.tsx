@@ -10,6 +10,7 @@ import {
   PanelLeftOpen,
   ShieldAlert,
   Lock,
+  Compass,
 } from 'lucide-react';
 import { User } from '../types';
 import { SiteBrandingConfig } from '../data/blogAndBrandingData';
@@ -17,6 +18,7 @@ import { SidebarFooter } from './SidebarFooter';
 import { usePlatformSettings } from '../hooks/usePlatformSettings';
 import { useLanguage } from '../context/LanguageContext';
 import { useUnreadMessages } from '../hooks/useUnreadMessages';
+import { useExamProgram } from '../context/ExamProgramContext';
 import { AsronLogo } from './AsronLogo';
 
 export interface AppSidebarProps {
@@ -82,7 +84,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   const { settings, isModuleHidden, isModuleLocked, showLockedNotice } = usePlatformSettings();
   const { t } = useLanguage();
   const { totalUnread } = useUnreadMessages();
-  const brandName = settings.platform_title || siteBranding?.brandName || 'ASRON SAT';
+  const { examType, setExamType, toggleExamType, isSat, isIelts } = useExamProgram();
+  const brandName = settings.platform_title || siteBranding?.brandName || (isIelts ? 'ASRON IELTS' : 'ASRON SAT');
 
   const moduleMap: Record<string, 'questions' | 'mocks' | 'vocabulary' | 'mistakes' | 'community'> = {
     qbank: 'questions',
@@ -92,11 +95,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     community: 'community',
   };
 
-  // EXACT 6 NAVIGATION ITEMS with Module Governance
+  // Dynamic navigation items supporting both SAT and IELTS programs + Resources
   const allNavItems = [
     {
       id: 'dashboard',
-      label: t('nav.home', 'Uy'),
+      label: isIelts ? 'IELTS Uy' : t('nav.home', 'Uy'),
       icon: LayoutDashboard,
       onClick: () => {
         setActiveTab('dashboard');
@@ -104,26 +107,12 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       },
     },
     {
-      id: 'qbank',
-      label: t('nav.questions', 'Savollar'),
-      icon: Database,
-      onClick: () => {
-        if (isModuleLocked('questions')) {
-          showLockedNotice(t('nav.questions', 'Savollar'));
-          return;
-        }
-        setActiveTab('qbank');
-        if (typeof window !== 'undefined') window.location.hash = '#/qbank';
-      },
-      isLocked: isModuleLocked('questions'),
-    },
-    {
       id: 'bluebook',
-      label: t('nav.mocks', 'Testlar'),
+      label: isIelts ? 'Mock Imtihonlar' : t('nav.mocks', 'Testlar'),
       icon: FileText,
       onClick: () => {
         if (isModuleLocked('mocks')) {
-          showLockedNotice(t('nav.mocks', 'Testlar'));
+          showLockedNotice(isIelts ? 'IELTS Testlar' : t('nav.mocks', 'Testlar'));
           return;
         }
         setActiveTab('bluebook');
@@ -132,8 +121,22 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       isLocked: isModuleLocked('mocks'),
     },
     {
+      id: 'qbank',
+      label: isIelts ? "Bo'limlar (Practice)" : t('nav.questions', 'Savollar'),
+      icon: Database,
+      onClick: () => {
+        if (isModuleLocked('questions')) {
+          showLockedNotice(isIelts ? "Bo'limlar" : t('nav.questions', 'Savollar'));
+          return;
+        }
+        setActiveTab('qbank');
+        if (typeof window !== 'undefined') window.location.hash = '#/qbank';
+      },
+      isLocked: isModuleLocked('questions'),
+    },
+    {
       id: 'vocab',
-      label: t('nav.vocabulary', "Lug'at"),
+      label: isIelts ? "IELTS Lug'at" : t('nav.vocabulary', "Lug'at"),
       icon: BookOpen,
       onClick: () => {
         if (isModuleLocked('vocabulary')) {
@@ -172,6 +175,16 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         if (typeof window !== 'undefined') window.location.hash = '#/community';
       },
       isLocked: isModuleLocked('community'),
+    },
+    {
+      id: 'resources',
+      label: isIelts ? 'Resurslar & Roadmaps' : 'Resurslar',
+      icon: Compass,
+      onClick: () => {
+        setActiveTab('resources');
+        if (typeof window !== 'undefined') window.location.hash = '#/resources';
+      },
+      isLocked: false,
     },
     ...(user.role === 'ADMIN' || user.role === 'SUPER_ADMIN'
       ? [
@@ -264,8 +277,55 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         </div>
       )}
 
-      {/* 2. Official 6 Navigation Items */}
+      {/* 2. Official Navigation Items */}
       <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto [&::-webkit-scrollbar]:hidden scrollbar-none">
+        {/* OnePrep-style Program Switcher */}
+        {!isCollapsed ? (
+          <div className="mb-3 px-1">
+            <div className="flex items-center p-1 rounded-2xl bg-slate-100 dark:bg-[#0A0F1D] border border-slate-200 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setExamType('SAT')}
+                className={`flex-1 py-1.5 rounded-xl text-xs font-extrabold transition-all text-center flex items-center justify-center gap-1.5 ${
+                  isSat
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${isSat ? 'bg-white' : 'bg-slate-400'}`} />
+                SAT
+              </button>
+              <button
+                type="button"
+                onClick={() => setExamType('IELTS')}
+                className={`flex-1 py-1.5 rounded-xl text-xs font-extrabold transition-all text-center flex items-center justify-center gap-1.5 ${
+                  isIelts
+                    ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/20'
+                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${isIelts ? 'bg-white' : 'bg-slate-400'}`} />
+                IELTS
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="mb-3 flex justify-center">
+            <button
+              type="button"
+              onClick={toggleExamType}
+              title={`Dastur: ${examType} (Almashtirish uchun bosing)`}
+              className={`w-11 h-11 rounded-2xl flex items-center justify-center font-black text-xs transition-all shadow-md active:scale-95 ${
+                isSat
+                  ? 'bg-blue-600 text-white shadow-blue-500/20'
+                  : 'bg-gradient-to-tr from-orange-500 to-amber-500 text-white shadow-orange-500/20'
+              }`}
+            >
+              {examType}
+            </button>
+          </div>
+        )}
+
         {!isCollapsed && (
           <div className="px-3 pb-2 text-[10px] font-mono font-semibold uppercase tracking-wider text-[#64748B] dark:text-[#64748B]">
             {t('mainSections', 'Asosiy Bo‘limlar')}
@@ -298,12 +358,14 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 'ai-tutor',
                 'roadmap',
                 'admin',
+                'resources',
               ].includes(activeTab)) ||
             (item.id === 'qbank' && (activeTab === 'questions' || activeTab === 'practice')) ||
             (item.id === 'bluebook' && activeTab === 'mocks') ||
             (item.id === 'vocab' && activeTab === 'vocabulary') ||
             (item.id === 'vault' && activeTab === 'mistakes') ||
-            (item.id === 'community' && activeTab === 'chat');
+            (item.id === 'community' && activeTab === 'chat') ||
+            (item.id === 'resources' && activeTab === 'resources');
 
           return (
             <div key={item.id} className="relative group w-full flex items-center justify-center">

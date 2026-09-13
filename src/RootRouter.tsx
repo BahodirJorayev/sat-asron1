@@ -14,7 +14,8 @@ export type ActiveView =
   | 'ai-tutor'
   | 'roadmap'
   | 'daily-workout'
-  | 'blog';
+  | 'blog'
+  | 'resources';
 
 export const resolveRoute = (hashOrPath: string): ActiveView => {
   if (!hashOrPath) return 'dashboard';
@@ -64,6 +65,7 @@ export const resolveRoute = (hashOrPath: string): ActiveView => {
   if (clean === 'roadmap') return 'roadmap';
   if (clean === 'daily-workout' || clean === 'workout') return 'daily-workout';
   if (clean === 'blog') return 'blog';
+  if (clean === 'resources' || clean === 'resurslar' || clean === 'guides' || clean === 'articles') return 'resources';
 
   // SAFE DEFENSIVE FALLBACK (NEVER RETURN NULL OR BLANK)
   return 'dashboard';

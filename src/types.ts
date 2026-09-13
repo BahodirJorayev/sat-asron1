@@ -760,3 +760,79 @@ export interface PlatformAnnouncement {
   created_at?: string;
   updated_at?: string;
 }
+
+// ============================================================================
+// DUAL-PROGRAM ECOSYSTEM & IELTS TYPES
+// ============================================================================
+export type ExamProgram = 'SAT' | 'IELTS';
+
+export type IeltsSkill = 'LISTENING' | 'READING' | 'WRITING' | 'SPEAKING';
+export type IeltsExamType = 'ACADEMIC' | 'GENERAL_TRAINING';
+
+export interface IeltsMockTest {
+  id: string;
+  title: string;
+  examType: IeltsExamType;
+  category: 'FULL_MOCK' | 'SECTIONAL_PRACTICE' | 'CLASSROOM_TEST';
+  isPrivate: boolean;
+  accessCode?: string;
+  passcode?: string;
+  isClassroomOnly?: boolean;
+  classroomNotice?: string;
+  totalTimeMinutes: number;
+  listeningAudioUrl?: string;
+  readingPassagesCount?: number;
+  writingTasksCount?: number;
+  speakingPartsCount?: number;
+  targetBand: number; // e.g. 7.5
+  attemptsCount: number;
+  averageBand: number;
+  description: string;
+  teacherNote?: string;
+  dueDate?: string;
+  tags: string[];
+  createdAt: string;
+}
+
+export interface IeltsTestSubmission {
+  id: string;
+  testId: string;
+  testTitle: string;
+  userId: string;
+  studentName: string;
+  username: string;
+  listeningBand: number;
+  readingBand: number;
+  writingBand?: number;
+  speakingBand?: number;
+  overallBand: number;
+  timeSpentMinutes: number;
+  submittedAt: string;
+  status: 'EVALUATED' | 'PENDING_WRITING_REVIEW';
+}
+
+// ============================================================================
+// RESOURCES & ROADMAP HUB TYPES
+// ============================================================================
+export type ResourceCategory = 'ARTICLES' | 'PODCASTS' | 'VIDEOS' | 'ROADMAP';
+export type ExamTag = 'SAT' | 'IELTS' | 'ALL';
+
+export interface PlatformResource {
+  id: string;
+  title: string;
+  category: ResourceCategory;
+  examTag: ExamTag;
+  description: string;
+  contentMarkdown?: string;
+  mediaUrl?: string;
+  pdfDownloadUrl?: string;
+  pdfSizeBytes?: string;
+  durationMinutes?: number;
+  author?: string;
+  orderIndex: number;
+  isPublished: boolean;
+  tags?: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+

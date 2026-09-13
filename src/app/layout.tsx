@@ -6,6 +6,7 @@ import { LanguageProvider } from '../context/LanguageContext';
 import { PlatformSettingsProvider } from '../contexts/PlatformSettingsContext';
 import { UserProfileProvider } from '../context/UserProfileContext';
 import { ThemeProvider } from '../context/ThemeContext';
+import { ExamProgramProvider } from '../context/ExamProgramContext';
 import { PathnameNormalizer } from '../components/navigation/PathnameNormalizer';
 
 export const metadata: Metadata = {
@@ -117,7 +118,9 @@ export default function RootLayout({
           <PlatformSettingsProvider>
           <LanguageProvider>
             <UserProfileProvider>
-              {children}
+              <ExamProgramProvider>
+                {children}
+              </ExamProgramProvider>
             </UserProfileProvider>
           </LanguageProvider>
         </PlatformSettingsProvider>

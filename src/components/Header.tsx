@@ -33,6 +33,7 @@ import { usePlatformSettings } from '../hooks/usePlatformSettings';
 import { LanguageSwitcher } from './navigation/LanguageSwitcher';
 import { useLanguage } from '../context/LanguageContext';
 import { useUserProfile } from '../hooks/useUserProfile';
+import { useExamProgram } from '../context/ExamProgramContext';
 
 interface Props {
   user: User;
@@ -72,6 +73,7 @@ export const Header: React.FC<Props> = ({
   const isPro = user.planTier === 'PRO';
   const { settings } = usePlatformSettings();
   const { t } = useLanguage();
+  const { examType, setExamType, isSat, isIelts } = useExamProgram();
 
   const brandName = settings.platform_title || siteBranding?.brandName || 'ASRON SAT';
   const brandTagline = settings.tagline || siteBranding?.brandTagline || 'Digital SAT Platform';
@@ -218,6 +220,34 @@ export const Header: React.FC<Props> = ({
 
         {/* Right Section: Controls, Search, Community, Desktop Theme & Profile */}
         <div className="flex items-center gap-2 sm:gap-2.5">
+          {/* Global Program Switcher (SAT vs IELTS) */}
+          <div className="flex items-center p-0.5 rounded-xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80">
+            <button
+              type="button"
+              onClick={() => setExamType('SAT')}
+              className={`px-2.5 py-1 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
+                isSat
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${isSat ? 'bg-white' : 'bg-slate-400'}`} />
+              SAT
+            </button>
+            <button
+              type="button"
+              onClick={() => setExamType('IELTS')}
+              className={`px-2.5 py-1 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
+                isIelts
+                  ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-xs'
+                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${isIelts ? 'bg-white' : 'bg-slate-400'}`} />
+              IELTS
+            </button>
+          </div>
+
           {/* Minimalist Multi-Language Switcher */}
           <LanguageSwitcher />
 

@@ -13,7 +13,8 @@ import {
   Calculator,
   MessageSquare,
   Globe,
-  Megaphone
+  Megaphone,
+  Award
 } from 'lucide-react';
 import { 
   User, 
@@ -38,6 +39,8 @@ import { AdminPlatformCMS } from './AdminPlatformCMS';
 import { AdminNewsCMS } from './AdminNewsCMS';
 import { AdminErrorBoundary } from './AdminErrorBoundary';
 import AdminVocabularyPage from '../app/admin/vocabulary/page';
+import { AdminIeltsManager } from './admin/AdminIeltsManager';
+import { AdminResourcesManager } from './admin/AdminResourcesManager';
 import { usePlatformSettings } from '../hooks/usePlatformSettings';
 
 import { INITIAL_SAT_DESMOS_HACKS } from '../data/desmosHacksData';
@@ -172,6 +175,16 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
       label: 'Mock Testlar (CMS)',
       icon: <FileText className="w-4 h-4" />,
       count: mockTests.length,
+    },
+    {
+      id: 'ielts',
+      label: 'IELTS Boshqaruvi',
+      icon: <Award className="w-4 h-4 text-orange-500" />,
+    },
+    {
+      id: 'resources',
+      label: 'Resurslar CMS',
+      icon: <BookOpen className="w-4 h-4 text-blue-500" />,
     },
     {
       id: 'users',
@@ -398,6 +411,20 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
                 onUpdateMockCategory={onUpdateMockCategory}
                 onDeleteMockCategory={onDeleteMockCategory}
               />
+            </AdminErrorBoundary>
+          )}
+
+          {/* IELTS Boshqaruvi & Maxsus Dars Testlari */}
+          {activeAdminTab === 'ielts' && (
+            <AdminErrorBoundary fallbackTitle="IELTS Boshqaruvida xatolik yuz berdi">
+              <AdminIeltsManager />
+            </AdminErrorBoundary>
+          )}
+
+          {/* Resurslar & Roadmaps CMS */}
+          {activeAdminTab === 'resources' && (
+            <AdminErrorBoundary fallbackTitle="Resurslar CMS yuklanishida xatolik yuz berdi">
+              <AdminResourcesManager />
             </AdminErrorBoundary>
           )}
 

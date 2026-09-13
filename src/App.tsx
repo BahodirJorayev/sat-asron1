@@ -79,6 +79,10 @@ import { useUserProgress, syncUserProgressRemote } from './hooks/useUserProgress
 import { ViewSkeletonLoader } from './components/common/ViewSkeletonLoader';
 import { ViewErrorBoundary } from './components/common/ViewErrorBoundary';
 import { SafeViewWrapper } from './components/common/SafeViewWrapper';
+import { IeltsDashboardView } from './components/ielts/IeltsDashboardView';
+import { IeltsMockTestsCatalogView } from './components/ielts/IeltsMockTestsCatalogView';
+import { ResourcesHubView } from './components/resources/ResourcesHubView';
+import { useExamProgram } from './context/ExamProgramContext';
 import {
   fetchGlobalPlatformSettings,
   saveGlobalPlatformSettings,
@@ -104,6 +108,8 @@ import {
 } from './lib/adminApi';
 
 export default function App() {
+  const { examType, setExamType, isSat, isIelts } = useExamProgram();
+
   // State management with Supabase and localStorage persistence
   const [usersList, setUsersList] = useState<User[]>(() => {
     try {
@@ -1894,6 +1900,27 @@ export default function App() {
             </div>
           );
         }
+        if (isIelts) {
+          return (
+            <IeltsDashboardView
+              user={currentUser}
+              onNavigateTab={(tab) => {
+                if (tab === 'bluebook' || tab === 'mocks') {
+                  setActiveTab('bluebook');
+                  if (typeof window !== 'undefined') window.location.hash = '#/mocks';
+                } else {
+                  setActiveTab(tab);
+                  if (typeof window !== 'undefined') window.location.hash = `#/${tab}`;
+                }
+              }}
+              onOpenClassroomTest={() => {
+                setActiveTab('bluebook');
+                if (typeof window !== 'undefined') window.location.hash = '#/mocks';
+              }}
+              onOpenPaywall={() => setIsPaywallOpen(true)}
+            />
+          );
+        }
         return (
           <DashboardView
             user={currentUser}
@@ -1929,6 +1956,14 @@ export default function App() {
         );
 
       case 'mocks':
+        if (isIelts) {
+          return (
+            <IeltsMockTestsCatalogView
+              user={currentUser}
+              onOpenPaywall={() => setIsPaywallOpen(true)}
+            />
+          );
+        }
         return (
           <MockTestsCatalogView
             user={currentUser}
@@ -2112,7 +2147,44 @@ export default function App() {
           />
         );
 
+      case 'resources':
+        return (
+          <ResourcesHubView
+            user={currentUser}
+            onNavigateTab={(tab) => {
+              if (tab === 'bluebook' || tab === 'mocks') {
+                setActiveTab('bluebook');
+                if (typeof window !== 'undefined') window.location.hash = '#/mocks';
+              } else {
+                setActiveTab(tab);
+                if (typeof window !== 'undefined') window.location.hash = `#/${tab}`;
+              }
+            }}
+          />
+        );
+
       default:
+        if (isIelts) {
+          return (
+            <IeltsDashboardView
+              user={currentUser}
+              onNavigateTab={(tab) => {
+                if (tab === 'bluebook' || tab === 'mocks') {
+                  setActiveTab('bluebook');
+                  if (typeof window !== 'undefined') window.location.hash = '#/mocks';
+                } else {
+                  setActiveTab(tab);
+                  if (typeof window !== 'undefined') window.location.hash = `#/${tab}`;
+                }
+              }}
+              onOpenClassroomTest={() => {
+                setActiveTab('bluebook');
+                if (typeof window !== 'undefined') window.location.hash = '#/mocks';
+              }}
+              onOpenPaywall={() => setIsPaywallOpen(true)}
+            />
+          );
+        }
         return (
           <DashboardView
             user={currentUser}
@@ -2235,7 +2307,9 @@ export default function App() {
 
         {/* Main Routed Views */}
         <main className={`flex-1 ${activeTab === 'community' || activeTab === 'chat' ? 'h-[100dvh] md:h-[calc(100dvh-64px)] overflow-hidden overflow-x-hidden overflow-y-hidden pb-0' : activeTab === 'landing' ? 'pb-0' : 'pb-16'}`}>
-          {renderView(currentView)}
+          <SafeViewWrapper key={currentView} viewName={currentView}>
+            {renderView(currentView)}
+          </SafeViewWrapper>
         </main>
       </div>
 

@@ -6,6 +6,7 @@ import { ThemeProvider } from './context/ThemeContext.tsx';
 import { PlatformSettingsProvider } from './contexts/PlatformSettingsContext.tsx';
 import { LanguageProvider } from './context/LanguageContext.tsx';
 import { UserProfileProvider } from './context/UserProfileContext.tsx';
+import { ExamProgramProvider } from './context/ExamProgramContext.tsx';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(
@@ -14,7 +15,9 @@ createRoot(document.getElementById('root')!).render(
       <PlatformSettingsProvider>
         <LanguageProvider>
           <UserProfileProvider>
-            <App />
+            <ExamProgramProvider>
+              <App />
+            </ExamProgramProvider>
           </UserProfileProvider>
         </LanguageProvider>
       </PlatformSettingsProvider>

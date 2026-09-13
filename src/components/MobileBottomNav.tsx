@@ -12,6 +12,7 @@ import {
 import { User } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { useUnreadMessages } from '../hooks/useUnreadMessages';
+import { useExamProgram } from '../context/ExamProgramContext';
 
 interface MobileBottomNavProps {
   activeTab: string;
@@ -26,6 +27,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
 }) => {
   const { t } = useLanguage();
   const { totalUnread } = useUnreadMessages();
+  const { isIelts } = useExamProgram();
   const [isChatOpen, setIsChatOpen] = React.useState(false);
 
   React.useEffect(() => {
@@ -48,22 +50,22 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   const navItems = [
     {
       id: 'dashboard',
-      label: t('nav.home', 'Uy'),
+      label: isIelts ? 'IELTS Uy' : t('nav.home', 'Uy'),
       icon: Home,
     },
     {
-      id: 'qbank',
-      label: t('nav.questions', 'Savollar'),
-      icon: Layers,
-    },
-    {
       id: 'bluebook',
-      label: t('nav.mocks', 'Testlar'),
+      label: isIelts ? 'IELTS Mock' : t('nav.mocks', 'Testlar'),
       icon: FileText,
     },
     {
+      id: 'qbank',
+      label: isIelts ? "Bo'limlar" : t('nav.questions', 'Savollar'),
+      icon: Layers,
+    },
+    {
       id: 'vocab',
-      label: t('nav.vocabulary', "Lug'at"),
+      label: isIelts ? "Lug'at" : t('nav.vocabulary', "Lug'at"),
       icon: BookOpen,
     },
     {
@@ -112,6 +114,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           'ai-tutor',
           'roadmap',
           'admin',
+          'resources',
         ].includes(activeTab)
       );
     }
